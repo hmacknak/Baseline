@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Baseline demo studio</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #f3f3f3;
+    font-family: "Liberation Sans", "DejaVu Sans", Arial, sans-serif; color: #1f2328; }
+  .app { position: absolute; inset: 0; display: grid; grid-template-rows: 34px 30px 1fr 30px; }
+  .titlebar { background: #107c41; color: #fff; display: flex; align-items: center; padding: 0 14px; gap: 10px; font-size: 13px; }
+  .titlebar b { font-size: 14px; }
+  .titlebar .sim { margin-left: auto; background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 10px; font-size: 12px; }
+  .fbar { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #d4d4d4; font-size: 13px; }
+  .fbar .name { width: 70px; text-align: center; border-right: 1px solid #d4d4d4; height: 100%; display: grid; place-items: center; font-weight: 600; }
+  .fbar .fx { width: 34px; text-align: center; color: #888; font-style: italic; border-right: 1px solid #d4d4d4; height: 100%; display: grid; place-items: center; }
+  .fbar .formula { padding: 0 10px; font-family: "DejaVu Sans Mono", monospace; font-size: 13px; white-space: pre; }
+  .fbar .caret { display: inline-block; width: 1px; height: 15px; background: #000; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .main { display: grid; grid-template-columns: 1fr 380px; min-height: 0; }
+  .gridwrap { overflow: hidden; background: #fff; position: relative; }
+  table.grid { border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+  .grid th { background: #f3f3f3; color: #555; font-weight: normal; border: 1px solid #d4d4d4; height: 22px; font-size: 12px; }
+  .grid th.corner { width: 36px; }
+  .grid td { border: 1px solid #e6e6e6; height: 24px; padding: 0 5px; white-space: nowrap; overflow: visible; position: relative; }
+  .grid td.num { text-align: right; }
+  .grid td.bold { font-weight: 700; }
+  .grid td.title { font-size: 16px; font-weight: 700; }
+  .grid td.fill { background: #e8f1ee; }
+  .grid td.err { color: #c00000; }
+  .grid td.sel { outline: 2px solid #107c41; outline-offset: -2px; z-index: 2; }
+  .grid td.flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { 0% { background: #c6efce; } 100% { background: transparent; } }
+  .grid td span.clip { display: block; overflow: visible; }
+  .pane { border-left: 1px solid #d4d4d4; background: #fff; display: grid; grid-template-rows: 30px 1fr; min-height: 0; }
+  .pane .phead { display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #555; border-bottom: 1px solid #e6e6e6; }
+  .pane iframe { border: 0; width: 100%; height: 100%; }
+  .tabs { display: flex; align-items: flex-end; background: #f3f3f3; border-top: 1px solid #d4d4d4; padding-left: 40px; font-size: 13px; }
+  .tabs .t { padding: 5px 14px; color: #444; }
+  .tabs .t.on { background: #fff; color: #107c41; font-weight: 700; border-bottom: 3px solid #107c41; }
+  /* Captions */
+  .caption { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); max-width: 900px; z-index: 50;
+    background: rgba(17, 24, 39, .92); color: #fff; padding: 12px 22px; border-radius: 10px; font-size: 22px; line-height: 1.35;
+    text-align: center; opacity: 0; transition: opacity .35s; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+  .caption.show { opacity: 1; }
+  .caption small { display: block; font-size: 15px; color: #c9d1d9; margin-top: 4px; }
+  /* Title / end cards */
+  .card { position: absolute; inset: 0; z-index: 80; background: #0f3d2e; color: #fff; display: grid; place-items: center;
+    text-align: center; opacity: 0; transition: opacity .6s; pointer-events: none; }
+  .card.show { opacity: 1; }
+  .card h1 { margin: 0 0 12px; font-size: 54px; }
+  .card p { margin: 6px 0; font-size: 24px; color: #cfe8df; }
+  .card .note { margin-top: 26px; font-size: 16px; color: #9cc5b6; }
+  .card .logo { width: 84px; height: 84px; border-radius: 18px; background: #105e48; border: 3px solid #4ec9a0;
+    display: inline-grid; place-items: center; font-size: 52px; font-weight: 700; margin-bottom: 18px; }
+  /* Fake cursor */
+  .cursor { position: absolute; z-index: 90; left: 640px; top: 400px; width: 22px; height: 22px; pointer-events: none;
+    transition: left .7s cubic-bezier(.3,.7,.3,1), top .7s cubic-bezier(.3,.7,.3,1); }
+  .cursor svg { filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+  .ripple { position: absolute; z-index: 89; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
+    border: 3px solid #f0a040; animation: ripple .5s ease-out forwards; pointer-events: none; }
+  @keyframes ripple { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="titlebar"><b>Excel</b> · Baseline-demo.xlsx<span class="sim">Simulated spreadsheet · real Baseline add-in</span></div>
+  <div class="fbar"><div class="name" id="nameBox">A1</div><div class="fx">fx</div><div class="formula" id="formula"></div></div>
+  <div class="main">
+    <div class="gridwrap"><table class="grid" id="grid"></table></div>
+    <div class="pane"><div class="phead">Baseline Review</div><iframe id="addin" src="/addin/taskpane.html"></iframe></div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</div>
+<div class="caption" id="caption"></div>
+<div class="card" id="card"></div>
+<div class="cursor" id="cursor"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2 L3 18 L7.5 13.8 L10.6 20.5 L13.2 19.3 L10.1 12.7 L16.5 12.4 Z" fill="#fff" stroke="#000" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+
+<script>
+// ─── Workbook model (shared with the add-in iframe via window.parent) ──────────
+const ROWS = 18, COLS = 6;
+const LETTERS = "ABCDEFGHIJ";
+window.__wb = null;
+window.__changeHandlers = [];
+window.__activateHandlers = [];
+
+function parseAddr(a) { const m = /^\$?([A-Z]+)\$?(\d+)$/.exec(a); return { col: LETTERS.indexOf(m[1]), row: +m[2] - 1 }; }
+function addr(r, c) { return LETTERS[c] + (r + 1); }
+
+// Tiny evaluator: SUM(range), + - * /, cell refs. Enough for the demo workbook.
+function cellValue(sheet, a, depth = 0) {
+  const cell = sheet.cells[a.replace(/\$/g, "")];
+  if (!cell) return null;
+  const v = cell.v;
+  if (typeof v === "string" && v[0] === "=") return evaluate(sheet, v, depth + 1);
+  return v;
+}
+function evaluate(sheet, formula, depth = 0) {
+  if (depth > 20) return "#REF!";
+  let expr = formula.slice(1);
+  expr = expr.replace(/SUM\(\s*\$?([A-Z])\$?(\d+)\s*:\s*\$?([A-Z])\$?(\d+)\s*\)/gi, (_, c1, r1, c2, r2) => {
+    let s = 0;
+    for (let c = LETTERS.indexOf(c1); c <= LETTERS.indexOf(c2); c++)
+      for (let r = +r1; r <= +r2; r++) { const x = cellValue(sheet, LETTERS[c] + r, depth); if (typeof x === "number") s += x; }
+    return "(" + s + ")";
+  });
+  let err = null;
+  expr = expr.replace(/\$?([A-Z])\$?(\d+)/g, (_, c, r) => {
+    const x = cellValue(sheet, c + r, depth);
+    if (typeof x === "string" && x[0] === "#") err = x;
+    return "(" + (typeof x === "number" ? x : 0) + ")";
+  });
+  if (err) return err;
+  try {
+    const out = Function('"use strict";return (' + expr + ")")();
+    if (!isFinite(out)) return "#DIV/0!";
+    return out;
+  } catch { return "#VALUE!"; }
+}
+
+function display(sheet, a) {
+  const cell = sheet.cells[a];
+  if (!cell) return { text: "", num: false };
+  const v = cellValue(sheet, a);
+  if (typeof v === "string") return { text: v, num: false, err: v[0] === "#" };
+  if (typeof v !== "number") return { text: String(v ?? ""), num: false };
+  const fmt = cell.fmt || "General";
+  if (fmt.indexOf("%") >= 0) return { text: (v * 100).toFixed(1) + "%", num: true };
+  if (fmt.indexOf("#,##0") >= 0) {
+    const s = Math.round(Math.abs(v)).toLocaleString("en-US");
+    return { text: v < 0 ? "(" + s + ")" : s, num: true };
+  }
+  return { text: Number.isInteger(v) ? String(v) : String(+v.toFixed(4)), num: true };
+}
+
+// ─── Rendering ────────────────────────────────────────────────────────────────
+let selected = "A1";
+function render() {
+  const wb = window.__wb, sheet = wb.sheets[wb.active];
+  const g = document.getElementById("grid");
+  const w = sheet.widths || {};
+  let html = '<colgroup><col style="width:36px">';
+  for (let c = 0; c < COLS; c++) html += `<col style="width:${Math.max(70, Math.round((w[LETTERS[c]] || 10) * 7.6))}px">`;
+  html += '</colgroup><tr><th class="corner"></th>';
+  for (let c = 0; c < COLS; c++) html += `<th>${LETTERS[c]}</th>`;
+  html += "</tr>";
+  for (let r = 0; r < ROWS; r++) {
+    html += `<tr><th>${r + 1}</th>`;
+    for (let c = 0; c < COLS; c++) {
+      const a = addr(r, c), cell = sheet.cells[a], d = display(sheet, a);
+      const cls = [d.num ? "num" : "", cell && cell.b ? "bold" : "", cell && cell.fill ? "fill" : "",
+        r === 0 && cell ? "title" : "", d.err ? "err" : "", a === selected ? "sel" : ""].join(" ");
+      const text = d.text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      html += `<td id="cell-${a}" class="${cls}"><span class="clip">${text}</span></td>`;
+    }
+    html += "</tr>";
+  }
+  g.innerHTML = html;
+  document.getElementById("tabs").innerHTML = wb.order.map(n => `<div class="t ${n === wb.active ? "on" : ""}" data-sheet="${n}">${n}</div>`).join("");
+  showFormula();
+}
+function showFormula(typing) {
+  const sheet = window.__wb.sheets[window.__wb.active];
+  document.getElementById("nameBox").textContent = selected;
+  const f = document.getElementById("formula");
+  if (typing !== undefined) { f.innerHTML = ""; f.textContent = typing; f.insertAdjacentHTML("beforeend", '<span class="caret"></span>'); return; }
+  const cell = sheet.cells[selected];
+  f.textContent = cell ? String(cell.v) : "";
+}
+
+// ─── API used by the add-in mock and by the recording script ─────────────────
+window.__select = a => { selected = a; render(); };
+window.__activate = name => { window.__wb.active = name; selected = "A1"; render(); window.__activateHandlers.forEach(h => h({})); };
+window.__typing = text => showFormula(text);
+window.__setCell = (a, v) => {
+  const sheet = window.__wb.sheets[window.__wb.active];
+  if (v === "" || v === null) delete sheet.cells[a];
+  else sheet.cells[a] = Object.assign({}, sheet.cells[a] || { b: false, fmt: "General", fill: false }, { v });
+  selected = a; render();
+  const td = document.getElementById("cell-" + a); if (td) td.classList.add("flash");
+  window.__changeHandlers.forEach(h => h({ address: a }));
+};
+window.__valueOf = (sheetName, a) => cellValue(window.__wb.sheets[sheetName], a);
+window.__caption = (html) => { const c = document.getElementById("caption"); if (!html) { c.classList.remove("show"); return; } c.innerHTML = html; c.classList.add("show"); };
+window.__card = (html) => { const c = document.getElementById("card"); if (!html) { c.classList.remove("show"); return; } c.innerHTML = html; c.classList.add("show"); };
+window.__cursor = (x, y) => { const c = document.getElementById("cursor"); c.style.left = x + "px"; c.style.top = y + "px"; };
+window.__ripple = (x, y) => { const r = document.createElement("div"); r.className = "ripple"; r.style.left = x + "px"; r.style.top = y + "px"; document.body.appendChild(r); setTimeout(() => r.remove(), 600); };
+window.__init = (wb) => { window.__wb = wb; render(); };
+</script>
+</body>
+</html>

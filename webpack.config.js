@@ -77,6 +77,10 @@ module.exports = async (env, options) => {
             to: "Baseline-demo.xlsx",
           },
           {
+            from: "demo/Baseline-demo-video.mp4",
+            to: "Baseline-demo-video.mp4",
+          },
+          {
             from: "manifest*.xml",
             to: "[name]" + "[ext]",
             transform(content) {
@@ -90,6 +94,10 @@ module.exports = async (env, options) => {
         ],
       }),
     ],
+    performance: {
+      // The demo video and workbook are downloads, not part of the add-in bundle.
+      assetFilter: name => !/\.(mp4|xlsx)$/.test(name),
+    },
     devServer: {
       headers: {
         "Access-Control-Allow-Origin": "*",

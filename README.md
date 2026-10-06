@@ -21,6 +21,12 @@ senior would, and if last year's reviewer raised the same issue, it says so.
 
 Every item explains **why it matters** and **how to fix it**, and clicking a cell reference jumps to that cell.
 
+## Demo video
+
+[▶ Watch the 90-second demo](https://hmacknak.github.io/Baseline/) (also at
+[`demo/Baseline-demo-video.mp4`](demo/Baseline-demo-video.mp4)). The spreadsheet in the video is simulated; the
+panel is the real add-in code running against it. To re-record, see `demo/video/record.mjs`.
+
 ## Demo workbook
 
 [`demo/Baseline-demo.xlsx`](demo/Baseline-demo.xlsx) (also on the install page) has a bank rec with 5 problems, an AR
