@@ -62,7 +62,7 @@ async function click(locator, opts = {}) {
   await locator.click();
   await wait(opts.after ?? 500);
 }
-async function editCell(a, text) {
+async function editCell(a, text, ms = 55) {
   const td = page.locator(`#cell-${a}`);
   const { x, y } = await moveTo(td, 0.5, 0.5);
   await page.evaluate(([x, y]) => window.__ripple(x, y), [x, y]);
@@ -70,7 +70,7 @@ async function editCell(a, text) {
   await wait(300);
   for (let i = 1; i <= text.length; i++) {
     await page.evaluate(t => window.__typing(t), text.slice(0, i));
-    await wait(55);
+    await wait(ms);
   }
   await wait(350);
   await page.evaluate(([a, t]) => {
@@ -103,7 +103,7 @@ await wait(3500);
 await card(null, 900);
 
 // ─── 1. Live review ──────────────────────────────────────────────────────────
-await caption("A junior is preparing the bank reconciliation.<small>Baseline reviews the sheet the way a senior would, live, as they work.</small>", 4200);
+await caption("A junior is preparing the year-end bank reconciliation.<small>Baseline reviews the sheet the way a senior would, live, as they work.</small>", 4200);
 await moveTo(addin.locator("#score"), 0.15, 0.5);
 await caption("Before anyone opens it for review, Baseline has already found <b>5 issues</b>.", 3600);
 
@@ -120,36 +120,45 @@ await addin.locator(".notes-table").scrollIntoViewIfNeeded();
 await wait(1500);
 await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
 await panelTop();
-await caption("Baseline matches them to this year's sheet:<small>3 of last year's issues are happening again.</small>", 4200);
+await caption("Baseline matches them to this year's sheet:<small>4 of last year's 6 points are happening again. The other 2 need your judgement.</small>", 4800);
 await moveTo(addin.locator(".py-callout"), 0.3, 0.5);
 await caption("Heads up, <b>this happened last year</b>.", 3000);
 
 // ─── 3. Fix it live ──────────────────────────────────────────────────────────
 await caption("The junior fixes the total…", 600);
-await editCell("B10", "=SUM(B6:B9)");
+await editCell("C14", "=SUM(C10:C13)");
 await panelTop();
 await caption("…and the checklist updates instantly. Last year's footing note shows <b>Looks fixed</b>.", 3800);
 
 await caption("Link the FX rate instead of hard-coding it…", 400);
-await editCell("B13", "=B12*B14");
-await caption("Add a reviewer line, a source and a tickmark legend…", 400);
+await editCell("C21", "=C19*C20");
+await caption("Add the reviewer line, a source and a tickmark legend…", 400);
 await editCell("A4", "Reviewed by:");
-await editCell("C15", "Source: bank statement, Dec 2025");
-await editCell("A16", "Tickmark legend: ✓ agreed to bank statement");
+await editCell("A5", "Source: RBC operating account statement at 31 Dec 2025 (p.3)", 38);
+await editCell("A6", "Tickmark legend: ✓ agreed to bank statement or trial balance", 38);
 await panelTop();
 await moveTo(addin.locator("#score"), 0.15, 0.5);
-await caption("<b>9 of 9 checks clear.</b> Ready for review, with no back-and-forth.", 4200);
+await caption("<b>9 of 9 checks clear.</b> Ready for review.<small>The two Check yourself points stay listed for the junior to work through.</small>", 4800);
 
 // ─── 4. Other sheets ─────────────────────────────────────────────────────────
-await caption("Switch to the AR aging…", 300);
+await caption("Now the receivables aging and ECL allowance…", 300);
 await activate("FY25 AR");
 await panelTop();
 await click(item("No numbers typed over formulas"), { after: 600 });
-await caption("It catches a number <b>typed over a formula</b>, a formula pointing at the <b>wrong row</b>, and <b>#DIV/0!</b> errors.", 4600);
+await caption("It catches a number <b>typed over a formula</b>, a formula pointing at the <b>wrong row</b>, and the <b>#DIV/0!</b> that follows.", 4600);
+await click(addin.locator(".item", { hasText: "No numbers typed over formulas" }).locator(".cell-link").first(), { after: 1200 });
+await click(item("Formulas consistent across rows and columns"), { after: 600 });
+await click(addin.locator(".item", { hasText: "Formulas consistent across rows and columns" }).locator(".cell-link").first(), { after: 1500 });
+await caption("The junior re-links the total and fixes the reference.", 500);
+await editCell("F10", "=SUM(B10:E10)");
+await editCell("G9", "=F9/F$15");
+await panelTop();
+await moveTo(addin.locator("#score"), 0.15, 0.5);
+await caption("<b>9 of 9 again.</b> The 90+ loss rate and the Lakeshore provision stay listed as <b>Check yourself</b>.", 5200);
 await caption(null);
 await activate("FY25 Fixed Assets");
 await panelTop();
-await caption("A clean sheet passes every check, and last year's notes show as fixed.", 4200);
+await caption("A clean workpaper passes every check, and last year's notes show as fixed.", 5000);
 await caption(null, 400);
 
 // ─── End card ────────────────────────────────────────────────────────────────

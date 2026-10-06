@@ -3,10 +3,11 @@
 Run:  python3 demo/make_demo.py
 Sheets:
   Start here         - what to do, step by step
-  FY25 Cash          - bank rec with a short total, a hard-coded FX rate, tickmarks with no legend,
-                       no source and no reviewer line (5 failing checks)
-  FY25 AR            - aging with a number typed over a formula, an inconsistent formula and a #DIV/0!
-  FY25 Fixed Assets  - a clean sheet that passes every check
+  FY25 Cash          - bank rec (fictional client) with a short total, a hard-coded FX rate, tickmarks with
+                       no legend, no source and no reviewer line (5 failing checks)
+  FY25 AR            - aging and ECL allowance with a number typed over a formula, an inconsistent
+                       formula and a #DIV/0! (3 failing checks)
+  FY25 Fixed Assets  - PP&E additions and depreciation: a clean sheet that passes every check
   PY Notes           - last year's review notes, ready to import
 """
 
@@ -49,15 +50,17 @@ lines = [
     ("", None),
     ("1. Open the add-in: Home → Review.", None),
     ('2. Click the "FY25 Cash" tab. The checklist shows 5 problems.', None),
-    ("3. Expand a red item and click a cell link, e.g. B10, to jump to it.", None),
+    ("3. Expand a red item and click a cell link, e.g. C14, to jump to it.", None),
     ('4. Open "Last year\'s notes" in the add-in → Import from "PY Notes" sheet.', None),
     ('   Back on Review, the yellow box shows which of last year\'s notes are happening again.', None),
-    ("5. Fix something live: change FY25 Cash B10 to =SUM(B6:B9) and watch it turn green.", None),
-    ("   Also try B13 → =B12*B14 (links the FX rate) and add 'Reviewed by:' in A4.", None),
-    ('6. Try "FY25 AR": a typed-over formula, an inconsistent formula and a #DIV/0!.', None),
+    ("   Notes Baseline can't test automatically show as \"Check yourself\".", None),
+    ("5. Fix something live: change FY25 Cash C14 to =SUM(C10:C13) and watch it turn green.", None),
+    ("   Also try C21 → =C19*C20 (links the FX rate), then add a Reviewed by: line in A4,", None),
+    ("   a Source: line in A5 and a Tickmark legend: line in A6.", None),
+    ('6. Try "FY25 AR": a typed-over total (F10), an inconsistent formula (G9) and a #DIV/0!.', None),
     ('7. "FY25 Fixed Assets" is a clean sheet that passes every check.', None),
     ("", None),
-    ("All figures are made up. Nothing in this file leaves Excel.", MUTED),
+    ("The client and all figures are made up. Nothing in this file leaves Excel.", MUTED),
 ]
 for r, (text, font) in enumerate(lines, start=1):
     c = ws.cell(row=r, column=1, value=text)
@@ -65,141 +68,203 @@ for r, (text, font) in enumerate(lines, start=1):
         c.font = font
 widths(ws, 95)
 
+CLIENT = "Prairie Ridge Mining Ltd."
+
+
+def money(ws, addr, value, bold=False, border=False):
+    c = ws[addr]
+    c.value = value
+    c.number_format = MONEY
+    if bold:
+        c.font = BOLD
+    if border:
+        c.border = TOTAL_BORDER
+
+
 # ─── FY25 Cash (5 failing checks) ────────────────────────────────────────────
 ws = wb.create_sheet("FY25 Cash")
-ws["A1"] = "Cash: bank reconciliation, 31 Dec 2025"
+ws["A1"] = f"{CLIENT} · WP 4.1 Cash: bank reconciliation, 31 Dec 2025"
 ws["A1"].font = TITLE
-ws["A2"] = "Purpose: reconcile the operating account balance to the bank statement"
-ws["A3"] = "Prepared by: JS 06/10/2025"
-# Missing on purpose: "Reviewed by" line and a "Source" line.
+ws["A2"] = "Purpose: reconcile GL cash (acct 1010) to the bank and test the reconciling items"
+ws["A3"] = "Prepared by: JS 14 Jan 2026"
+# Missing on purpose: the reviewer line (A4), a source line (A5) and the tickmark legend (A6).
 
-header_row(ws, 5, ["Item", "Amount", "Tick"])
-items = [
-    ("Balance per bank statement", 482_150),
-    ("Deposits in transit", 36_400),
-    ("Outstanding cheques", -51_275),
-    ("Bank error correction", 1_200),
+header_row(ws, 7, ["Item", "Ref", "CAD", "Tick", "Comment"])
+cash_rows = [
+    (8, "Balance per bank statement", "BS-1", 1_284_610, "Agreed to statement p.3"),
+    (9, "Add: deposits in transit", "DIT-1", 86_420, "2 deposits; cleared 2 Jan 2026"),
+    (10, "Less: chq 10442 · Pioneer Drilling", "", -41_300, "Outstanding at 31 Dec 2025"),
+    (11, "Less: chq 10447 · Cobalt Freight", "", -18_950, "Outstanding at 31 Dec 2025"),
+    (12, "Less: chq 10451 · Wascana Safety", "", -22_775, "Outstanding at 31 Dec 2025"),
+    (13, "Less: chq 10455 · SaskPower", "", -9_420, "Outstanding at 31 Dec 2025"),
+    (15, "Add: bank error (fee charged in error)", "BE-1", 3_200, "Reversed by bank 3 Jan 2026"),
+    (17, "Balance per GL (acct 1010)", "TB", 1_281_785, "Agreed to trial balance"),
 ]
-for i, (label, amount) in enumerate(items):
-    r = 6 + i
+for r, label, ref, amount, comment in cash_rows:
     ws.cell(row=r, column=1, value=label)
-    ws.cell(row=r, column=2, value=amount).number_format = MONEY
-ws["C6"] = "✓"
-ws["C7"] = "✓"
-ws["C8"] = "✓"  # Tickmarks with no legend, on purpose.
+    ws.cell(row=r, column=2, value=ref)
+    money(ws, f"C{r}", amount)
+    ws.cell(row=r, column=4, value="✓").alignment = Alignment(horizontal="center")
+    ws.cell(row=r, column=5, value=comment)
 
-ws["A10"] = "Adjusted bank balance"
-ws["A10"].font = BOLD
-ws["B10"] = "=SUM(B6:B8)"  # Stops short: leaves out B9, on purpose.
-ws["B10"].number_format = MONEY
-ws["B10"].font = BOLD
-ws["B10"].border = TOTAL_BORDER
+ws["A14"] = "Total outstanding cheques"
+ws["A14"].font = BOLD
+money(ws, "C14", "=SUM(C10:C12)", bold=True, border=True)  # Stops short: leaves out C13, on purpose.
+ws["A16"] = "Adjusted bank balance"
+ws["A16"].font = BOLD
+money(ws, "C16", "=C8+C9+C14+C15", bold=True, border=True)
+ws["A18"] = "Difference"
+ws["A18"].font = BOLD
+money(ws, "C18", "=C16-C17", bold=True, border=True)
+ws["E18"] = "Should be nil"
+ws["E18"].font = MUTED
 
-ws["A12"] = "USD sub-account (USD)"
-ws["B12"] = 25_000
-ws["B12"].number_format = MONEY
-ws["A13"] = "USD sub-account (CAD)"
-ws["B13"] = "=B12*1.37"  # Hard-coded FX rate, on purpose.
-ws["B13"].number_format = MONEY
-ws["A14"] = "FX rate USD→CAD"
-ws["B14"] = 1.37
-ws["C14"] = "per Bank of Canada 31 Dec close"
-widths(ws, 34, 14, 34)
+ws["A19"] = "USD sub-account (USD)"
+money(ws, "C19", 58_300)
+ws["D19"] = "✓"
+ws["A20"] = "FX rate USD→CAD"
+ws["C20"] = 1.37
+ws["E20"] = "per Bank of Canada 31 Dec close"
+ws["A21"] = "USD sub-account (CAD)"
+money(ws, "C21", "=C19*1.37")  # Hard-coded FX rate, on purpose.
+widths(ws, 38, 8, 14, 6, 34)
 
 # ─── FY25 AR (3 failing checks) ──────────────────────────────────────────────
 ws = wb.create_sheet("FY25 AR")
-ws["A1"] = "Accounts receivable: aging, 31 Dec 2025"
+ws["A1"] = f"{CLIENT} · WP 5.2 Trade receivables: aging and ECL allowance, 31 Dec 2025"
 ws["A1"].font = TITLE
-ws["A2"] = "Purpose: test the AR aging and allowance"
-ws["A3"] = "Source: AR aging report from the client's system, 3 Jan 2026"
-ws["A4"] = "Prepared by: JS 06/10/2025"
-ws["C4"] = "Reviewed by:"
+ws["A2"] = "Purpose: test the aging for accuracy and recalculate the expected credit loss (ECL) allowance"
+ws["A3"] = "Source: AR aging report run 3 Jan 2026 (client system); control account GL 1200"
+ws["A4"] = "Prepared by: JS 15 Jan 2026"
+ws["E4"] = "Reviewed by:"
 
-header_row(ws, 6, ["Customer", "0-30", "31-60", "61-90", "Total", "% of total"])
+header_row(ws, 6, ["Customer", "Current", "31-60", "61-90", "90+", "Total", "% of total"])
 customers = [
-    ("Northwind Traders", 18_200, 4_100, 900),
-    ("Contoso Ltd", 22_750, 0, 3_300),
-    ("Fabrikam Inc", 9_800, 2_250, 0),
-    ("Adventure Works", 14_100, 6_400, 1_750),
-    ("Tailspin Toys", 7_300, 0, 0),
+    ("Northern Reach Energy", 212_400, 38_200, 0, 0),
+    ("Boreal Haulage Ltd.", 96_750, 41_300, 12_900, 0),
+    ("Lakeshore Fabricators", 54_300, 22_100, 31_800, 48_600),
+    ("Prairie Steel Works", 143_900, 27_450, 0, 0),
+    ("Wascana Industrial Supply", 38_200, 9_800, 6_350, 2_150),
+    ("Meridian Pipe & Fittings", 77_600, 15_000, 0, 11_200),
+    ("Tallgrass Environmental", 28_950, 0, 0, 0),
+    ("Kestrel Drilling Services", 64_100, 18_900, 7_700, 0),
 ]
-for i, (name, a, b, c) in enumerate(customers):
+for i, (name, *buckets) in enumerate(customers):
     r = 7 + i
     ws.cell(row=r, column=1, value=name)
-    for col, v in zip((2, 3, 4), (a, b, c)):
+    for col, v in zip((2, 3, 4, 5), buckets):
         ws.cell(row=r, column=col, value=v).number_format = MONEY
-    ws.cell(row=r, column=5, value=f"=SUM(B{r}:D{r})").number_format = MONEY
-    ws.cell(row=r, column=6, value=f"=E{r}/$E$12").number_format = PCT
+    money(ws, f"F{r}", f"=SUM(B{r}:E{r})")
+    ws[f"F{r}"].font = BOLD
+    ws[f"G{r}"] = f"=F{r}/F$15"
+    ws[f"G{r}"].number_format = PCT
 
-ws["E9"] = 14_050  # Typed over the row formula (true total is 12,050), on purpose.
-ws["E9"].number_format = MONEY
-ws["F10"] = "=E10/$E$13"  # Points at the wrong total row, on purpose.
-ws["F10"].number_format = PCT
+ws["F10"] = 168_850  # Typed over the row formula (true total is 171,350), on purpose.
+ws["F10"].number_format = MONEY
+ws["F10"].font = BOLD
+ws["G9"] = "=F9/F16"  # Points at the wrong total row (F16 is blank) → #DIV/0!, on purpose.
+ws["G9"].number_format = PCT
 
-ws["A12"] = "Total"
-ws["A12"].font = BOLD
+ws["A15"] = "Total"
+ws["A15"].font = BOLD
+for col in "BCDEF":
+    money(ws, f"{col}15", f"=SUM({col}7:{col}14)", bold=True, border=True)
+ws["G15"] = "=SUM(G7:G14)"
+ws["G15"].number_format = PCT
+ws["G15"].font = BOLD
+ws["G15"].border = TOTAL_BORDER
+
+ws["A16"] = "ECL rate (policy matrix)"
+ws["A16"].font = MUTED
+for col, rate in zip("BCDE", (0.005, 0.02, 0.08, 0.35)):
+    ws[f"{col}16"] = rate
+    ws[f"{col}16"].number_format = PCT
+ws["A17"] = "Collective ECL by bucket"
 for col in "BCDE":
-    c = ws[f"{col}12"]
-    c.value = f"=SUM({col}7:{col}11)"
-    c.number_format = MONEY
-    c.font = BOLD
-    c.border = TOTAL_BORDER
-
-ws["A15"] = "Allowance coverage"
-ws["B15"] = "=E12/B16"  # B16 (allowance) left blank → #DIV/0!, on purpose.
-ws["A16"] = "Allowance for doubtful accounts"
-widths(ws, 30, 12, 12, 12, 14, 12)
+    money(ws, f"{col}17", f"={col}15*{col}16")
+money(ws, "F17", "=SUM(B17:E17)", bold=True)
+ws["A18"] = "Specific provision · Lakeshore (disputed invoice)"
+money(ws, "F18", 20_000)
+ws["A19"] = "Required allowance"
+ws["A19"].font = BOLD
+money(ws, "F19", "=F17+F18", bold=True, border=True)
+ws["A20"] = "Allowance booked per GL (1205)"
+money(ws, "F20", 54_000)
+ws["A21"] = "Difference"
+ws["A21"].font = BOLD
+money(ws, "F21", "=F19-F20", bold=True, border=True)
+widths(ws, 36, 11, 11, 11, 11, 12, 11)
 
 # ─── FY25 Fixed Assets (clean) ───────────────────────────────────────────────
 ws = wb.create_sheet("FY25 Fixed Assets")
-ws["A1"] = "Fixed assets: additions and depreciation, FY2025"
+ws["A1"] = f"{CLIENT} · WP 7.1 PP&E: FY2025 additions and depreciation recalculation"
 ws["A1"].font = TITLE
-ws["A2"] = "Purpose: recalculate straight-line depreciation on FY25 additions"
-ws["A3"] = "Source: fixed asset register export, 2 Jan 2026"
-ws["A4"] = "Prepared by: JS 06/10/2025"
-ws["C4"] = "Reviewed by:"
+ws["A2"] = "Purpose: vouch FY2025 additions and recalculate straight-line depreciation"
+ws["A3"] = "Source: fixed asset register export 2 Jan 2026; vendor invoices (sample of 5)"
+ws["A4"] = "Prepared by: JS 16 Jan 2026"
+ws["E4"] = "Reviewed by:"
+ws["A5"] = "Tickmark legend: ✓ agreed to vendor invoice, approved capex and in-service date"
+ws["A6"] = "Months in period (year ended 31 Dec 2025)"
+ws["B6"] = 12
 
-header_row(ws, 6, ["Asset", "Cost", "Useful life (yrs)", "Depreciation", "Net book value", "Tick"])
+header_row(ws, 7, ["Asset (FY2025 addition)", "Cost", "Life (yrs)", "In service", "Months", "Depreciation", "Net book value", "Tick"])
 assets = [
-    ("Delivery van", 48_000, 6),
-    ("Laptops (12)", 21_600, 3),
-    ("Warehouse racking", 35_500, 10),
-    ("Forklift", 29_900, 8),
+    ("Haul truck · CAT 777", 1_480_000, 10, "1 Mar 2025", 10),
+    ("Crusher liner set", 312_500, 4, "1 Jun 2025", 7),
+    ("Survey drone & GNSS", 48_900, 5, "1 Aug 2025", 5),
+    ("Site office module", 215_000, 15, "1 Jul 2025", 6),
+    ("Water treatment skid", 640_000, 12, "1 Oct 2025", 3),
 ]
-for i, (name, cost, life) in enumerate(assets):
-    r = 7 + i
+for i, (name, cost, life, since, months) in enumerate(assets):
+    r = 8 + i
     ws.cell(row=r, column=1, value=name)
-    ws.cell(row=r, column=2, value=cost).number_format = MONEY
+    money(ws, f"B{r}", cost)
     ws.cell(row=r, column=3, value=life)
-    ws.cell(row=r, column=4, value=f"=B{r}/C{r}").number_format = MONEY
-    ws.cell(row=r, column=5, value=f"=B{r}-D{r}").number_format = MONEY
-    ws.cell(row=r, column=6, value="✓")
+    ws.cell(row=r, column=4, value=since)
+    ws.cell(row=r, column=5, value=months)
+    money(ws, f"F{r}", f"=B{r}/C{r}*E{r}/$B$6")
+    money(ws, f"G{r}", f"=B{r}-F{r}")
+    ws.cell(row=r, column=8, value="✓").alignment = Alignment(horizontal="center")
 
-ws["A11"] = "Total"
-ws["A11"].font = BOLD
-for col in "BDE":
-    c = ws[f"{col}11"]
-    c.value = f"=SUM({col}7:{col}10)"
-    c.number_format = MONEY
-    c.font = BOLD
-    c.border = TOTAL_BORDER
-
-ws["A13"] = "Tickmark legend"
+ws["A13"] = "Total additions"
 ws["A13"].font = BOLD
-ws["A14"] = "✓ = agreed cost to invoice and useful life to policy"
-widths(ws, 30, 12, 16, 14, 16, 6)
+for col in "BFG":
+    money(ws, f"{col}13", f"=SUM({col}8:{col}12)", bold=True, border=True)
+
+header_row(ws, 14, ["Cost rollforward", "CAD"])
+rollforward = [
+    (15, "Opening cost per prior-year WP 7.1", 18_420_000),
+    (16, "Additions (above)", "=B13"),
+    (17, "Disposals (WP 7.3)", -225_000),
+    (18, "Closing cost", "=SUM(B15:B17)"),
+    (19, "Closing cost per GL (acct 1500)", 20_891_400),
+    (20, "Difference", "=B18-B19"),
+]
+for r, label, v in rollforward:
+    ws.cell(row=r, column=1, value=label)
+    money(ws, f"B{r}", v)
+for r in (18, 20):
+    ws[f"A{r}"].font = BOLD
+    money(ws, f"B{r}", ws[f"B{r}"].value, bold=True, border=True)
+widths(ws, 34, 12, 10, 11, 9, 12, 15, 6)
 
 # ─── PY Notes ────────────────────────────────────────────────────────────────
 ws = wb.create_sheet("PY Notes")
 header_row(ws, 1, ["Sheet", "Cell", "Review note"])
 py_notes = [
-    ("FY24 Cash", "B10", "Total doesn't foot: adjusted balance excludes the last reconciling item"),
-    ("FY24 Cash", "B13", "Hard-coded FX rate, link to source"),
+    ("FY24 Cash", "C13", "Outstanding cheques total doesn't foot: the last cheque listed is excluded from the sum range"),
+    ("FY24 Cash", "C20", "FX rate hard-coded in the formula; link to the Bank of Canada rate and cite it"),
+    ("FY24 Cash", "A4", "Source not documented: cite the bank statement and its date"),
     ("FY24 Cash", "", "Please sign off and add the reviewer line"),
-    ("FY24 AR", "E9", "Formula overwritten with a typed number, re-link the total"),
-    ("FY24 AR", "", "Discuss allowance methodology with manager"),
-    ("FY24 Fixed Assets", "", "Where is the tickmark legend?"),
-    ("FY24 Fixed Assets", "D8", "Hard-coded useful life in depreciation formula"),
+    ("FY24 Cash", "C10", "Cheques outstanding over 90 days: assess whether stale-dated and whether to reverse"),
+    ("FY24 Cash", "C9", "Deposits in transit: agree to January bank activity and document clearing dates"),
+    ("FY24 AR", "F9", "Customer total overwritten with a typed number; re-link the total"),
+    ("FY24 AR", "G8", "% of total formula is inconsistent: one row points at the wrong total"),
+    ("FY24 AR", "E16", "Support the 35% rate for the 90+ bucket against historic write-offs"),
+    ("FY24 AR", "F18", "Lakeshore: obtain management or legal support for the specific provision"),
+    ("FY24 Fixed Assets", "E8", "Useful life hard-coded in the depreciation formula; link to the life column"),
+    ("FY24 Fixed Assets", "A13", "Where is the tickmark legend?"),
+    ("FY24 Fixed Assets", "B8", "Confirm additions meet the capitalization threshold and note who approved the capex"),
 ]
 for r, row in enumerate(py_notes, start=2):
     for c, v in enumerate(row, start=1):
