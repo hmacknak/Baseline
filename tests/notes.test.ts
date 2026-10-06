@@ -23,6 +23,11 @@ describe("tagNote", () => {
     expect(tagNote(text)).toContain(tag);
   });
 
+  it('treats "link to source" as a hard-code note only', () => {
+    expect(tagNote("Hard-coded rate, link to source")).toEqual(["hardcodes"]);
+    expect(tagNote("No source documented")).toEqual(["header"]);
+  });
+
   it("leaves unrelated notes untagged", () => {
     expect(tagNote("Discuss with manager re: accrual judgement")).toEqual([]);
   });

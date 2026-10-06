@@ -28,6 +28,18 @@ How it reviews:
 - **AI review** (Claude): judgement calls such as missing sign-offs, unclear explanations, and missing tickmark legends.
 - A small server holds the API key; the add-in never contains it.
 
+## Status
+- **v0.1 (built):** live 9-item checklist in Excel plus prior-year notes ("this happened last year"). Local only,
+  no AI.
+
+## Saved ideas (later)
+- **Common-issue analysis:** analyse a whole set of review notes (across sheets, juniors, engagements) to show
+  which issues come up most, then focus the checklist and coaching on those. The note tagging in
+  `src/review/notes.ts` is the starting point.
+- **Talk:** ask "why?" or "how do I fix it?" on any note and get a senior-style explanation from Claude. This needs a
+  decision on client data and a small server to hold the API key.
+- **Skill building:** turn repeat issues into this week's habit (reuse the legacy Excel Coach).
+
 ## Open questions
 - Client data: practice/dummy workpapers only, or real ones with the firm's approval?
 - The first set of real (anonymised) senior review notes, which become the first checks and set the bot's voice.

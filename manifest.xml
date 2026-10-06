@@ -5,11 +5,11 @@
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" 
            xsi:type="TaskPaneApp">
   <Id>4ba405c7-c076-4623-87dc-b658292acd68</Id>
-  <Version>1.0.0.0</Version>
-  <ProviderName>Excel Coach</ProviderName>
+  <Version>0.1.0.0</Version>
+  <ProviderName>Baseline</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Excel Coach"/>
-  <Description DefaultValue="Keyboard efficiency trainer for audit professionals"/>
+  <DisplayName DefaultValue="Baseline Review"/>
+  <Description DefaultValue="Live review checklist for workpapers, with last year's review notes built in."/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
@@ -83,13 +83,13 @@
         <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="Excel Coach is ready!"/>
-        <bt:String id="CommandsGroup.Label" DefaultValue="Excel Coach"/>
-        <bt:String id="TaskpaneButton.Label" DefaultValue="Show Coach"/>
+        <bt:String id="GetStarted.Title" DefaultValue="Baseline Review is ready"/>
+        <bt:String id="CommandsGroup.Label" DefaultValue="Baseline"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="Review"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Excel Coach is tracking your keyboard shortcuts. Click Show Coach to see your progress."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Open the Excel Coach panel"/>
+        <bt:String id="GetStarted.Description" DefaultValue="Click Review on the Home tab to open the live review checklist."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Open the Baseline live review checklist"/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

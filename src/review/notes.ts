@@ -34,8 +34,14 @@ const TAG_RULES: Array<{ id: CheckId; pattern: RegExp }> = [
   { id: "tickmarks", pattern: /tick\s*marks?|legend/i },
 ];
 
+/** "Link to source" is advice about a hard-code, not a note that the sheet lacks a documented source. */
+const LINK_TO_SOURCE = /link(ed)? (it |this )?to (the )?source/gi;
+
 export function tagNote(text: string): CheckId[] {
-  return TAG_RULES.filter(r => r.pattern.test(text)).map(r => r.id);
+  return TAG_RULES.filter(r => {
+    const subject = r.id === "header" ? text.replace(LINK_TO_SOURCE, "") : text;
+    return r.pattern.test(subject);
+  }).map(r => r.id);
 }
 
 // ─── Parsing ─────────────────────────────────────────────────────────────────

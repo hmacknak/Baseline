@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Baseline Review</title>
+    <link rel="stylesheet" href="./taskpane.css" />
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">✓</span>
+        <div>
+          <h1>Baseline Review</h1>
+          <p id="status" class="status">Starting…</p>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="review" role="tab" aria-selected="true">Review</button>
+        <button class="tab" data-tab="notes" role="tab" aria-selected="false">
+          Last year's notes <span id="notesCount" class="pill" hidden></span>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="tab-review" class="panel">
+        <div id="score" class="score"></div>
+        <div id="pyPanel" class="py" hidden></div>
+        <ul id="checklist" class="checklist"></ul>
+        <p id="truncated" class="warn" hidden>
+          This sheet is very large, so only the first part was reviewed.
+        </p>
+      </section>
+
+      <section id="tab-notes" class="panel" hidden>
+        <p class="help">
+          Paste last year's review notes, one per line. Add the sheet name in front so Baseline can match it to this
+          year's tab. Year labels are ignored, so "FY24 Cash" matches "FY25 Cash".
+        </p>
+        <pre class="example">Cash | B12 | Hard-coded FX rate, link to source
+Cash | Please sign off and date
+AR | Total doesn't foot
+Where is the tickmark legend?</pre>
+        <textarea id="notesInput" rows="9" placeholder="Sheet | Cell | Note"></textarea>
+        <div class="buttons">
+          <button id="saveNotes" class="primary">Save notes</button>
+          <button id="importNotes">Import from "PY Notes" sheet</button>
+          <button id="clearNotes" class="quiet">Clear</button>
+        </div>
+        <p class="help small">
+          Notes are saved inside this workbook, so they roll forward with the file. Nothing leaves Excel.
+        </p>
+        <div id="notesList"></div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
