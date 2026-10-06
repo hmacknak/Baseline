@@ -5,7 +5,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const urlDev = "https://localhost:3000/";
-const urlProd = "https://www.contoso.com/"; // TODO: set when hosting is decided (see docs/DECISIONS.md)
+const urlProd = "https://hmacknak.github.io/Baseline/"; // GitHub Pages, published by .github/workflows/pages.yml
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();

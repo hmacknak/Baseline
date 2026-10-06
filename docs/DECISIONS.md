@@ -39,6 +39,8 @@
 - **PY notes are tagged by keyword** (`src/review/notes.ts`) and stored in workbook settings so they roll
   forward with the file. Sheet names are matched ignoring years/FY labels.
 - **Common-issue analysis deferred** (owner: "could come later, just save the thought"). Recorded in VISION.md.
-- **Hosting not decided.** The manifest still points at `localhost:3000`, so `npm start` is the only way to run it.
-  Next step for real users: host the built files (e.g. GitHub Pages or Vercel) and sideload the manifest.
+- **Hosting: GitHub Pages** (owner approved publishing). `.github/workflows/pages.yml` runs tests, builds and
+  publishes `dist/` to https://hmacknak.github.io/Baseline/ on every push to `main`. The production manifest
+  points there; `npm start` still uses localhost for development. Only built add-in code is published, never
+  workbook data.
 - `npm run validate` uses Microsoft's online validator; it couldn't run in the build sandbox (network blocked).
