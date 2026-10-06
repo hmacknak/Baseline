@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Baseline Review</title>
+    <link rel="icon" href="assets/icon-32.png" />
+    <style>
+      :root { --bg: #fff; --text: #1f2328; --muted: #59636e; --brand: #105e48; --card: #f6f7f8; }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #1e1e1e; --text: #e6e6e6; --muted: #a0a0a0; --brand: #4ec9a0; --card: #262626; }
+      }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Segoe UI", -apple-system, sans-serif; }
+      main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
+      h1 { margin: 0 0 4px; font-size: 26px; }
+      p { color: var(--muted); margin: 0 0 20px; }
+      .btn { display: block; text-align: center; padding: 16px; border-radius: 8px; background: var(--brand);
+             color: #fff; font-weight: 600; font-size: 18px; text-decoration: none; }
+      ol { background: var(--card); border-radius: 8px; padding: 16px 16px 16px 36px; margin: 20px 0; }
+      li { margin: 6px 0; }
+      small { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Baseline Review</h1>
+      <p>A live review checklist for Excel workpapers, with last year's review notes built in.</p>
+      <a class="btn" href="manifest.xml" download="manifest.xml">Download add-in file</a>
+      <ol>
+        <li>Tap <b>Download add-in file</b> above. It saves <code>manifest.xml</code> to Downloads.</li>
+        <li>Open <b>Excel on the web</b> (office.com) and open any workbook.</li>
+        <li><b>Home → Add-ins → More Add-ins → My Add-ins → Upload My Add-in</b>, then pick <code>manifest.xml</code>.</li>
+        <li>Click <b>Review</b> on the Home tab.</li>
+      </ol>
+      <small>Nothing in your workbook leaves Excel. <a href="https://github.com/hmacknak/Baseline">Source</a></small>
+    </main>
+  </body>
+</html>

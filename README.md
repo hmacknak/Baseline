@@ -42,7 +42,7 @@ There is no AI and no server in this version.
 
 ## Install it (no coding needed)
 
-1. Download the add-in file: **https://hmacknak.github.io/Baseline/manifest.xml** (right-click → Save link as…).
+1. Go to **https://hmacknak.github.io/Baseline/** and tap **Download add-in file**.
 2. Open **Excel on the web** (office.com), then open any workbook.
 3. Go to **Home → Add-ins → More Add-ins → My Add-ins → Upload My Add-in**, and choose `manifest.xml`.
 4. Click **Review** on the Home tab. The checklist opens and updates as you work.
