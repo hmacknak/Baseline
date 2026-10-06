@@ -1,11 +1,9 @@
 {
-  "name": "office-addin-taskpane",
-  "version": "0.0.1",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/OfficeDev/Office-Addin-TaskPane.git"
-  },
-  "license": "MIT",
+  "name": "baseline-review",
+  "version": "0.1.0",
+  "description": "Baseline Review: a live review checklist for Excel workpapers, with prior-year review notes baked in.",
+  "private": true,
+  "license": "UNLICENSED",
   "config": {
     "app_to_debug": "excel",
     "app_type_to_debug": "desktop",
@@ -23,7 +21,9 @@
     "start": "office-addin-debugging start manifest.xml",
     "stop": "office-addin-debugging stop manifest.xml",
     "validate": "office-addin-manifest validate manifest.xml",
-    "watch": "webpack --mode development --watch"
+    "watch": "webpack --mode development --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "core-js": "^3.36.0",
@@ -53,7 +53,8 @@
     "typescript": "^5.4.2",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "5.1.0"
+    "webpack-dev-server": "5.1.0",
+    "vitest": "^3.2.4"
   },
   "prettier": "office-addin-prettier-config",
   "browserslist": [

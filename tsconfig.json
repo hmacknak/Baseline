@@ -1,26 +1,15 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "baseUrl": ".",
+    "target": "es2017",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2017", "dom"],
+    "strict": true,
+    "noEmit": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "jsx": "react",
-    "noEmitOnError": true,
-    "outDir": "lib",
-    "sourceMap": true,
-    "target": "es5",
-    "lib": [
-      "es2015",
-      "dom"
-    ]
+    "skipLibCheck": true,
+    "types": ["office-js"]
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "lib",
-    "lib-amd"
-  ],
-  "ts-node": { 
-    "files": true 
-  }
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "dist", "legacy"]
 }
