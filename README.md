@@ -21,6 +21,12 @@ senior would, and if last year's reviewer raised the same issue, it says so.
 
 Every item explains **why it matters** and **how to fix it**, and clicking a cell reference jumps to that cell.
 
+## Demo workbook
+
+[`demo/Baseline-demo.xlsx`](demo/Baseline-demo.xlsx) (also on the install page) has a bank rec with 5 problems, an AR
+aging with 3, a clean fixed-asset sheet, and a `PY Notes` sheet to import. Follow its **Start here** tab.
+Rebuild it with `python3 demo/make_demo.py`.
+
 ## Last year's review notes
 
 Paste last year's review notes into the **Last year's notes** tab (or keep them on a sheet called

@@ -16,6 +16,7 @@
       p { color: var(--muted); margin: 0 0 20px; }
       .btn { display: block; text-align: center; padding: 16px; border-radius: 8px; background: var(--brand);
              color: #fff; font-weight: 600; font-size: 18px; text-decoration: none; }
+      .btn.secondary { margin-top: 10px; background: none; color: var(--brand); border: 2px solid var(--brand); }
       ol { background: var(--card); border-radius: 8px; padding: 16px 16px 16px 36px; margin: 20px 0; }
       li { margin: 6px 0; }
       small { color: var(--muted); }
@@ -26,11 +27,13 @@
       <h1>Baseline Review</h1>
       <p>A live review checklist for Excel workpapers, with last year's review notes built in.</p>
       <a class="btn" href="manifest.xml" download="manifest.xml">Download add-in file</a>
+      <a class="btn secondary" href="Baseline-demo.xlsx" download="Baseline-demo.xlsx">Download demo workbook</a>
       <ol>
         <li>Tap <b>Download add-in file</b> above. It saves <code>manifest.xml</code> to Downloads.</li>
         <li>Open <b>Excel on the web</b> (office.com) and open any workbook.</li>
         <li><b>Home → Add-ins → More Add-ins → My Add-ins → Upload My Add-in</b>, then pick <code>manifest.xml</code>.</li>
         <li>Click <b>Review</b> on the Home tab.</li>
+        <li>Want to see it in action? Open the <b>demo workbook</b> and follow its <i>Start here</i> tab.</li>
       </ol>
       <small>Nothing in your workbook leaves Excel. <a href="https://github.com/hmacknak/Baseline">Source</a></small>
     </main>

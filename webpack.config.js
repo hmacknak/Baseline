@@ -73,6 +73,10 @@ module.exports = async (env, options) => {
             to: "index.html",
           },
           {
+            from: "demo/Baseline-demo.xlsx",
+            to: "Baseline-demo.xlsx",
+          },
+          {
             from: "manifest*.xml",
             to: "[name]" + "[ext]",
             transform(content) {
