@@ -96,7 +96,7 @@ module.exports = async (env, options) => {
     ],
     performance: {
       // The demo video and workbook are downloads, not part of the add-in bundle.
-      assetFilter: name => !/\.(mp4|xlsx)$/.test(name),
+      assetFilter: name => !/\.(mp4|xlsx|map)$/.test(name),
     },
     devServer: {
       headers: {
