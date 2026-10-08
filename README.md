@@ -41,7 +41,7 @@ Every item explains **why it matters** and **how to fix it**, and clicking a cel
 
 ## Demo video
 
-[▶ Watch the 90-second demo](https://hmacknak.github.io/Baseline/) (also at
+[▶ Watch the 2-minute demo](https://hmacknak.github.io/Baseline/) (also at
 [`demo/Baseline-demo-video.mp4`](demo/Baseline-demo-video.mp4)). The spreadsheet in the video is simulated; the
 panel is the real add-in code running against it. To re-record, see `demo/video/record.mjs`.
 
