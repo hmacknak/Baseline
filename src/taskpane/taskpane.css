@@ -740,3 +740,35 @@ textarea {
   font: inherit;
   font-weight: normal;
 }
+
+/* Updates */
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 14px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--brand);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.update-banner span {
+  flex: 1;
+}
+
+.update-banner button {
+  padding: 4px 10px;
+  border: 1px solid var(--brand);
+  border-radius: 4px;
+  background: var(--brand);
+  color: #fff;
+}
+
+.settings-head {
+  margin: 22px 0 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}

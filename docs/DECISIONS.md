@@ -68,3 +68,13 @@
   liabilities) rendered as a plain badge. The add-in icon is a "B" monogram.
 - Allowed symbols: ✓ / ✗ as pass/fail marks in the checklist, and audit tickmarks (✓ √ ^ …) inside workpapers,
   which are standard audit notation.
+
+## 2026-10-08: Self-updating add-in
+- Every publish writes `version.json` (the commit id) next to the add-in and bakes the same id into the code.
+- **On opening**, the panel checks `version.json`; if a newer build is live it reloads into it once (guarded per
+  version, so a lagging cache can't cause a loop). Safe because settings, reviewer choices and PY notes live in
+  the workbook.
+- **While open**, it checks every 30 minutes and shows an "Update now" banner instead of reloading mid-task.
+- **Settings → Check for updates** shows the current version and applies an update on demand.
+- Bundles are content-hashed (`taskpane.<hash>.js`), so Excel can't keep serving a stale cached copy.
+- The manifest URL never changes, so nobody needs to re-upload the add-in file to get updates.

@@ -3,12 +3,16 @@
 const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { DefinePlugin } = require("webpack");
 
 const { execSync } = require("child_process");
 
 const urlDev = "https://localhost:3000/";
 
-/** Short commit id for the download page, so each publish gets fresh (uncached) download links. */
+/**
+ * Short commit id of this build. It stamps the download page links, is baked into the add-in, and is
+ * published as version.json so a running add-in can tell when a newer build is live.
+ */
 function buildVersion() {
   let sha = (process.env.GITHUB_SHA || "").slice(0, 7);
   if (!sha) {
@@ -29,6 +33,7 @@ async function getHttpsOptions() {
 
 module.exports = async (env, options) => {
   const dev = options.mode === "development";
+  const version = dev ? { sha: "dev", label: "development" } : buildVersion();
   const config = {
     devtool: "source-map",
     entry: {
@@ -37,6 +42,8 @@ module.exports = async (env, options) => {
     },
     output: {
       clean: true,
+      // Content-hashed names so a published update can never be served from a stale cache.
+      filename: dev ? "[name].js" : "[name].[contenthash:8].js",
     },
     resolve: {
       extensions: [".ts", ".html", ".js"],
@@ -59,7 +66,7 @@ module.exports = async (env, options) => {
           test: /\.css$/,
           type: "asset/resource",
           generator: {
-            filename: "[name][ext]",
+            filename: dev ? "[name][ext]" : "[name].[contenthash:8][ext]",
           },
         },
         {
@@ -72,6 +79,10 @@ module.exports = async (env, options) => {
       ],
     },
     plugins: [
+      new DefinePlugin({
+        __BUILD_VERSION__: JSON.stringify(version.sha),
+        __BUILD_LABEL__: JSON.stringify(version.label),
+      }),
       new HtmlWebpackPlugin({
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
@@ -87,8 +98,10 @@ module.exports = async (env, options) => {
             from: "site/index.html",
             to: "index.html",
             transform(content) {
-              const v = buildVersion();
-              return content.toString().replace(/__VERSION_LABEL__/g, v.label).replace(/__VERSION__/g, v.sha);
+              return content
+                .toString()
+                .replace(/__VERSION_LABEL__/g, version.label)
+                .replace(/__VERSION__/g, version.sha);
             },
           },
           {
@@ -98,6 +111,16 @@ module.exports = async (env, options) => {
           {
             from: "demo/Baseline-demo-video.mp4",
             to: "Baseline-demo-video.mp4",
+          },
+          {
+            from: "site/version.json",
+            to: "version.json",
+            transform(content) {
+              return content
+                .toString()
+                .replace(/__VERSION_LABEL__/g, version.label)
+                .replace(/__VERSION__/g, version.sha);
+            },
           },
           {
             from: "manifest*.xml",

@@ -16,6 +16,7 @@ import { InsightResult, ReviewResult, runReview, suggestReviewer } from "../revi
 import { fmtAmount, sheetTexts } from "../review/reviewers/procedure";
 import { CATALOG, CATEGORY_ORDER, getReviewer } from "../review/reviewers/catalog";
 import { ReviewContext, Reviewer, SheetSnapshot } from "../review/types";
+import { CURRENT_LABEL, CURRENT_VERSION, applyUpdate, autoUpdateOnOpen, fetchLatest, isUpdate } from "../update";
 import {
   loadAssignments,
   loadContext,
@@ -524,6 +525,43 @@ function wireSettings() {
   });
 }
 
+// ─── Updates ─────────────────────────────────────────────────────────────────
+
+const UPDATE_CHECK_MS = 30 * 60 * 1000;
+let pendingVersion: string | null = null;
+
+/** Quietly check in the background; offer the update rather than reloading mid-task. */
+async function checkInBackground() {
+  const latest = await fetchLatest();
+  if (latest && isUpdate(CURRENT_VERSION, latest.version)) {
+    pendingVersion = latest.version;
+    $("updateBanner").hidden = false;
+  }
+}
+
+function wireUpdates() {
+  $("versionLabel").textContent = CURRENT_LABEL;
+  $("updateNow").addEventListener("click", () => {
+    if (pendingVersion) applyUpdate(pendingVersion);
+  });
+  $("checkUpdates").addEventListener("click", async () => {
+    const status = $("updateStatus");
+    status.hidden = false;
+    status.textContent = "Checking…";
+    const latest = await fetchLatest();
+    if (!latest) {
+      status.textContent = "Couldn't reach the update server. Check your connection and try again.";
+    } else if (CURRENT_VERSION === "dev") {
+      status.textContent = `Development build. The published version is ${latest.label}.`;
+    } else if (isUpdate(CURRENT_VERSION, latest.version)) {
+      status.textContent = `Updating to ${latest.label}…`;
+      applyUpdate(latest.version);
+    } else {
+      status.textContent = "You're on the latest version.";
+    }
+  });
+}
+
 // ─── Notes tab ───────────────────────────────────────────────────────────────
 
 function renderNotesTab() {
@@ -622,7 +660,10 @@ function wireTabs() {
 }
 
 Office.onReady(async () => {
+  // Switch to a newer published build before doing any work; everything is stored in the workbook.
+  if (await autoUpdateOnOpen()) return;
   wireTabs();
+  wireUpdates();
   wireNotesTab();
   wireSettings();
   // Re-tag on load so notes saved by an older version pick up improved keyword rules.
@@ -638,6 +679,7 @@ Office.onReady(async () => {
     toast("Live updates unavailable in this Excel version");
   }
   setInterval(renderStatus, 15000);
+  setInterval(checkInBackground, UPDATE_CHECK_MS);
 });
 
 export {};

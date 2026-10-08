@@ -28,6 +28,10 @@
     </header>
 
     <main>
+      <div id="updateBanner" class="update-banner" hidden>
+        <span>A new version of Baseline is available.</span>
+        <button id="updateNow" class="primary">Update now</button>
+      </div>
       <section id="tab-review" class="panel">
         <div id="suggest" class="suggest" hidden></div>
         <div id="score" class="score"></div>
@@ -81,6 +85,17 @@
         <div class="buttons">
           <button id="saveSettings" class="primary">Save settings</button>
         </div>
+
+        <h3 class="settings-head">About this add-in</h3>
+        <p class="help small">Version <span id="versionLabel"></span></p>
+        <div class="buttons">
+          <button id="checkUpdates">Check for updates</button>
+        </div>
+        <p id="updateStatus" class="help small" hidden></p>
+        <p class="help small">
+          Baseline also checks automatically each time the panel opens. Your settings, reviewers and notes are saved
+          in the workbook, so updating never loses work.
+        </p>
       </section>
 
       <section id="tab-notes" class="panel" hidden>
