@@ -4,7 +4,22 @@ const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
+const { execSync } = require("child_process");
+
 const urlDev = "https://localhost:3000/";
+
+/** Short commit id for the download page, so each publish gets fresh (uncached) download links. */
+function buildVersion() {
+  let sha = (process.env.GITHUB_SHA || "").slice(0, 7);
+  if (!sha) {
+    try {
+      sha = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+    } catch {
+      sha = "dev";
+    }
+  }
+  return { sha, label: `${new Date().toISOString().slice(0, 10)} (${sha})` };
+}
 const urlProd = "https://hmacknak.github.io/Baseline/"; // GitHub Pages, published by .github/workflows/pages.yml
 
 async function getHttpsOptions() {
@@ -71,6 +86,10 @@ module.exports = async (env, options) => {
           {
             from: "site/index.html",
             to: "index.html",
+            transform(content) {
+              const v = buildVersion();
+              return content.toString().replace(/__VERSION_LABEL__/g, v.label).replace(/__VERSION__/g, v.sha);
+            },
           },
           {
             from: "demo/Baseline-demo.xlsx",
