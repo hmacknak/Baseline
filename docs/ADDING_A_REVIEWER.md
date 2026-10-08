@@ -27,11 +27,12 @@ Most new reviewers are about 100 lines, mostly column names and plain-English te
    Write `why` for a junior: what could be wrong and why a reviewer cares.
 6. **Last year's notes.** Give an insight `aliases: ["your-tag"]`, then add a matching rule to `TAG_RULES` in
    `src/review/notes.ts`, so a PY note like "stale cheque not followed up" shows as *Again this year*.
-7. **Register it** in `CATALOG` in `src/review/reviewers/catalog.ts`. Replace the "Coming soon" entry if
+7. **Give it a monogram** (`code`: two to four capital letters, e.g. "FA"). No emoji or icons; see DECISIONS.md.
+8. **Register it** in `CATALOG` in `src/review/reviewers/catalog.ts`. Replace the "Coming soon" entry if
    there is one, and add any new category to `CATEGORY_ORDER`.
-8. **Test it** in `tests/reviewers.test.ts`: build a small sheet with `sheet({...})`, plant one example of each
+9. **Test it** in `tests/reviewers.test.ts`: build a small sheet with `sheet({...})`, plant one example of each
    risk and one clean row, and assert exactly the planted rows are flagged.
-9. **Demo it.** Add a sheet to `demo/make_demo.py` with planted issues, then run `python3 demo/make_demo.py`.
+10. **Demo it.** Add a sheet to `demo/make_demo.py` with planted issues, then run `python3 demo/make_demo.py`.
 
 Run `npm test` and `npm run build`. Pushing to `main` republishes the add-in.
 

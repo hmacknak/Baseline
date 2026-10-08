@@ -61,3 +61,10 @@
 - **PY notes can match insights**, not just checklist items (e.g. a cut-off note becomes *Again this year* when the
   cut-off insight finds items). Bare "error" no longer tags a note as a formula error ("cut-off error" was misread).
 - **"Coming soon" cards** show planned reviewers in the catalog so the direction is visible.
+
+## 2026-10-08: Professional presentation, no emoji
+- **No emoji anywhere**: add-in, website, docs, demo, video. The audience is audit firms and audit committees.
+  Reviewers are identified by a short monogram (`code`, e.g. "BR" Bank reconciliation, "UL" Unrecorded
+  liabilities) rendered as a plain badge. The add-in icon is a "B" monogram.
+- Allowed symbols: ✓ / ✗ as pass/fail marks in the checklist, and audit tickmarks (✓ √ ^ …) inside workpapers,
+  which are standard audit notation.

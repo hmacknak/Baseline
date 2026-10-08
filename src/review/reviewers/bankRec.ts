@@ -52,7 +52,7 @@ export const bankRec: Reviewer = {
   id: "bank-rec",
   name: "Bank reconciliation",
   category: "Cash",
-  icon: "🏦",
+  code: "BR",
   summary: "Ties the rec to the GL and flags stale, misdated or uncleared outstanding items.",
   alwaysOn: false,
   detect: sheet =>

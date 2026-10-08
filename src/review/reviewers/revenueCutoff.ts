@@ -38,7 +38,7 @@ export const revenueCutoff: Reviewer = {
   id: "revenue-cutoff",
   name: "Revenue cut-off",
   category: "Revenue",
-  icon: "📦",
+  code: "CO",
   summary: "Catches sales recorded in the wrong year by comparing invoice and shipping dates around year-end.",
   alwaysOn: false,
   detect: sheet =>

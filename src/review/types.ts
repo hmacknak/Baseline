@@ -98,7 +98,8 @@ export interface Reviewer {
   name: string;
   /** Catalog row, e.g. "Cash", "Liabilities". */
   category: string;
-  icon: string;
+  /** Two-to-four letter monogram shown on catalog cards, e.g. "BR". */
+  code: string;
   summary: string;
   /** Always-on reviewers run on every sheet; procedure reviewers are chosen per sheet. */
   alwaysOn: boolean;

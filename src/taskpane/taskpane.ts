@@ -153,7 +153,7 @@ function renderSuggestion() {
   box.hidden = false;
   const text = el("p");
   text.appendChild(document.createTextNode("This looks like a "));
-  text.appendChild(el("strong", undefined, `${s.reviewer.icon} ${s.reviewer.name}`));
+  text.appendChild(el("strong", undefined, s.reviewer.name));
   text.appendChild(document.createTextNode(". Use that reviewer?"));
   box.appendChild(text);
   const buttons = el("div", "buttons");
@@ -342,7 +342,7 @@ function renderProcedure() {
   add.hidden = !!reviewer || !sheet || !sheet.cells.length || !$("suggest").hidden;
   if (!reviewer || !result) return;
 
-  $("procIcon").textContent = reviewer.icon;
+  $("procIcon").textContent = reviewer.code;
   $("procName").textContent = reviewer.name;
   const box = $("insights");
   box.textContent = "";
@@ -399,7 +399,7 @@ function renderCatalogDetail() {
   const current = assignedReviewer();
 
   const top = el("div", "detail-top");
-  top.appendChild(el("span", "detail-icon", r.icon));
+  top.appendChild(el("span", "monogram large", r.code));
   const titles = el("div");
   titles.appendChild(el("h2", undefined, r.name));
   titles.appendChild(el("p", "help", r.summary));
@@ -461,7 +461,7 @@ function renderCatalog() {
     CATALOG.filter(r => r.category === cat).forEach(r => {
       const on = r.alwaysOn || (current && current.id === r.id);
       const card = el("button", `card${r.comingSoon ? " soon" : ""}${on ? " on" : ""}${catalogSelection === r.id ? " selected" : ""}`);
-      card.appendChild(el("span", "card-icon", r.icon));
+      card.appendChild(el("span", "monogram", r.code));
       card.appendChild(el("span", "card-name", r.name));
       card.appendChild(el("span", "card-meta", reviewerMeta(r)));
       if (on) card.appendChild(el("span", "badge", r.alwaysOn ? "Always on" : "On this sheet"));

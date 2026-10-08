@@ -44,7 +44,7 @@ export const arConfirmations: Reviewer = {
   id: "ar-confirmations",
   name: "AR confirmations",
   category: "Receivables",
-  icon: "✉️",
+  code: "AC",
   summary: "Checks every confirm was sent, differences are explained, and non-responses have alternative procedures.",
   alwaysOn: false,
   detect: sheet =>

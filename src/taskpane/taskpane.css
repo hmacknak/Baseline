@@ -446,10 +446,36 @@ textarea {
   font-size: 13px;
 }
 
-.section-icon {
-  width: 22px;
-  text-align: center;
-  font-size: 15px;
+/* Reviewer monograms (no icons or emoji) */
+.monogram {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.monogram.small {
+  min-width: 26px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.monogram.large {
+  min-width: 44px;
+  height: 44px;
+  font-size: 14px;
+}
+
+.card.soon .monogram {
+  background: var(--muted);
 }
 
 .section-sub {
@@ -639,11 +665,6 @@ textarea {
   opacity: 0.55;
 }
 
-.card-icon {
-  font-size: 24px;
-  line-height: 1;
-}
-
 .card-name {
   font-weight: 600;
   line-height: 1.25;
@@ -689,11 +710,6 @@ textarea {
 .detail-top h2 {
   margin: 0 0 2px;
   font-size: 14px;
-}
-
-.detail-icon {
-  font-size: 28px;
-  line-height: 1;
 }
 
 .catalog-detail h3 {

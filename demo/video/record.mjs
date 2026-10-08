@@ -93,7 +93,7 @@ const panelTop = async () => {
 const item = title => addin.locator(".item", { hasText: title }).locator(".item-head");
 
 // ─── Title card ───────────────────────────────────────────────────────────────
-await card(`<div><div class="logo">✓</div><h1>Baseline Review</h1>
+await card(`<div><div class="logo">B</div><h1>Baseline Review</h1>
   <p>Live review feedback for junior staff, inside Excel</p>
   <div class="note">Demo · simulated spreadsheet, real add-in</div></div>`);
 workbook.active = "FY25 Cash";
@@ -172,7 +172,7 @@ await caption("Revenue cut-off: sales booked in the <b>wrong year</b>, both ways
 await caption(null, 400);
 
 // ─── End card ────────────────────────────────────────────────────────────────
-await card(`<div><div class="logo">✓</div><h1>Baseline Review</h1>
+await card(`<div><div class="logo">B</div><h1>Baseline Review</h1>
   <p>Complete workpapers. Sharper testing. Juniors who learn as they go.</p>
   <p style="margin-top:22px;font-size:20px">hmacknak.github.io/Baseline</p></div>`, 4500);
 

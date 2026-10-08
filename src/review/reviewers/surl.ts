@@ -35,7 +35,7 @@ export const surl: Reviewer = {
   id: "surl",
   name: "Search for unrecorded liabilities",
   category: "Liabilities",
-  icon: "🔎",
+  code: "UL",
   summary: "Finds post-year-end invoices for this year's services that never made it into AP.",
   alwaysOn: false,
   detect: sheet =>

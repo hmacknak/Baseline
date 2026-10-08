@@ -15,10 +15,10 @@ in the testing data, like an invoice dated after year-end for a December service
 
 | Reviewer | Finds |
 |---|---|
-| 🏦 Bank reconciliation | rec not agreeing to the GL, stale cheques, items cleared before year-end, cheques dated after year-end, large uncleared items |
-| 🔎 Search for unrecorded liabilities | post-year-end invoices for this year's services, pre-year-end invoices not in AP, items with no service date |
-| 📦 Revenue cut-off | sales recorded this year but shipped next year (and the reverse), credit notes after year-end, large near-year-end sales with no conclusion |
-| ✉️ AR confirmations | unexplained differences, non-responses with no alternative procedures, large balances never sent |
+| Bank reconciliation | rec not agreeing to the GL, stale cheques, items cleared before year-end, cheques dated after year-end, large uncleared items |
+| Search for unrecorded liabilities | post-year-end invoices for this year's services, pre-year-end invoices not in AP, items with no service date |
+| Revenue cut-off | sales recorded this year but shipped next year (and the reverse), credit notes after year-end, large near-year-end sales with no conclusion |
+| AR confirmations | unexplained differences, non-responses with no alternative procedures, large balances never sent |
 
 Each one also checks that every tested item is complete. Set the **year-end** and **threshold** once in the
 Settings tab (saved in the workbook). To add a procedure, see [docs/ADDING_A_REVIEWER.md](docs/ADDING_A_REVIEWER.md).
