@@ -19,20 +19,68 @@
       </div>
       <nav class="tabs" role="tablist">
         <button class="tab active" data-tab="review" role="tab" aria-selected="true">Review</button>
+        <button class="tab" data-tab="catalog" role="tab" aria-selected="false">Catalog</button>
         <button class="tab" data-tab="notes" role="tab" aria-selected="false">
-          Last year's notes <span id="notesCount" class="pill" hidden></span>
+          PY notes <span id="notesCount" class="pill" hidden></span>
         </button>
+        <button class="tab" data-tab="settings" role="tab" aria-selected="false" title="Settings">Settings</button>
       </nav>
     </header>
 
     <main>
       <section id="tab-review" class="panel">
+        <div id="suggest" class="suggest" hidden></div>
         <div id="score" class="score"></div>
         <div id="pyPanel" class="py" hidden></div>
+
+        <div id="procSection" hidden>
+          <div class="section-head">
+            <span id="procIcon" class="section-icon"></span>
+            <h2 id="procName"></h2>
+            <button id="procChange" class="link">Change</button>
+          </div>
+          <div id="insights" class="insights"></div>
+          <ul id="procList" class="checklist"></ul>
+        </div>
+        <button id="addReviewer" class="add-reviewer" hidden>+ Add a procedure reviewer from the catalog</button>
+
+        <div class="section-head">
+          <span class="section-icon">✓</span>
+          <h2>Workpaper basics</h2>
+          <span class="section-sub">Always on</span>
+        </div>
         <ul id="checklist" class="checklist"></ul>
         <p id="truncated" class="warn" hidden>
           This sheet is very large, so only the first part was reviewed.
         </p>
+      </section>
+
+      <section id="tab-catalog" class="panel" hidden>
+        <p class="help">
+          Pick the reviewer for the procedure on this sheet. Workpaper basics always run. A procedure reviewer adds
+          its own checklist and finds high-risk items in your testing.
+        </p>
+        <div id="catalogDetail" class="catalog-detail" hidden></div>
+        <div id="catalogRows"></div>
+      </section>
+
+      <section id="tab-settings" class="panel" hidden>
+        <p class="help">Saved in this workbook. Procedure reviewers use these to find high-risk items.</p>
+        <label class="field">
+          <span>Year-end</span>
+          <input id="yearEnd" type="date" />
+        </label>
+        <p id="yearEndHint" class="help small" hidden></p>
+        <label class="field">
+          <span>Threshold</span>
+          <input id="threshold" type="number" min="0" step="any" placeholder="e.g. 10000" />
+        </label>
+        <p class="help small">
+          Items at or above this amount get extra attention (for example your clearly trivial or testing threshold).
+        </p>
+        <div class="buttons">
+          <button id="saveSettings" class="primary">Save settings</button>
+        </div>
       </section>
 
       <section id="tab-notes" class="panel" hidden>

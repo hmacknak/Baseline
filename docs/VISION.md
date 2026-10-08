@@ -32,6 +32,17 @@ How it reviews:
 - **v0.1 (built):** live 9-item checklist in Excel plus prior-year notes ("this happened last year"). Local only,
   no AI.
 
+- **v0.2 (built):** reviewer catalog. Workpaper basics always run; procedure reviewers (bank rec, SURL, revenue
+  cut-off, AR confirmations) are suggested per sheet and add completeness checks plus insights, which surface
+  high-risk items from the testing data. Year-end and threshold are set once per workbook.
+
+## Reviewer catalog (direction)
+Think "Netflix of procedures": rows by area (Cash, Liabilities, Revenue, Receivables, Fixed assets…), each card a
+reviewer for one test. The aim is twofold: **workpapers come back complete** ("you missed a date here"), and
+**the testing itself gets sharper**, because the reviewer runs the analysis a senior would (dates around
+year-end, items over threshold, unexplained differences) and points the junior straight at the risky items.
+Ten more reviewers are listed as "Coming soon"; adding one is documented in `docs/ADDING_A_REVIEWER.md`.
+
 ## Saved ideas (later)
 - **Common-issue analysis:** analyse a whole set of review notes (across sheets, juniors, engagements) to show
   which issues come up most, then focus the checklist and coaching on those. The note tagging in

@@ -44,3 +44,20 @@
   points there; `npm start` still uses localhost for development. Only built add-in code is published, never
   workbook data.
 - `npm run validate` uses Microsoft's online validator; it couldn't run in the build sandbox (network blocked).
+
+## 2026-10-08: v0.2 Reviewer catalog
+- **Two kinds of reviewer.** *Workpaper basics* (the v0.1 checks) run on every sheet. *Procedure reviewers* are
+  chosen per sheet from a catalog. Many procedures are planned, so each reviewer is a small data-driven file
+  (`src/review/reviewers/`) built on a shared table reader (`src/review/table.ts`).
+- **Suggest, then confirm** (owner's choice). Baseline scores each reviewer against the sheet name, the words on the sheet
+  and the recognised column headings; a score of 0.6 or more shows "This looks like a … Use it?". The choice (or "Not
+  now") is saved per sheet in workbook settings, keyed by the sheet name without year labels so it rolls forward.
+- **Insights are panel-only** (owner's choice). High-risk items are listed in the add-in with click-to-jump.
+  Nothing is written to the workbook.
+- **Year-end and threshold** are set once per workbook (Settings tab, saved in the workbook). Insights that need
+  them say so instead of guessing. Baseline offers a year-end it spots in a sheet title, but never applies it silently.
+- **Dates** are handled as Excel serial numbers. Text dates are read month-first (en-US Excel) unless the first
+  number is over 12.
+- **PY notes can match insights**, not just checklist items (e.g. a cut-off note becomes *Again this year* when the
+  cut-off insight finds items). Bare "error" no longer tags a note as a formula error ("cut-off error" was misread).
+- **"Coming soon" cards** show planned reviewers in the catalog so the direction is visible.

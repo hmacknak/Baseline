@@ -4,11 +4,13 @@
 
 import { toA1 } from "../review/address";
 import { PyNote } from "../review/notes";
-import { Cell, CellKind, SheetSnapshot } from "../review/types";
+import { Cell, CellKind, ReviewContext, SheetSnapshot } from "../review/types";
 
 /** Reading more than this many cells on every keystroke would make Excel sluggish. */
 const MAX_CELLS = 100000;
 const NOTES_SETTING = "baseline.pyNotes.v1";
+const CONTEXT_SETTING = "baseline.context.v1";
+const ASSIGNMENTS_SETTING = "baseline.assignments.v1";
 const NOTES_SHEET = /^py\s*(review\s*)?notes?$/i;
 
 function kindOf(type: string): CellKind {
@@ -104,20 +106,47 @@ export async function readNotesSheet(): Promise<unknown[][] | null> {
   });
 }
 
-// PY notes are stored inside the workbook, so they travel with the file when it is rolled forward.
+// Settings are stored inside the workbook, so they travel with the file when it is rolled forward.
 
-export function loadNotes(): PyNote[] {
-  const raw = Office.context.document.settings.get(NOTES_SETTING);
-  return Array.isArray(raw) ? (raw as PyNote[]) : [];
+export function loadSetting<T>(key: string): T | undefined {
+  const raw = Office.context.document.settings.get(key);
+  return raw === null || raw === undefined ? undefined : (raw as T);
 }
 
-export function saveNotes(notes: PyNote[]): Promise<void> {
+export function saveSetting(key: string, value: unknown): Promise<void> {
   const settings = Office.context.document.settings;
-  settings.set(NOTES_SETTING, notes);
+  settings.set(key, value);
   return new Promise((resolve, reject) => {
     settings.saveAsync(result => {
       if (result.status === Office.AsyncResultStatus.Succeeded) resolve();
       else reject(result.error);
     });
   });
+}
+
+export function loadNotes(): PyNote[] {
+  const raw = loadSetting<PyNote[]>(NOTES_SETTING);
+  return Array.isArray(raw) ? raw : [];
+}
+
+export function saveNotes(notes: PyNote[]): Promise<void> {
+  return saveSetting(NOTES_SETTING, notes);
+}
+
+/** Year-end and threshold for this engagement. */
+export function loadContext(): ReviewContext {
+  return loadSetting<ReviewContext>(CONTEXT_SETTING) || {};
+}
+
+export function saveContext(ctx: ReviewContext): Promise<void> {
+  return saveSetting(CONTEXT_SETTING, ctx);
+}
+
+/** Which procedure reviewer each sheet uses ("none" = the junior declined the suggestion). */
+export function loadAssignments(): Record<string, string> {
+  return loadSetting<Record<string, string>>(ASSIGNMENTS_SETTING) || {};
+}
+
+export function saveAssignments(map: Record<string, string>): Promise<void> {
+  return saveSetting(ASSIGNMENTS_SETTING, map);
 }

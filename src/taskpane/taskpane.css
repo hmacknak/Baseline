@@ -36,6 +36,11 @@
   box-sizing: border-box;
 }
 
+/* Elements with display rules (pills, cards) must still disappear when hidden. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -399,4 +404,323 @@ textarea {
 
 .toast.show {
   opacity: 1;
+}
+
+/* ─── Reviewer catalog, procedure sections and insights ─────────────────── */
+
+.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--link);
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+.suggest {
+  border: 1px solid var(--brand);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: var(--surface);
+}
+
+.suggest p {
+  margin: 0 0 6px;
+}
+
+.suggest .buttons {
+  margin: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+
+.section-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+}
+
+.section-icon {
+  width: 22px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.section-sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.add-reviewer {
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 9px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: none;
+  color: var(--link);
+}
+
+.insights {
+  margin-bottom: 10px;
+}
+
+.insights-head {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+
+.insights-head strong {
+  color: var(--text);
+}
+
+.insight {
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.insight.hit.high {
+  border-left-color: var(--high);
+}
+
+.insight.hit.medium,
+.insight.hit.low {
+  border-left-color: var(--medium);
+}
+
+.insight.clear {
+  border-left-color: var(--ok);
+}
+
+.insight.blocked {
+  border-left-color: var(--border);
+}
+
+.insight-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+}
+
+.insight-head:hover {
+  background: var(--surface);
+}
+
+.insight.hit.high .mark {
+  color: var(--high);
+}
+
+.insight.hit.medium .mark,
+.insight.hit.low .mark {
+  color: var(--medium);
+}
+
+.insight.clear .mark {
+  color: var(--ok);
+}
+
+.insight.clear .item-title,
+.insight.blocked .item-title {
+  color: var(--muted);
+}
+
+.insight-meta {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.insight-body {
+  padding: 2px 10px 10px 36px;
+}
+
+.insight-item {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--border);
+}
+
+.insight-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.insight-text span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.insight-amount {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.over {
+  margin: 8px 0 0;
+  color: var(--high);
+  font-weight: 600;
+}
+
+/* Catalog */
+.cat-row {
+  margin-bottom: 14px;
+}
+
+.cat-row h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.cat-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+}
+
+.card {
+  position: relative;
+  flex: none;
+  width: 150px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  scroll-snap-align: start;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card.on {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+
+.card.selected {
+  outline: 2px solid var(--link);
+  outline-offset: 1px;
+}
+
+.card.soon {
+  opacity: 0.55;
+}
+
+.card-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.card-name {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.card-meta {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.badge.suggested {
+  background: var(--py-border);
+  color: #000;
+}
+
+.catalog-detail {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 14px;
+  background: var(--surface);
+}
+
+.detail-top {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.detail-top h2 {
+  margin: 0 0 2px;
+  font-size: 14px;
+}
+
+.detail-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.catalog-detail h3 {
+  margin: 10px 0 4px;
+  font-size: 12px;
+}
+
+.catalog-detail ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+/* Settings */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 4px;
+  font-weight: 600;
+}
+
+.field input {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: normal;
 }

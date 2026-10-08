@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runChecklist } from "../src/review/checks";
+import { getCheck, runChecklist } from "../src/review/checks";
 import {
   normaliseSheetName,
   notesForSheet,
@@ -94,6 +94,13 @@ describe("pyStatuses", () => {
   });
 
   it("finds PY notes for a specific check", () => {
-    expect(pyNotesForCheck(notes, "FY25 Cash", "hardcodes").map(n => n.text)).toEqual(["Hard-coded FX rate"]);
+    expect(pyNotesForCheck(notes, "FY25 Cash", getCheck("hardcodes")).map(n => n.text)).toEqual(["Hard-coded FX rate"]);
+  });
+});
+
+describe("tagNote precision", () => {
+  it("doesn't treat every use of 'error' as a formula error", () => {
+    expect(tagNote("Cut-off error not identified")).not.toContain("errors");
+    expect(tagNote("Formula error in total")).toContain("errors");
   });
 });

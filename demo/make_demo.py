@@ -7,9 +7,16 @@ Sheets:
                        no source and no reviewer line (5 failing checks)
   FY25 AR            - aging with a number typed over a formula, an inconsistent formula and a #DIV/0!
   FY25 Fixed Assets  - a clean sheet that passes every check
+  FY25 SURL          - search for unrecorded liabilities with a missed December liability
+  FY25 Revenue cut-off - sales recorded in the wrong year both ways, plus a post-year-end credit note
+  FY25 AR confirmations - an unexplained difference, a non-response with no follow-up, an unsent confirm
   PY Notes           - last year's review notes, ready to import
+
+The Cash sheet also carries an outstanding cheque list (stale, cleared-early and large uncleared items)
+and a GL balance that the rec doesn't agree to.
 """
 
+from datetime import date
 from pathlib import Path
 
 from openpyxl import Workbook
@@ -25,6 +32,7 @@ HEAD_FILL = PatternFill("solid", fgColor="E8F1EE")
 TOTAL_BORDER = Border(top=Side(style="thin"), bottom=Side(style="double"))
 MONEY = "#,##0;(#,##0)"
 PCT = "0.0%"
+DATE = "dd-mmm-yy"
 
 
 def header_row(ws, row, labels):
@@ -32,6 +40,18 @@ def header_row(ws, row, labels):
         c = ws.cell(row=row, column=i, value=label)
         c.font = BOLD
         c.fill = HEAD_FILL
+
+
+def table(ws, top, headers, rows, formats):
+    """Write a header row and item rows; formats maps a 0-based column to a number format."""
+    header_row(ws, top, headers)
+    for i, row in enumerate(rows, start=1):
+        for j, v in enumerate(row):
+            if v is None:
+                continue
+            c = ws.cell(row=top + i, column=j + 1, value=v)
+            if j in formats:
+                c.number_format = formats[j]
 
 
 def widths(ws, *w):
@@ -48,14 +68,16 @@ lines = [
     ("Baseline Review: demo workbook", TITLE),
     ("", None),
     ("1. Open the add-in: Home → Review.", None),
-    ('2. Click the "FY25 Cash" tab. The checklist shows 5 problems.', None),
-    ("3. Expand a red item and click a cell link, e.g. B10, to jump to it.", None),
-    ('4. Open "Last year\'s notes" in the add-in → Import from "PY Notes" sheet.', None),
-    ('   Back on Review, the yellow box shows which of last year\'s notes are happening again.', None),
-    ("5. Fix something live: change FY25 Cash B10 to =SUM(B6:B9) and watch it turn green.", None),
-    ("   Also try B13 → =B12*B14 (links the FX rate) and add 'Reviewed by:' in A4.", None),
-    ('6. Try "FY25 AR": a typed-over formula, an inconsistent formula and a #DIV/0!.', None),
-    ('7. "FY25 Fixed Assets" is a clean sheet that passes every check.', None),
+    ("2. Settings tab: set year-end to 31 Dec 2025 (or click 'Use it') and threshold to 10000. Save.", None),
+    ('3. Click the "FY25 Cash" tab. Baseline suggests the Bank reconciliation reviewer. Click "Use it".', None),
+    ("   Insights show the rec is $1,200 off the GL, a stale cheque, one that cleared before year-end, and more.", None),
+    ("4. Expand a red item and click a cell link, e.g. B10, to jump to it.", None),
+    ('5. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
+    ("6. Fix something live: change FY25 Cash B10 to =SUM(B6:B9). The total and the GL difference both clear.", None),
+    ('7. Open the Catalog tab to see every reviewer. Try "FY25 SURL", "FY25 Revenue cut-off" and', None),
+    ('   "FY25 AR confirmations": each gets its own suggestion, checklist and high-risk items.', None),
+    ('8. "FY25 AR" has a typed-over formula, an inconsistent formula and #DIV/0! errors.', None),
+    ('9. "FY25 Fixed Assets" is a clean sheet that passes every check.', None),
     ("", None),
     ("All figures are made up. Nothing in this file leaves Excel.", MUTED),
 ]
@@ -104,7 +126,31 @@ ws["B13"].number_format = MONEY
 ws["A14"] = "FX rate USD→CAD"
 ws["B14"] = 1.37
 ws["C14"] = "per Bank of Canada 31 Dec close"
-widths(ws, 34, 14, 34)
+
+ws["A11"] = "Balance per general ledger"
+ws["B11"] = 468_475  # The rec is $1,200 off until B10 includes B9.
+ws["B11"].number_format = MONEY
+
+# Outstanding cheque detail (sums to the 51,275 above).
+table(
+    ws,
+    17,
+    ["Cheque #", "Payee", "Date", "Amount", "Cleared date", "Comment"],
+    [
+        ("1041", "Northwind Traders", date(2025, 5, 2), 2_400, None, "Not yet cleared"),  # stale
+        ("1102", "Contoso Ltd", date(2025, 12, 20), 31_500, date(2025, 12, 29), None),  # cleared before YE
+        ("1110", "Tailspin Toys", date(2025, 12, 30), 12_000, None, None),  # large, uncleared, no comment
+        ("1111", "Adventure Works", date(2025, 12, 31), 5_375, date(2026, 1, 6), None),
+    ],
+    {2: DATE, 3: MONEY, 4: DATE},
+)
+ws["A22"] = "Total"
+ws["A22"].font = BOLD
+ws["D22"] = "=SUM(D18:D21)"
+ws["D22"].number_format = MONEY
+ws["D22"].font = BOLD
+ws["D22"].border = TOTAL_BORDER
+widths(ws, 34, 18, 34, 12, 13, 16)
 
 # ─── FY25 AR (3 failing checks) ──────────────────────────────────────────────
 ws = wb.create_sheet("FY25 AR")
@@ -189,6 +235,77 @@ ws["A13"].font = BOLD
 ws["A14"] = "✓ = agreed cost to invoice and useful life to policy"
 widths(ws, 30, 12, 16, 14, 16, 6)
 
+# ─── FY25 SURL ───────────────────────────────────────────────────────────────
+ws = wb.create_sheet("FY25 SURL")
+ws["A1"] = "Search for unrecorded liabilities, 31 Dec 2025"
+ws["A1"].font = TITLE
+ws["A2"] = "Purpose: test January payments and invoices for liabilities that belong in FY25"
+ws["A3"] = "Source: January cash disbursements journal and vendor invoices"
+ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["D4"] = "Reviewed by:"
+table(
+    ws,
+    6,
+    ["Vendor", "Invoice date", "Service date", "Payment date", "Amount", "Recorded in AP?", "Conclusion"],
+    [
+        ("Acme Plumbing", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_400, "N", "Accrual needed"),
+        ("Bolt Software", date(2026, 1, 5), date(2026, 1, 1), date(2026, 1, 9), 6_000, "N", "FY26 expense, OK"),
+        ("City Power", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_200, "N", "Investigate"),
+        ("Delta Freight", date(2026, 1, 8), None, date(2026, 1, 22), 12_750, "N", None),
+        ("Echo Legal", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_000, "Y", "In AP listing"),
+        ("Fresh Foods Co", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_150, "N", "FY26 expense, OK"),
+    ],
+    {1: DATE, 2: DATE, 3: DATE, 4: MONEY},
+)
+widths(ws, 20, 13, 13, 13, 12, 16, 20)
+
+# ─── FY25 Revenue cut-off ────────────────────────────────────────────────────
+ws = wb.create_sheet("FY25 Revenue cut-off")
+ws["A1"] = "Revenue cut-off testing, 31 Dec 2025"
+ws["A1"].font = TITLE
+ws["A2"] = "Purpose: test sales either side of year-end are recorded in the right period"
+ws["A3"] = "Source: sales journal 20 Dec 2025 to 10 Jan 2026, shipping logs"
+ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["D4"] = "Reviewed by:"
+table(
+    ws,
+    6,
+    ["Invoice #", "Customer", "Invoice date", "Ship date", "Amount", "Conclusion"],
+    [
+        ("INV-880", "Adventure Works", date(2025, 12, 22), date(2025, 12, 21), 4_000, "OK"),
+        ("INV-899", "Tailspin Toys", date(2025, 12, 29), date(2025, 12, 29), 22_000, None),
+        ("INV-901", "Northwind Traders", date(2025, 12, 31), date(2026, 1, 3), 48_000, "Shipped Jan"),
+        ("INV-902", "Contoso Ltd", date(2026, 1, 2), date(2025, 12, 30), 15_500, "Shipped Dec"),
+        ("CN-14", "Fabrikam Inc", date(2026, 1, 6), date(2026, 1, 6), -9_800, "Credit note"),
+        ("INV-910", "Wide World", date(2026, 1, 8), date(2026, 1, 7), 7_250, "OK"),
+    ],
+    {2: DATE, 3: DATE, 4: MONEY},
+)
+widths(ws, 12, 20, 13, 13, 12, 18)
+
+# ─── FY25 AR confirmations ───────────────────────────────────────────────────
+ws = wb.create_sheet("FY25 AR confirmations")
+ws["A1"] = "AR confirmations, 31 Dec 2025"
+ws["A1"].font = TITLE
+ws["A2"] = "Purpose: confirm significant customer balances directly with customers"
+ws["A3"] = "Source: AR aging at 31 Dec 2025, confirmation responses"
+ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["D4"] = "Reviewed by:"
+table(
+    ws,
+    6,
+    ["Customer", "Balance per ledger", "Date sent", "Confirmed balance", "Explanation", "Alternative procedures"],
+    [
+        ("Northwind Traders", 23_200, date(2026, 1, 10), 23_200, None, None),
+        ("Contoso Ltd", 26_050, date(2026, 1, 10), 22_750, None, None),
+        ("Fabrikam Inc", 14_050, date(2026, 1, 10), None, None, None),
+        ("Adventure Works", 22_250, date(2026, 1, 10), None, None, "Agreed to Jan receipts"),
+        ("Tailspin Toys", 17_300, None, None, None, None),
+    ],
+    {1: MONEY, 2: DATE, 3: MONEY},
+)
+widths(ws, 20, 17, 12, 17, 18, 22)
+
 # ─── PY Notes ────────────────────────────────────────────────────────────────
 ws = wb.create_sheet("PY Notes")
 header_row(ws, 1, ["Sheet", "Cell", "Review note"])
@@ -200,6 +317,8 @@ py_notes = [
     ("FY24 AR", "", "Discuss allowance methodology with manager"),
     ("FY24 Fixed Assets", "", "Where is the tickmark legend?"),
     ("FY24 Fixed Assets", "D8", "Hard-coded useful life in depreciation formula"),
+    ("FY24 SURL", "", "Missing service dates on several items, so you can't conclude on the period"),
+    ("FY24 Revenue cut-off", "", "Dec 31 invoice shipped in January was not identified"),
 ]
 for r, row in enumerate(py_notes, start=2):
     for c, v in enumerate(row, start=1):

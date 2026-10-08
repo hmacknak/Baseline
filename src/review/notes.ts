@@ -2,7 +2,7 @@
 // match them to this year's sheet so the review can say "this happened last year".
 
 import { CheckResult } from "./checks";
-import { CheckId } from "./types";
+import { Check, CheckId, Insight } from "./types";
 
 export interface PyNote {
   /** Sheet the note was raised on last year; empty means "any sheet". */
@@ -23,7 +23,7 @@ export interface PyNoteStatus {
 // ─── Tagging ─────────────────────────────────────────────────────────────────
 
 const TAG_RULES: Array<{ id: CheckId; pattern: RegExp }> = [
-  { id: "errors", pattern: /#ref|#div|#n\/a|#value|#name|formula error|\berrors?\b/i },
+  { id: "errors", pattern: /#ref|#div|#n\/a|#value|#name|#num|formula errors?|error (value|in (the )?formula)/i },
   { id: "hardcodes", pattern: /hard[\s-]?cod|\bplug(ged)?\b|typed (in )?number|link (it )?to (the )?source|not linked/i },
   { id: "overwritten", pattern: /over[\s-]?writ|typed over|pasted over|broken formula|formula (was )?replaced/i },
   { id: "totals", pattern: /\bfoot|cross[\s-]?foot|does(n'?t| not) (add|sum|tie)|total (is )?(wrong|off|excludes?|missing)|sum range/i },
@@ -32,6 +32,19 @@ const TAG_RULES: Array<{ id: CheckId; pattern: RegExp }> = [
   { id: "signoff", pattern: /sign[\s-]?off|initial(s|led)?\b|prepared by|reviewed by|\bdate[ds]?\b.*\b(prep|sign)/i },
   { id: "header", pattern: /\bpurpose\b|\bobjective\b|\bsource\b|where (did|does) .* come from/i },
   { id: "tickmarks", pattern: /tick\s*marks?|legend/i },
+  // Answered by every procedure reviewer's "every tested item is complete" check.
+  {
+    id: "completeness",
+    pattern:
+      /\bmissing\b.*\b(dates?|conclusions?|amounts?|support|service|invoice|vendor|ship)|\b(dates?|conclusions?|amounts?) (is |are )?(missing|blank)|not (dated|concluded)|\bincomplete\b|left blank|no conclusion/i,
+  },
+  // Answered by procedure insights (see each insight's aliases).
+  { id: "cutoff", pattern: /cut-?\s?off|wrong (period|year)|shipped (in )?(jan|january|after year[- ]?end|next year)/i },
+  { id: "unrecorded", pattern: /unrecorded liabilit|not accrued|missing accrual|should (have been|be) accrued/i },
+  { id: "stale", pattern: /\bstale\b/i },
+  { id: "rec-difference", pattern: /(rec|reconciliation) (doesn'?t|does not|didn'?t) (agree|tie|balance)|unreconciled|reconciling difference/i },
+  { id: "confirm-difference", pattern: /confirm\w*.*(difference|variance)|(difference|variance).*confirm|unexplained difference/i },
+  { id: "confirm-no-response", pattern: /non-?respon|no response|alternative procedures?/i },
 ];
 
 /** "Link to source" is advice about a hard-code, not a note that the sheet lacks a documented source. */
@@ -129,17 +142,50 @@ export function notesForSheet(notes: PyNote[], sheetName: string): PyNote[] {
  * For each PY note on this sheet: is the same kind of issue still showing this year?
  * Notes we can't tie to an automatic check are flagged for a manual look.
  */
-export function pyStatuses(notes: PyNote[], sheetName: string, results: CheckResult[]): PyNoteStatus[] {
+/** The parts of an insight result that PY matching needs (kept loose to avoid a circular import). */
+export interface InsightSignal {
+  insight: Pick<Insight, "id" | "aliases">;
+  items: unknown[];
+  blocked?: string;
+}
+
+export function pyStatuses(
+  notes: PyNote[],
+  sheetName: string,
+  results: CheckResult[],
+  insights: InsightSignal[] = [],
+): PyNoteStatus[] {
+  const covered = new Set<CheckId>();
   const failing = new Set<CheckId>();
-  for (const r of results) if (r.findings.length) failing.add(r.check.id);
+  for (const r of results) {
+    for (const id of answersTo(r.check)) {
+      covered.add(id);
+      if (r.findings.length) failing.add(id);
+    }
+  }
+  for (const r of insights) {
+    if (r.blocked) continue;
+    for (const id of answersTo(r.insight)) {
+      covered.add(id);
+      if (r.items.length) failing.add(id);
+    }
+  }
   return notesForSheet(notes, sheetName).map(note => {
+    // Only tags some check on this sheet can answer count; e.g. a "missing date" note on a sheet
+    // with no procedure reviewer chosen can't be judged automatically.
+    const judged = note.tags.filter(t => covered.has(t));
     let status: PyStatus = "check-manually";
-    if (note.tags.length) status = note.tags.some(t => failing.has(t)) ? "still-an-issue" : "looks-fixed";
+    if (judged.length) status = judged.some(t => failing.has(t)) ? "still-an-issue" : "looks-fixed";
     return { note, status };
   });
 }
 
+function answersTo(check: Pick<Check, "id" | "aliases">): CheckId[] {
+  return [check.id].concat(check.aliases || []);
+}
+
 /** PY notes that relate to a given checklist item on this sheet. */
-export function pyNotesForCheck(notes: PyNote[], sheetName: string, checkId: CheckId): PyNote[] {
-  return notesForSheet(notes, sheetName).filter(n => n.tags.indexOf(checkId) >= 0);
+export function pyNotesForCheck(notes: PyNote[], sheetName: string, check: Pick<Check, "id" | "aliases">): PyNote[] {
+  const ids = answersTo(check);
+  return notesForSheet(notes, sheetName).filter(n => n.tags.some(t => ids.indexOf(t) >= 0));
 }

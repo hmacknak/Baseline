@@ -20,9 +20,9 @@
   .main { display: grid; grid-template-columns: 1fr 380px; min-height: 0; }
   .gridwrap { overflow: hidden; background: #fff; position: relative; }
   table.grid { border-collapse: collapse; table-layout: fixed; font-size: 13px; }
-  .grid th { background: #f3f3f3; color: #555; font-weight: normal; border: 1px solid #d4d4d4; height: 22px; font-size: 12px; }
+  .grid th { background: #f3f3f3; color: #555; font-weight: normal; border: 1px solid #d4d4d4; height: 20px; font-size: 11px; }
   .grid th.corner { width: 36px; }
-  .grid td { border: 1px solid #e6e6e6; height: 24px; padding: 0 5px; white-space: nowrap; overflow: visible; position: relative; }
+  .grid td { border: 1px solid #e6e6e6; height: 22px; padding: 0 5px; white-space: nowrap; overflow: visible; position: relative; }
   .grid td.num { text-align: right; }
   .grid td.bold { font-weight: 700; }
   .grid td.title { font-size: 16px; font-weight: 700; }
@@ -78,7 +78,7 @@
 
 <script>
 // ─── Workbook model (shared with the add-in iframe via window.parent) ──────────
-const ROWS = 18, COLS = 6;
+const ROWS = 24, COLS = 7;
 const LETTERS = "ABCDEFGHIJ";
 window.__wb = null;
 window.__changeHandlers = [];
@@ -125,6 +125,11 @@ function display(sheet, a) {
   if (typeof v === "string") return { text: v, num: false, err: v[0] === "#" };
   if (typeof v !== "number") return { text: String(v ?? ""), num: false };
   const fmt = cell.fmt || "General";
+  if (/mmm|yy/.test(fmt)) {
+    const d = new Date(Date.UTC(1899, 11, 30) + v * 86400000);
+    const mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
+    return { text: `${String(d.getUTCDate()).padStart(2, "0")}-${mon}-${String(d.getUTCFullYear()).slice(2)}`, num: true };
+  }
   if (fmt.indexOf("%") >= 0) return { text: (v * 100).toFixed(1) + "%", num: true };
   if (fmt.indexOf("#,##0") >= 0) {
     const s = Math.round(Math.abs(v)).toLocaleString("en-US");
@@ -140,7 +145,7 @@ function render() {
   const g = document.getElementById("grid");
   const w = sheet.widths || {};
   let html = '<colgroup><col style="width:36px">';
-  for (let c = 0; c < COLS; c++) html += `<col style="width:${Math.max(70, Math.round((w[LETTERS[c]] || 10) * 7.6))}px">`;
+  for (let c = 0; c < COLS; c++) html += `<col style="width:${Math.max(64, Math.round((w[LETTERS[c]] || 10) * 7.2))}px">`;
   html += '</colgroup><tr><th class="corner"></th>';
   for (let c = 0; c < COLS; c++) html += `<th>${LETTERS[c]}</th>`;
   html += "</tr>";
