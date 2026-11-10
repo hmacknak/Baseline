@@ -22,7 +22,7 @@
   table.grid { border-collapse: collapse; table-layout: fixed; font-size: 13px; }
   .grid th { background: #f3f3f3; color: #555; font-weight: normal; border: 1px solid #d4d4d4; height: 20px; font-size: 11px; }
   .grid th.corner { width: 36px; }
-  .grid td { border: 1px solid #e6e6e6; height: 22px; padding: 0 5px; white-space: nowrap; overflow: visible; position: relative; }
+  .grid td { border: 1px solid #e6e6e6; height: 22px; padding: 0 4px; white-space: nowrap; overflow: visible; position: relative; font-size: 12px; }
   .grid td.num { text-align: right; }
   .grid td.bold { font-weight: 700; }
   .grid td.title { font-size: 16px; font-weight: 700; }
@@ -78,7 +78,7 @@
 
 <script>
 // ─── Workbook model (shared with the add-in iframe via window.parent) ──────────
-const ROWS = 24, COLS = 7;
+const ROWS = 24, COLS = 9;
 const LETTERS = "ABCDEFGHIJ";
 window.__wb = null;
 window.__changeHandlers = [];
@@ -144,8 +144,12 @@ function render() {
   const wb = window.__wb, sheet = wb.sheets[wb.active];
   const g = document.getElementById("grid");
   const w = sheet.widths || {};
+  const colPx = [];
+  for (let c = 0; c < COLS; c++) colPx.push(Math.max(48, Math.round((w[LETTERS[c]] || 10) * 7.2)));
+  // table-layout: fixed only honours column widths when the table itself has a width.
+  g.style.width = 36 + colPx.reduce((a, b) => a + b, 0) + "px";
   let html = '<colgroup><col style="width:36px">';
-  for (let c = 0; c < COLS; c++) html += `<col style="width:${Math.max(64, Math.round((w[LETTERS[c]] || 10) * 7.2))}px">`;
+  for (const px of colPx) html += `<col style="width:${px}px">`;
   html += '</colgroup><tr><th class="corner"></th>';
   for (let c = 0; c < COLS; c++) html += `<th>${LETTERS[c]}</th>`;
   html += "</tr>";
@@ -170,17 +174,20 @@ function showFormula(typing) {
   const f = document.getElementById("formula");
   if (typing !== undefined) { f.innerHTML = ""; f.textContent = typing; f.insertAdjacentHTML("beforeend", '<span class="caret"></span>'); return; }
   const cell = sheet.cells[selected];
-  f.textContent = cell ? String(cell.v) : "";
+  if (cell && typeof cell.v === "number" && /mmm|yy/.test(cell.fmt || "")) {
+    const d = new Date(Date.UTC(1899, 11, 30) + cell.v * 86400000);
+    f.textContent = `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+  } else f.textContent = cell ? String(cell.v) : "";
 }
 
 // ─── API used by the add-in mock and by the recording script ─────────────────
 window.__select = a => { selected = a; render(); };
 window.__activate = name => { window.__wb.active = name; selected = "A1"; render(); window.__activateHandlers.forEach(h => h({})); };
 window.__typing = text => showFormula(text);
-window.__setCell = (a, v) => {
+window.__setCell = (a, v, fmt) => {
   const sheet = window.__wb.sheets[window.__wb.active];
   if (v === "" || v === null) delete sheet.cells[a];
-  else sheet.cells[a] = Object.assign({}, sheet.cells[a] || { b: false, fmt: "General", fill: false }, { v });
+  else sheet.cells[a] = Object.assign({}, sheet.cells[a] || { b: false, fmt: "General", fill: false }, { v }, fmt ? { fmt } : {});
   selected = a; render();
   const td = document.getElementById("cell-" + a); if (td) td.classList.add("flash");
   window.__changeHandlers.forEach(h => h({ address: a }));

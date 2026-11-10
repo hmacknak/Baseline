@@ -15,9 +15,9 @@ const spec: TableSpec = {
       key: "serviceDate",
       label: "service date",
       kind: "date",
-      names: ["service date", "service period", "period of service", "services to", "goods received", "date received", "receipt date", "delivery date", "service period end"],
+      names: ["service date", "service period", "period of service", "services to", "service to", "service end", "goods received", "date received", "receipt date", "delivery date", "service period end"],
     },
-    { key: "paymentDate", label: "payment date", kind: "date", names: ["payment date", "date paid", "paid date", "cheque date", "check date", "disbursement date", "paid on"] },
+    { key: "paymentDate", label: "payment date", kind: "date", names: ["payment date", "date paid", "paid date", "paid", "cheque date", "check date", "disbursement date", "paid on"] },
     { key: "amount", label: "amount", kind: "amount", names: ["amount", "invoice amount", "payment amount", "amount paid", "total", "$"] },
     {
       key: "recorded",

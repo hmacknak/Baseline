@@ -20,7 +20,7 @@ const files = {
 };
 const workbook = JSON.parse(fs.readFileSync(path.join(DIR, "workbook.json"), "utf8"));
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
 const context = await browser.newContext({
   viewport: { width: 1280, height: 720 },
   recordVideo: { dir: OUT, size: { width: 1280, height: 720 } },
@@ -62,7 +62,7 @@ async function click(locator, opts = {}) {
   await locator.click();
   await wait(opts.after ?? 500);
 }
-async function editCell(a, text) {
+async function editCell(a, text, opts = {}) {
   const td = page.locator(`#cell-${a}`);
   const { x, y } = await moveTo(td, 0.5, 0.5);
   await page.evaluate(([x, y]) => window.__ripple(x, y), [x, y]);
@@ -73,10 +73,10 @@ async function editCell(a, text) {
     await wait(55);
   }
   await wait(350);
-  await page.evaluate(([a, t]) => {
-    const v = /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : t;
-    window.__setCell(a, v);
-  }, [a, text]);
+  await page.evaluate(([a, t, value, fmt]) => {
+    const v = value !== undefined ? value : /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : t;
+    window.__setCell(a, v, fmt);
+  }, [a, text, opts.value, opts.fmt]);
   await wait(1000); // debounce (600 ms) + render
 }
 async function activate(name) {
@@ -94,22 +94,22 @@ const item = title => addin.locator(".item", { hasText: title }).locator(".item-
 
 // ─── Title card ───────────────────────────────────────────────────────────────
 await card(`<div><div class="logo">B</div><h1>Baseline Review</h1>
-  <p>Live review feedback for junior staff, inside Excel</p>
+  <p>AP-3 Search for unrecorded liabilities</p>
   <div class="note">Demo · simulated spreadsheet, real add-in</div></div>`);
-workbook.active = "FY25 Cash";
+workbook.active = "AP-3 SURL";
 await page.evaluate(wb => window.__init(wb), workbook);
 await addin.locator(".item").first().waitFor();
 await wait(3500);
 await card(null, 900);
 
-// ─── 1. Suggests the right reviewer ──────────────────────────────────────────
-await caption("A junior is preparing the bank reconciliation.<small>Baseline reviews it the way a senior would, live, as they work.</small>", 4000);
+// ─── 1. The workpaper and the reviewer ───────────────────────────────────────
+await caption("A first-year associate is preparing <b>AP-3, the search for unrecorded liabilities</b>.<small>Nine January and February payments selected for testing.</small>", 4600);
 await moveTo(addin.locator("#suggest"), 0.3, 0.3);
-await caption("It recognises the procedure and suggests the right <b>reviewer</b> from its catalog.", 3600);
+await caption("Baseline recognises the procedure and offers the <b>SURL reviewer</b>.", 3400);
 await click(addin.locator("#suggest button.primary"), { after: 900 });
 
-// ─── 2. Settings once per workbook ───────────────────────────────────────────
-await caption("Set the year-end and threshold once. They're saved in the workbook.", 600);
+// ─── 2. Engagement settings ──────────────────────────────────────────────────
+await caption("Year-end and threshold are set once for the engagement.", 600);
 await click(addin.locator('.tab[data-tab="settings"]'), { after: 500 });
 await click(addin.locator("#yearEndHint button"), { after: 400 });
 await click(addin.locator("#threshold"), { after: 200 });
@@ -118,57 +118,46 @@ await click(addin.locator("#saveSettings"), { after: 600 });
 await click(addin.locator('.tab[data-tab="review"]'), { after: 600 });
 await panelTop();
 
-// ─── 3. Insights ─────────────────────────────────────────────────────────────
-await moveTo(addin.locator("#insights"), 0.3, 0.06);
-await caption("<b>Insights</b>: the high-risk items a senior would ask about.<small>The rec is $1,200 off the GL, a cheque cleared before year-end, a stale cheque, a large uncleared item.</small>", 5200);
+// ─── 3. Insights: the exceptions ─────────────────────────────────────────────
+await moveTo(addin.locator("#insights"), 0.3, 0.08);
+await caption("Baseline tests every selection against year-end.<small>Two January invoices are for <b>December services</b> and were never recorded.</small>", 5200);
+await moveTo(addin.locator("#insights .over").first(), 0.4, 0.5);
+await caption("Together <b>$29,650</b>, above the $10,000 threshold.", 3600);
 await click(addin.locator("#insights .cell-link").first(), { after: 500 });
-await caption("Click any item to jump straight to it.", 2600);
+await caption("Click any item to jump straight to the selection.", 3000);
 
-// ─── 4. Last year's notes ────────────────────────────────────────────────────
-await caption("Load last year's review notes…", 400);
+// ─── 4. Completeness and workpaper basics ───────────────────────────────────
+await addin.locator("#procList").scrollIntoViewIfNeeded();
+await wait(400);
+await moveTo(addin.locator("#procList"), 0.3, 0.2);
+await caption("It also catches what review notes are made of:<small>Delta Freight has no service date, and two selections have no conclusion.</small>", 4800);
+await addin.locator("#checklist").scrollIntoViewIfNeeded();
+await wait(400);
+await moveTo(addin.locator("#checklist .item.fail").first(), 0.3, 0.5);
+await caption("Workpaper basics run on every sheet: <b>the total stops a row short</b>.", 3800);
+
+// ─── 5. Last year's review notes ─────────────────────────────────────────────
+await caption("Load last year's review notes for this workpaper…", 400);
 await click(addin.locator('.tab[data-tab="notes"]'), { after: 500 });
 await click(addin.locator("#importNotes"), { after: 1100 });
 await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
 await panelTop();
-await moveTo(addin.locator("#pyPanel"), 0.3, 0.2);
-await caption("…and Baseline shows which of last year's issues are <b>happening again</b>.", 4000);
+await moveTo(addin.locator("#pyPanel"), 0.3, 0.3);
+await caption("…last year's reviewer raised <b>both of these issues</b>. Baseline flags that they are happening again.", 4600);
 
-// ─── 5. Fix it live ──────────────────────────────────────────────────────────
-await caption("The junior fixes the total…", 500);
-await editCell("B10", "=SUM(B6:B9)");
+// ─── 6. The associate clears the review points ──────────────────────────────
+await caption("The associate clears the points before the senior ever opens the file…", 400);
+await editCell("D11", "05-Jan-26", { value: 46027, fmt: "dd-mmm-yy" });
+await editCell("I11", "Jan freight, FY26");
+await editCell("I16", "Exception: Dec service, not in AP");
+await editCell("F17", "=SUM(F8:F16)");
 await panelTop();
-await caption("…the rec now agrees to the GL, and last year's footing note shows <b>Looks fixed</b>.", 4400);
+await moveTo(addin.locator("#score"), 0.15, 0.5);
+await caption("<b>All checks clear.</b> Last year's service-date note now shows <b>Looks fixed</b>.", 4600);
 
-// ─── 6. The catalog ──────────────────────────────────────────────────────────
-await caption(null);
-await click(addin.locator('.tab[data-tab="catalog"]'), { after: 700 });
-await caption("A <b>catalog of reviewers</b>, one for each procedure. Workpaper basics always run.", 3800);
-await addin.locator(".cat-row", { hasText: "Liabilities" }).scrollIntoViewIfNeeded();
-await click(addin.locator(".card", { hasText: "Search for unrecorded liabilities" }), { after: 700 });
-await panelTop();
-await caption("Each one knows its test: what must be filled in, and what's risky.", 3800);
-
-// ─── 7. SURL ─────────────────────────────────────────────────────────────────
-await caption(null);
-await activate("FY25 SURL");
-await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
-await click(addin.locator("#suggest button.primary"), { after: 1000 });
-await panelTop();
-await moveTo(addin.locator("#insights"), 0.3, 0.1);
-await caption("On the search for unrecorded liabilities: a <b>January invoice for December work</b> that never made it into AP…", 4600);
-await addin.locator("#procList").scrollIntoViewIfNeeded();
-await wait(500);
-await moveTo(addin.locator("#procList"), 0.3, 0.2);
-await caption("…and a reminder that row 10 is <b>missing its service date and conclusion</b>.", 4200);
-
-// ─── 8. Revenue cut-off ──────────────────────────────────────────────────────
-await caption(null);
-await activate("FY25 Revenue cut-off");
-await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
-await click(addin.locator("#suggest button.primary"), { after: 1000 });
-await panelTop();
-await moveTo(addin.locator("#insights"), 0.3, 0.1);
-await caption("Revenue cut-off: sales booked in the <b>wrong year</b>, both ways, plus a credit note after year-end.", 5000);
+// ─── 7. What's left is the real finding ─────────────────────────────────────
+await moveTo(addin.locator("#insights"), 0.3, 0.08);
+await caption("What's left is the real finding: <b>unrecorded liabilities</b>, documented and ready for the summary of unadjusted differences.", 5600);
 await caption(null, 400);
 
 // ─── End card ────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ Sheets:
                        no source and no reviewer line (5 failing checks)
   FY25 AR            - aging with a number typed over a formula, an inconsistent formula and a #DIV/0!
   FY25 Fixed Assets  - a clean sheet that passes every check
-  FY25 SURL          - search for unrecorded liabilities with a missed December liability
+  AP-3 SURL          - search for unrecorded liabilities workpaper (the demo video's procedure)
   FY25 Revenue cut-off - sales recorded in the wrong year both ways, plus a post-year-end credit note
   FY25 AR confirmations - an unexplained difference, a non-response with no follow-up, an unsent confirm
   PY Notes           - last year's review notes, ready to import
@@ -74,7 +74,7 @@ lines = [
     ("4. Expand a red item and click a cell link, e.g. B10, to jump to it.", None),
     ('5. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
     ("6. Fix something live: change FY25 Cash B10 to =SUM(B6:B9). The total and the GL difference both clear.", None),
-    ('7. Open the Catalog tab to see every reviewer. Try "FY25 SURL", "FY25 Revenue cut-off" and', None),
+    ('7. Open the Catalog tab to see every reviewer. Try "AP-3 SURL", "FY25 Revenue cut-off" and', None),
     ('   "FY25 AR confirmations": each gets its own suggestion, checklist and high-risk items.', None),
     ('8. "FY25 AR" has a typed-over formula, an inconsistent formula and #DIV/0! errors.', None),
     ('9. "FY25 Fixed Assets" is a clean sheet that passes every check.', None),
@@ -235,29 +235,43 @@ ws["A13"].font = BOLD
 ws["A14"] = "✓ = agreed cost to invoice and useful life to policy"
 widths(ws, 30, 12, 16, 14, 16, 6)
 
-# ─── FY25 SURL ───────────────────────────────────────────────────────────────
-ws = wb.create_sheet("FY25 SURL")
-ws["A1"] = "Search for unrecorded liabilities, 31 Dec 2025"
+# ─── AP-3 SURL (the featured procedure in the demo video) ─────────────────────
+ws = wb.create_sheet("AP-3 SURL")
+ws["A1"] = "Cedar Valley Foods Ltd.  |  AP-3  Search for unrecorded liabilities"
 ws["A1"].font = TITLE
-ws["A2"] = "Purpose: test January payments and invoices for liabilities that belong in FY25"
-ws["A3"] = "Source: January cash disbursements journal and vendor invoices"
-ws["A4"] = "Prepared by: JS 06/10/2025"
-ws["D4"] = "Reviewed by:"
+ws["A2"] = "Year ended 31 December 2025"
+ws["A3"] = "Objective: identify liabilities at 31 Dec 2025 not recorded in accounts payable (completeness)."
+ws["A4"] = "Source: Jan to Feb 2026 cash disbursements journal and vendor invoices. Selection: all payments over $5,000."
+ws["A5"] = "Prepared by: JS 12/01/2026"
+ws["E5"] = "Reviewed by:"
 table(
     ws,
-    6,
-    ["Vendor", "Invoice date", "Service date", "Payment date", "Amount", "Recorded in AP?", "Conclusion"],
+    7,
+    ["Vendor", "Invoice #", "Inv date", "Service to", "Paid", "Amount", "In AP?", "Tick", "Conclusion"],
     [
-        ("Acme Plumbing", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_400, "N", "Accrual needed"),
-        ("Bolt Software", date(2026, 1, 5), date(2026, 1, 1), date(2026, 1, 9), 6_000, "N", "FY26 expense, OK"),
-        ("City Power", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_200, "N", "Investigate"),
-        ("Delta Freight", date(2026, 1, 8), None, date(2026, 1, 22), 12_750, "N", None),
-        ("Echo Legal", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_000, "Y", "In AP listing"),
-        ("Fresh Foods Co", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_150, "N", "FY26 expense, OK"),
+        ("Acme Plumbing", "INV-4471", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_400, "N", "✓", "Exception: Dec service, not in AP"),
+        ("Bolt Software", "BS-1102", date(2026, 1, 5), date(2026, 1, 31), date(2026, 1, 9), 6_000, "N", "✓", "Jan subscription, FY26"),
+        ("City Power", "CP-88213", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_200, "N", "✓", "Investigate: Dec invoice"),
+        ("Delta Freight", "DF-5520", date(2026, 1, 8), None, date(2026, 1, 22), 12_750, "N", "✓", None),
+        ("Echo Legal", "EL-0931", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_000, "Y", "✓", "In AP listing at YE"),
+        ("Fresh Foods Co", "FF-2290", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_150, "N", "✓", "FY26 expense"),
+        ("Granite Rentals", "GR-7741", date(2026, 1, 20), date(2025, 12, 31), date(2026, 2, 3), 24_600, "Y", "✓", "Accrued at YE, see AP-2"),
+        ("Harbor Security", "HS-3310", date(2026, 2, 2), date(2026, 1, 31), date(2026, 2, 10), 7_800, "N", "✓", "FY26 expense"),
+        ("Ironwood Consulting", "IC-1907", date(2026, 1, 9), date(2025, 12, 20), date(2026, 1, 30), 11_250, "N", "✓", None),
     ],
-    {1: DATE, 2: DATE, 3: DATE, 4: MONEY},
+    {2: DATE, 3: DATE, 4: DATE, 5: MONEY},
 )
-widths(ws, 20, 13, 13, 13, 12, 16, 20)
+ws["A17"] = "Total tested"
+ws["A17"].font = BOLD
+ws["F17"] = "=SUM(F8:F15)"  # Stops a row short: leaves out Ironwood (F16), on purpose.
+ws["F17"].number_format = MONEY
+ws["F17"].font = BOLD
+ws["F17"].border = TOTAL_BORDER
+ws["A19"] = "Tickmark legend"
+ws["A19"].font = BOLD
+ws["A20"] = "✓ = agreed to vendor invoice and cleared cheque"
+ws["A22"] = "Conclusion: to be completed once exceptions are cleared."
+widths(ws, 20, 10, 10, 10, 10, 10, 7, 5, 30)
 
 # ─── FY25 Revenue cut-off ────────────────────────────────────────────────────
 ws = wb.create_sheet("FY25 Revenue cut-off")
@@ -317,7 +331,8 @@ py_notes = [
     ("FY24 AR", "", "Discuss allowance methodology with manager"),
     ("FY24 Fixed Assets", "", "Where is the tickmark legend?"),
     ("FY24 Fixed Assets", "D8", "Hard-coded useful life in depreciation formula"),
-    ("FY24 SURL", "", "Missing service dates on several items, so you can't conclude on the period"),
+    ("AP-3 SURL", "", "Missing service dates on several items, so you can't conclude on the period"),
+    ("AP-3 SURL", "", "January invoice for December services was not identified as an unrecorded liability"),
     ("FY24 Revenue cut-off", "", "Dec 31 invoice shipped in January was not identified"),
 ]
 for r, row in enumerate(py_notes, start=2):
