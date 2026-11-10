@@ -126,36 +126,47 @@ await caption("Together <b>$29,650</b>, above the $10,000 threshold.", 3600);
 await click(addin.locator("#insights .cell-link").first(), { after: 500 });
 await caption("Click any item to jump straight to the selection.", 3000);
 
-// ─── 4. Completeness and workpaper basics ───────────────────────────────────
+// ─── 4. Procedure completeness ───────────────────────────────────────────────
 await addin.locator("#procList").scrollIntoViewIfNeeded();
 await wait(400);
 await moveTo(addin.locator("#procList"), 0.3, 0.2);
-await caption("It also catches what review notes are made of:<small>Delta Freight has no service date, and two selections have no conclusion.</small>", 4800);
-await addin.locator("#checklist").scrollIntoViewIfNeeded();
-await wait(400);
-await moveTo(addin.locator("#checklist .item.fail").first(), 0.3, 0.5);
-await caption("Workpaper basics run on every sheet: <b>the total stops a row short</b>.", 3800);
+await caption("It also checks the testing is complete:<small>Delta Freight has no service date, and two selections have no conclusion.</small>", 4600);
 
-// ─── 5. Last year's review notes ─────────────────────────────────────────────
+// ─── 5. Workpaper basics ─────────────────────────────────────────────────────
+await addin.locator("#checklist").scrollIntoViewIfNeeded();
+await wait(500);
+await moveTo(addin.locator("#checklist"), 0.4, 0.35);
+await caption("<b>Workpaper basics</b> run on every sheet, like a senior's first pass:<small>a total that stops a row short, a hard-coded number, tickmarks with no legend.</small>", 5200);
+await click(item("No hard-coded numbers inside formulas"), { after: 600 });
+await addin.locator(".item.open, #checklist .item-body").first().scrollIntoViewIfNeeded().catch(() => {});
+await wait(400);
+await moveTo(addin.locator("#checklist .item-body").first(), 0.4, 0.4);
+await caption("Each flag explains <b>why a reviewer cares</b> and <b>how to fix it</b>.<small>Here the coverage calculation hard-codes the population instead of linking to it.</small>", 5600);
+await click(addin.locator("#checklist .item-body .cell-link").first(), { after: 600 });
+await caption("One click takes the associate to the cell.", 2800);
+
+// ─── 6. Last year's review notes ─────────────────────────────────────────────
 await caption("Load last year's review notes for this workpaper…", 400);
 await click(addin.locator('.tab[data-tab="notes"]'), { after: 500 });
 await click(addin.locator("#importNotes"), { after: 1100 });
 await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
 await panelTop();
 await moveTo(addin.locator("#pyPanel"), 0.3, 0.3);
-await caption("…last year's reviewer raised <b>both of these issues</b>. Baseline flags that they are happening again.", 4600);
+await caption("…last year's reviewer raised <b>the same issues</b>. Baseline flags that they are happening again.", 4600);
 
-// ─── 6. The associate clears the review points ──────────────────────────────
+// ─── 7. The associate clears the review points ──────────────────────────────
 await caption("The associate clears the points before the senior ever opens the file…", 400);
 await editCell("D11", "05-Jan-26", { value: 46027, fmt: "dd-mmm-yy" });
 await editCell("I11", "Jan freight, FY26");
 await editCell("I16", "Exception: Dec service, not in AP");
 await editCell("F17", "=SUM(F8:F16)");
+await editCell("F20", "=F17/F19");
+await editCell("A23", "Tickmark legend: ✓ = agreed to vendor invoice and cleared cheque");
 await panelTop();
 await moveTo(addin.locator("#score"), 0.15, 0.5);
-await caption("<b>All checks clear.</b> Last year's service-date note now shows <b>Looks fixed</b>.", 4600);
+await caption("<b>All checks clear.</b> Last year's notes on service dates and the tickmark legend now show <b>Looks fixed</b>.", 4800);
 
-// ─── 7. What's left is the real finding ─────────────────────────────────────
+// ─── 8. What's left is the real finding ─────────────────────────────────────
 await moveTo(addin.locator("#insights"), 0.3, 0.08);
 await caption("What's left is the real finding: <b>unrecorded liabilities</b>, documented and ready for the summary of unadjusted differences.", 5600);
 await caption(null, 400);

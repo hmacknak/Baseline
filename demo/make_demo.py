@@ -267,9 +267,13 @@ ws["F17"] = "=SUM(F8:F15)"  # Stops a row short: leaves out Ironwood (F16), on p
 ws["F17"].number_format = MONEY
 ws["F17"].font = BOLD
 ws["F17"].border = TOTAL_BORDER
-ws["A19"] = "Tickmark legend"
-ws["A19"].font = BOLD
-ws["A20"] = "✓ = agreed to vendor invoice and cleared cheque"
+ws["A19"] = "Population: payments over $5,000"
+ws["F19"] = 1_284_600
+ws["F19"].number_format = MONEY
+ws["A20"] = "Coverage of population"
+ws["F20"] = "=F17/1284600"  # Hard-coded population instead of a link to F19, on purpose.
+ws["F20"].number_format = PCT
+# Missing on purpose: tickmark legend (the ✓ marks in column H are unexplained).
 ws["A22"] = "Conclusion: to be completed once exceptions are cleared."
 widths(ws, 20, 10, 10, 10, 10, 10, 7, 5, 30)
 
@@ -333,6 +337,7 @@ py_notes = [
     ("FY24 Fixed Assets", "D8", "Hard-coded useful life in depreciation formula"),
     ("AP-3 SURL", "", "Missing service dates on several items, so you can't conclude on the period"),
     ("AP-3 SURL", "", "January invoice for December services was not identified as an unrecorded liability"),
+    ("AP-3 SURL", "H8", "Where is the tickmark legend?"),
     ("FY24 Revenue cut-off", "", "Dec 31 invoice shipped in January was not identified"),
 ]
 for r, row in enumerate(py_notes, start=2):
