@@ -121,7 +121,7 @@ in the right account, and was approved.
 |---|---|---|
 | Ledger amount doesn't agree to support | Accuracy | ISA 315; ISA 530 |
 | Service (or, failing that, invoice) date outside the year | Cut-off | ISA 315 |
-| Same vendor, amount and invoice twice | Occurrence | ISA 240 |
+| Same vendor, amount and invoice twice | Occurrence; accuracy | ISA 240 |
 | Approval refused or not recorded | Occurrence | ISA 315 |
 | Description suggests a capital item over threshold | Classification | IAS 16.7; IAS 16.12 |
 | Marked as recorded in the wrong account | Classification | ISA 315 |
