@@ -17,6 +17,7 @@ import {
 } from "../review/notes";
 import { explain, frameworkOf } from "../review/framework";
 import { InsightResult, ReviewResult, runReview, suggestReviewer } from "../review/review";
+import { summarise, summaryParts } from "../review/summary";
 import { fmtAmount, sheetTexts } from "../review/reviewers/procedure";
 import { CATALOG, CATEGORY_ORDER, getReviewer } from "../review/reviewers/catalog";
 import { ReviewContext, Reviewer, SheetSnapshot } from "../review/types";
@@ -151,9 +152,15 @@ function scheduleReview() {
   timer = setTimeout(review, DEBOUNCE_MS);
 }
 
+let reviewSeq = 0;
+
 async function review() {
+  // If a newer review starts while this one is still reading the sheet, this one's result is dropped.
+  const seq = ++reviewSeq;
   try {
-    sheet = await readActiveSheet();
+    const snap = await readActiveSheet();
+    if (seq !== reviewSeq) return;
+    sheet = snap;
     result = runReview(sheet, ctx, PROCEDURES_ENABLED ? assignedReviewer() : undefined);
     basicsView = applyDismissals(sheet, result.basics, dismissals);
     procedureView = applyDismissals(sheet, result.procedure, dismissals);
@@ -510,16 +517,16 @@ function renderScore() {
     score.textContent = "This sheet is empty. Start working and the checklist will update as you go.";
     return;
   }
-  const all = basicsView.concat(procedureView);
-  const toFix = all.reduce((n, r) => n + r.findings.length, 0);
-  const passed = all.filter(r => r.findings.length === 0).length;
-  if (!toFix) {
+  // Procedure insights count too: a sheet with a flagged high-risk item is never "No open issues".
+  const s = summarise(basicsView.concat(procedureView), result.insights);
+  if (s.allClear) {
     score.appendChild(el("strong", "all-clear", "No open issues"));
-    score.appendChild(document.createTextNode(` · all ${all.length} checks clear`));
+    score.appendChild(document.createTextNode(` · all ${s.checks} checks clear`));
     return;
   }
-  score.appendChild(el("strong", undefined, `${toFix} to fix`));
-  score.appendChild(document.createTextNode(` · ${passed} of ${all.length} checks clear`));
+  const parts = summaryParts(s);
+  score.appendChild(el("strong", undefined, parts[0]));
+  score.appendChild(document.createTextNode(parts.slice(1).concat(`${s.clear} of ${s.checks} checks clear`).map(p => ` · ${p}`).join("")));
 }
 
 // ─── Step through issues or dates ───────────────────────────────────────────
@@ -544,6 +551,9 @@ function steps(): Step[] {
   const out: Step[] = [];
   for (const r of basicsView.concat(procedureView)) {
     for (const f of r.findings) if (f.cell) out.push({ cell: f.cell, text: f.message });
+  }
+  for (const r of result ? result.insights : []) {
+    for (const i of r.items) out.push({ cell: i.cell, text: `${r.insight.title}: ${i.label}, ${i.detail}` });
   }
   return out;
 }
@@ -613,9 +623,15 @@ async function reviewWorkbook() {
     const list = el("ul", "wb-list");
     for (const snap of sheets) {
       if (!snap.cells.length) continue;
-      const checks = applyDismissals(snap, runChecklist(snap, ctx), dismissals);
+      // Each sheet is reviewed the way it would be if it were open: basics plus its procedure reviewer.
+      const assignedId = assignments[normaliseSheetName(snap.name) || snap.name];
+      const reviewer = PROCEDURES_ENABLED && assignedId && assignedId !== DECLINED ? getReviewer(assignedId) : undefined;
+      const res = runReview(snap, ctx, reviewer);
+      const checks = applyDismissals(snap, res.all, dismissals);
       const open = checks.filter(c => c.findings.length);
-      const count = open.reduce((n, c) => n + c.findings.length, 0);
+      const flagged = res.insights.filter(i => i.items.length);
+      const sum = summarise(checks, res.insights);
+      const count = sum.toFix + sum.highRisk;
       if (count) needing++;
       const li = el("li");
       const btn = el("button", `wb-row ${count ? "fail" : "pass"}`);
@@ -627,12 +643,18 @@ async function reviewWorkbook() {
           "span",
           "wb-sub",
           count
-            ? open
-                .sort((a, b) => SEVERITY_ORDER.indexOf(a.check.severity) - SEVERITY_ORDER.indexOf(b.check.severity))
+            ? flagged
+                .map(i => i.insight.title)
+                .concat(
+                  open
+                    .sort((a, b) => SEVERITY_ORDER.indexOf(a.check.severity) - SEVERITY_ORDER.indexOf(b.check.severity))
+                    .map(c => c.check.title),
+                )
                 .slice(0, 2)
-                .map(c => c.check.title)
                 .join(" · ")
-            : "No open issues",
+            : sum.notRun
+              ? "Procedure checks not run: set the year-end in Settings"
+              : "No open issues",
         ),
       );
       btn.appendChild(text);

@@ -126,6 +126,16 @@ function signoffDate(sheet: SheetSnapshot, kind: "prepared" | "reviewed"): { cel
 
 const DATE_OUTLIER_DAYS = 400;
 
+/** The order and style of a date format, ignoring padding: "dd-mmm-yy" and "d-mmm-yyyy" are both "dMy". */
+function dateStyle(fmt: string): string {
+  const bare = fmt
+    .replace(/"[^"]*"/g, "")
+    .replace(/\[[^\]]*\]/g, "")
+    .split(";")[0]
+    .toLowerCase();
+  return (bare.match(/d+|m+|y+/g) || []).map(t => (t.charAt(0) === "m" ? (t.length >= 3 ? "M" : "m") : t.charAt(0))).join("");
+}
+
 export const dates: Check = {
   id: "dates",
   title: "Dates are consistent",
@@ -140,9 +150,15 @@ export const dates: Check = {
       const ye = ymdFromSerial(ctx.yearEnd);
       for (const c of allCells(sheet)) {
         if (!isText(c) || c.row > sheet.originRow + 8) continue;
+        // A prior-year date beside this year's is a comparative column, not a heading left behind.
+        const thisYear = new RegExp(`\\b${ye.year}\\b`);
+        const rowMentionsThisYear = (sheet.cells[c.row - sheet.originRow] || []).some(
+          o => !!o && ((isText(o) && thisYear.test(o.value)) || (isDateCell(o) && ymdFromSerial(o.value as number).year === ye.year)),
+        );
+        if (rowMentionsThisYear) continue;
         for (const d of monthEndsIn(c.value)) {
           const x = ymdFromSerial(d);
-          if (x.year < ye.year && x.month === ye.month && !/prior|py\b|comparative|previous/i.test(c.value)) {
+          if (x.year < ye.year && x.month === ye.month && !/prior|py\b|comparative|previous|last year/i.test(c.value)) {
             out.push({
               checkId: "dates",
               cell: c.address,
@@ -166,8 +182,12 @@ export const dates: Check = {
       if (real.length >= 3) {
         const sorted = real.map(c => c.value as number).sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)];
-        for (const c of real) {
-          if (Math.abs((c.value as number) - median) > DATE_OUTLIER_DAYS) {
+        const far = real.filter(c => Math.abs((c.value as number) - median) > DATE_OUTLIER_DAYS);
+        const near = real.length - far.length;
+        // A typo stands out only where the other dates sit close together (a testing table). Columns that
+        // legitimately span years (acquisition dates, loan terms, lease starts) are left alone.
+        if (far.length && near >= 3 && far.length <= Math.max(1, Math.floor(real.length * 0.2))) {
+          for (const c of far) {
             out.push({
               checkId: "dates",
               cell: c.address,
@@ -175,12 +195,16 @@ export const dates: Check = {
             });
           }
         }
-        const formats = Array.from(new Set(real.map(c => c.numberFormat).filter(Boolean)));
-        if (formats.length > 1) {
+        // "dd-mmm-yy" and "d-mmm-yyyy" read the same; only a different order or style is worth a flag.
+        const styles = new Map<string, string>();
+        real.forEach(c => {
+          if (c.numberFormat && !styles.has(dateStyle(c.numberFormat))) styles.set(dateStyle(c.numberFormat), c.numberFormat);
+        });
+        if (styles.size > 1) {
           out.push({
             checkId: "dates",
             cell: real[0].address,
-            message: `Column ${colToLetters(real[0].col)} mixes date formats (${formats.join(", ")})`,
+            message: `Column ${colToLetters(real[0].col)} mixes date formats (${Array.from(styles.values()).join(", ")})`,
           });
         }
       }
@@ -254,10 +278,8 @@ export const textNumbers: Check = {
 
 // ─── Stray numbers off to the side ──────────────────────────────────────────
 
-function hasLabelToLeft(sheet: SheetSnapshot, c: Cell): boolean {
-  for (let col = c.col - 1; col >= sheet.originCol; col--) if (isText(cellAt(sheet, c.row, col))) return true;
-  return false;
-}
+/** Above this many, unlabelled numbers are a block of data (a second schedule), not scratch work. */
+const MAX_STRAY = 8;
 
 function hasNeighbour(sheet: SheetSnapshot, c: Cell): boolean {
   for (let dr = -1; dr <= 1; dr++)
@@ -273,23 +295,39 @@ export const strayNumbers: Check = {
   fix: "Delete scratch calculations, or move them into the workpaper with a label explaining what they are.",
   run(sheet) {
     const tables = tablesOf(sheet);
+    // "Off to the side" only means something once the sheet has a working area to be beside.
+    if (!tables.length) return [];
     const area = mainColumns(sheet, tables);
-    const inTable = new Set<string>();
-    for (const t of tables) for (const r of t.rows) for (const col of t.headers.keys()) inTable.add(`${r}:${col}`);
+    const width = sheet.cells[0] ? sheet.cells[0].length : 0;
+    const inTable = new Set<number>();
+    for (const t of tables) for (const r of t.rows) for (const col of t.headers.keys()) inTable.add(r * 16384 + col);
     const out: Finding[] = [];
-    for (const c of allCells(sheet)) {
-      if (!(isNumeric(c) || isDateCell(c)) || inTable.has(`${c.row}:${c.col}`)) continue;
-      const offSide = !!area && (c.col >= area.max + 2 || c.col <= area.min - 2);
-      const isolated = !hasLabelToLeft(sheet, c) && !hasNeighbour(sheet, c);
-      if (offSide || isolated) {
-        out.push({
-          checkId: "stray",
-          cell: c.address,
-          message: offSide ? `${c.address} sits outside the workpaper with no label` : `${c.address} has no label`,
-        });
+    for (const line of sheet.cells) {
+      // The first text in the row is its label; anything to its right is labelled.
+      let firstText = Infinity;
+      for (let i = 0; i < width; i++) {
+        if (isText(line[i])) {
+          firstText = line[i].col;
+          break;
+        }
+      }
+      for (const c of line) {
+        if (!c || !(isNumeric(c) || isDateCell(c)) || inTable.has(c.row * 16384 + c.col)) continue;
+        const labelled = firstText < c.col;
+        // Outside the working area, only a label right beside the number explains it.
+        const offSide =
+          !!area && (c.col >= area.max + 2 || c.col <= area.min - 2) && !isText(cellAt(sheet, c.row, c.col - 1));
+        const isolated = !labelled && !hasNeighbour(sheet, c);
+        if (offSide || isolated) {
+          out.push({
+            checkId: "stray",
+            cell: c.address,
+            message: offSide ? `${c.address} sits outside the workpaper with no label` : `${c.address} has no label`,
+          });
+        }
       }
     }
-    return out;
+    return out.length > MAX_STRAY ? [] : out;
   },
 };
 
@@ -328,6 +366,8 @@ function colourName(hex: string): string {
   return "pink";
 }
 
+const MAX_HIGHLIGHTS = 20;
+
 const COLOUR_LEGEND = /(yellow|green|orange|pink|blue|red|purple|highlight\w*|shad\w+)\s*(=|:|-)\s*\w/i;
 
 export const highlights: Check = {
@@ -353,6 +393,8 @@ export const highlights: Check = {
       const rows = new Set(list_.map(c => c.row));
       const banner = Array.from(rows).every(r => list_.filter(c => c.row === r).length >= 4);
       if (banner) continue;
+      // A colour used on many cells is a convention (input cells, a status column), not a note-to-self.
+      if (list_.length > MAX_HIGHLIGHTS) continue;
       out.push({
         checkId: "highlights",
         cell: list_[0].address,

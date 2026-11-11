@@ -42,7 +42,9 @@ function normaliseColour(c: unknown): string | undefined {
 
 async function snapshotOf(ctx: Excel.RequestContext, ws: Excel.Worksheet): Promise<SheetSnapshot> {
   ws.load("name");
-  const used = ws.getUsedRangeOrNullObject();
+  // Values only: cells that are merely formatted (a border dragged down 10,000 rows) don't count as used.
+  // Otherwise a small workpaper can look enormous, get cut off, and lose its highlighting check.
+  const used = ws.getUsedRangeOrNullObject(true);
   used.load(["isNullObject", "rowIndex", "columnIndex", "rowCount", "columnCount"]);
   await ctx.sync();
 

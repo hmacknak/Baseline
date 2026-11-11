@@ -6,6 +6,7 @@ import { findHardcodedNumbers, hasExternalLink, toR1C1 } from "./formula";
 import { isDateFormat } from "./layout";
 import { completeness, dates, highlights, placeholders, strayNumbers, textNumbers } from "./quality";
 import { Cell, Check, CheckId, Finding, ReviewContext, SheetSnapshot } from "./types";
+import { looksLikeWorkpaper } from "./workpaper";
 
 // ─── Grid helpers ────────────────────────────────────────────────────────────
 
@@ -294,7 +295,8 @@ const signoff: Check = {
   why: "Sign-offs show who did the work and when. A workpaper without them isn't evidence, and it's one of the most common review notes.",
   fix: 'Add "Prepared by: <initials>, <date>" and leave a "Reviewed by:" line for your senior.',
   run(sheet) {
-    if (isEmpty(sheet)) return [];
+    // Supporting data tabs (client listings, exports) aren't signed off; only workpapers are.
+    if (isEmpty(sheet) || !looksLikeWorkpaper(sheet)) return [];
     const out: Finding[] = [];
     const prep = findLabel(sheet, PREPARED);
     if (!prep) out.push({ checkId: "signoff", message: 'No "Prepared by" sign-off on this sheet' });
@@ -317,12 +319,12 @@ const header: Check = {
   why: "A reviewer needs to know what the sheet is for, where the numbers came from, and what you concluded before they can sign it off.",
   fix: 'Add "Purpose:" and "Source:" lines (document name, client contact or system report) at the top, and a "Conclusion:" at the bottom.',
   run(sheet) {
-    if (isEmpty(sheet)) return [];
+    if (isEmpty(sheet) || !looksLikeWorkpaper(sheet)) return [];
     const texts = textCells(sheet).map(c => String(c.value));
     const out: Finding[] = [];
-    if (!texts.some(t => /purpose|objective/i.test(t)))
+    if (!texts.some(t => /\b(purpose|objectives?)\b/i.test(t)))
       out.push({ checkId: "header", message: "No purpose or objective stated" });
-    if (!texts.some(t => /source/i.test(t)))
+    if (!texts.some(t => /\bsources?\b/i.test(t)))
       out.push({ checkId: "header", message: "No source documented for the numbers" });
     if (!texts.some(t => /^\s*conclu(sion|ded)\b/i.test(t)))
       out.push({ checkId: "header", message: "No conclusion documented" });

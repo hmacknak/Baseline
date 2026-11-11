@@ -137,10 +137,24 @@ function prevSolidIndex(tokens: Token[], i: number): number {
 
 const ARITH = ["+", "-", "*", "/", "^"];
 
+/** Scaling by a unit: months, days, weeks, percent, thousands. Everyone can see where these come from. */
+const UNIT_FACTORS = [7, 12, 24, 52, 60, 100, 360, 365, 366, 1000, 1000000, 1000000000];
+
+/**
+ * True for constants that are arithmetic, not unsupported inputs: "/12", "*100", "/1000", "^2", "/2" (an average).
+ * Added or subtracted amounts, and any other multiplier (a rate, a price), still count as hard-codes.
+ */
+function isUnitConversion(value: number, prevOp: string, nextOp: string): boolean {
+  if (prevOp === "^") return value === 2 || value === 3 || value === 0.5;
+  if (prevOp === "/" && (value === 2 || value === 4)) return true;
+  if (UNIT_FACTORS.indexOf(value) < 0) return false;
+  return prevOp === "*" || prevOp === "/" || nextOp === "*";
+}
+
 /**
  * Numeric literals used as arithmetic operands, e.g. 1.05 in "=A1*1.05" or 500 in "=SUM(A1:A3)+500".
  * Function arguments such as the 2 in ROUND(A1,2) or the 3 in VLOOKUP(...,3,FALSE) are ignored,
- * as are 0 and 1 and anything inside array constants.
+ * as are 0 and 1, unit conversions such as /12 or *100, and anything inside array constants.
  */
 export function findHardcodedNumbers(formula: string): string[] {
   const tokens = lex(formula);
@@ -184,6 +198,10 @@ export function findHardcodedNumbers(formula: string): string[] {
         const after = nextSolid(tokens, tokens.indexOf(next));
         return !!after && after.type === "op" && ARITH.indexOf(after.text) >= 0;
       })();
+
+    const prevOp = prev && prev.type === "op" ? prev.text : "";
+    const nextOp = next && next.type === "op" ? next.text : "";
+    if (isUnitConversion(value, prevOp, nextOp)) continue;
 
     if (prevIsOperator || (nextIsOperator && next!.text !== "%") || percentThenOperator) {
       found.push(next && next.text === "%" ? t.text + "%" : t.text);

@@ -98,3 +98,22 @@
 - Audit references (ISA, PCAOB AS) don't change with the framework.
 - Unresolved: the FASB Codification itself couldn't be opened; paragraph-level US GAAP references were checked
   against Deloitte, PwC and KPMG guides. Only ASC 830-20-35-2 is cited at paragraph level.
+
+## 2026-11-11: Less noise on ordinary workbooks
+Measured on 180 sheets from 130 public sample workbooks (`tools/noise`), then fixed what fired wrongly:
+- **Sign-off and purpose/source/conclusion** now apply only to sheets that look like workpapers (a workpaper
+  reference or FY in the tab name, a period heading, or any sign-off/purpose/conclusion/legend line). Client
+  listings and exports are no longer flagged. Before: 180 of 180 sheets flagged. After: 3.
+  Trade-off: a brand-new tab with no heading at all gets no sign-off reminder until it has one.
+- **Dates:** a "typo" is only called where the other dates sit close together, so fixed-asset, loan and lease
+  dates aren't flagged. Comparative columns ("31 December 2024" beside this year's) aren't "rolled forward".
+  Padding differences (dd-mmm-yy vs d-mmm-yyyy) aren't "mixed formats". Zero shown as a date is ignored.
+- **Hard-codes:** unit conversions (/12, *100, /1000, /365, ^2, /2) are not flagged. Rates, prices and added
+  amounts still are.
+- **Stray numbers:** only checked once the sheet has a working table; a block of more than 8 unlabelled numbers
+  is treated as data. Also about 12x faster on wide sheets.
+- **Highlighting:** a colour on more than 20 cells is treated as a convention.
+- **Panel:** "No open issues" is never shown while a procedure insight has flagged something or could not run.
+  Step-through and "Review all sheets" include procedure findings. Sheets are sized by their contents, not their
+  formatting, so a small workpaper with formatting dragged down is no longer cut off.
+- Not done yet: marking a procedure finding OK; expiring last year's "Mark OK" decisions on roll-forward.

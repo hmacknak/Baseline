@@ -163,3 +163,64 @@ describe("sign-off labels", () => {
     expect(f).toEqual([]);
   });
 });
+
+describe("noise on ordinary workbooks", () => {
+  it("does not call long-dated columns typos (fixed asset register)", () => {
+    const s = sheet(
+      {
+        A1: "Asset", B1: "Acquired", C1: "Cost",
+        A2: "Building", B2: d(2012, 3, 1), C2: 900000,
+        A3: "Truck", B3: d(2019, 6, 1), C3: 80000,
+        A4: "Laptop", B4: d(2024, 2, 1), C4: 2000,
+        A5: "Forklift", B5: d(2025, 8, 1), C5: 42000,
+        A6: "Roof", B6: d(2016, 8, 1), C6: 120000,
+      },
+      "Fixed assets",
+      { formats: { B2: DATE, B3: DATE, B4: DATE, B5: DATE, B6: DATE } },
+    );
+    expect(getCheck("dates").run(s, ctx)).toEqual([]);
+  });
+
+  it("does not call a comparative column a roll-forward error", () => {
+    const s = sheet({ A1: "Lead schedule", B3: "Balance at 31 December 2025", C3: "Balance at 31 December 2024", A4: "Cash", B4: 10, C4: 9 });
+    expect(getCheck("dates").run(s, ctx)).toEqual([]);
+  });
+
+  it("treats padding differences in date formats as the same format", () => {
+    const s = sheet(
+      { A1: d(2026, 1, 5), A2: d(2026, 1, 9), A3: d(2026, 1, 12) },
+      "T",
+      { formats: { A1: "dd-mmm-yy", A2: "d-mmm-yyyy", A3: "[$-409]dd-mmm-yy;@" } },
+    );
+    expect(getCheck("dates").run(s, ctx)).toEqual([]);
+  });
+
+  it("ignores zero shown as a date", () => {
+    const s = sheet({ A1: 0, A2: d(2026, 1, 9), A3: d(2026, 1, 12), A4: d(2026, 1, 15) }, "T", {
+      formats: { A1: DATE, A2: DATE, A3: DATE, A4: DATE },
+    });
+    expect(getCheck("dates").run(s, ctx)).toEqual([]);
+  });
+
+  it("does not look for stray numbers on a sheet with no working table", () => {
+    expect(getCheck("stray").run(sheet({ A1: 5, C7: 12, F2: 9 }))).toEqual([]);
+  });
+
+  it("treats a block of unlabelled numbers as data, not scratch work", () => {
+    const cells: Record<string, string | number> = {
+      A1: "Item", B1: "Amount", C1: "Tick", A2: "Cash", B2: 100, C2: "x", A3: "AR", B3: 200, C3: "x",
+    };
+    for (let r = 1; r <= 12; r++) cells[`H${r}`] = r * 10;
+    expect(getCheck("stray").run(sheet(cells))).toEqual([]);
+  });
+
+  it("treats a colour used on many cells as a convention", () => {
+    const cells: Record<string, number> = {};
+    const fills: Record<string, string> = {};
+    for (let r = 1; r <= 25; r++) {
+      cells[`B${r}`] = r;
+      fills[`B${r}`] = "#FFFF00";
+    }
+    expect(getCheck("highlights").run(sheet(cells, "T", { fills }))).toEqual([]);
+  });
+});
