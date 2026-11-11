@@ -3,7 +3,7 @@
 
 import { formatSerial } from "../dates";
 import { ColumnSpec, Table, TableRow, cellAddress, isBlank, readTable, textOf } from "../table";
-import { Cell, Check, Finding, Insight, InsightItem, ReviewContext, Severity, SheetSnapshot } from "../types";
+import { Cell, Check, Finding, FrameworkText, Insight, InsightItem, ReviewContext, Severity, SheetSnapshot } from "../types";
 
 export interface TableSpec {
   columns: ColumnSpec[];
@@ -50,6 +50,7 @@ export function completenessCheck(opts: {
   why?: string;
   assertion?: string;
   reference?: string;
+  usGaap?: FrameworkText;
 }): Check {
   return {
     id: opts.id,
@@ -58,6 +59,7 @@ export function completenessCheck(opts: {
     aliases: ["completeness"],
     assertion: opts.assertion,
     reference: opts.reference,
+    usGaap: opts.usGaap,
     why:
       opts.why ||
       "A blank date, amount or conclusion means the item isn't evidenced. It's one of the most common reasons a workpaper comes back from review.",
@@ -119,6 +121,7 @@ export function rowInsight(opts: {
   aliases?: string[];
   assertion?: string;
   reference?: string;
+  usGaap?: FrameworkText;
   spec: TableSpec;
   /** Return a reason string to flag the row, or null to pass it. */
   test(row: TableRow, ctx: ReviewContext): { detail: string; cellKey: string; amount?: number | null } | null;
@@ -133,6 +136,7 @@ export function rowInsight(opts: {
     aliases: opts.aliases,
     assertion: opts.assertion,
     reference: opts.reference,
+    usGaap: opts.usGaap,
     run(sheet, ctx) {
       const table = tableFor(sheet, opts.spec);
       if (!table) return [];

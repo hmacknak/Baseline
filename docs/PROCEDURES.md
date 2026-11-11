@@ -6,6 +6,10 @@ sites themselves could not be opened from the build environment, so paragraph nu
 published copies of the standards (national adoptions and IFRS Foundation files) and are listed below. Where a
 paragraph number could not be confirmed, the standard is cited without one.
 
+**Accounting framework.** Each workbook is set to IFRS (default) or US GAAP in Settings. Audit references (ISA,
+PCAOB AS) are the same either way; accounting references, and wording that depends on them, follow the framework.
+The tables below show IFRS first, then US GAAP.
+
 Assertions follow ISA 315 (Revised 2019): for transactions, **occurrence, completeness, accuracy, cut-off,
 classification**; for balances, **existence, rights and obligations, completeness, accuracy/valuation and
 allocation**.
@@ -35,9 +39,9 @@ allocation**.
 
 | Rule | Assertion | Reference |
 |---|---|---|
-| Post-year-end invoice for a service on or before year-end, not recorded | Completeness | Conceptual Framework 4.26; IAS 37.11 |
-| Invoice dated on or before year-end, marked not recorded | Completeness | IAS 37.11 |
-| Recorded at year-end but the service was next year (over-accrual) | Existence; cut-off | Conceptual Framework 4.26 |
+| Post-year-end invoice for a service on or before year-end, not recorded | Completeness | IFRS: Conceptual Framework 4.26; IAS 37.11. US GAAP: FASB Concepts Statement 8, ch. 4; ASC 405 |
+| Invoice dated on or before year-end, marked not recorded | Completeness | IFRS: IAS 37.11. US GAAP: ASC 405 |
+| Recorded at year-end but the service was next year (over-accrual) | Existence; cut-off | IFRS: Conceptual Framework 4.26. US GAAP: FASB Concepts Statement 8, ch. 4 |
 | No service date, so the year can't be decided | Completeness; cut-off | ISA 500 |
 | Search window ends less than 30 days after year-end | Completeness | ISA 560 |
 | Every selection complete; key columns present | Completeness | ISA 500; ISA 230 |
@@ -70,6 +74,9 @@ entity, and are complete. The same request also brings back loans, guarantees, s
   - An overdraft is a borrowing. It is part of cash and cash equivalents only if it is repayable on demand and
     integral to cash management (IAS 7.8; IFRS Interpretations Committee agenda decision, June 2018).
   - Foreign-currency cash is a monetary item translated at the closing rate (IAS 21.23).
+  - US GAAP: a bank overdraft is a loan from the bank, presented as a liability, with changes shown as financing
+    cash flows; netting against cash at the same bank needs a right of set-off (ASC 305, ASC 230, ASC 210-20).
+    Foreign-currency balances are adjusted to the current exchange rate at each balance sheet date (ASC 830-20-35-2).
 
 **How it is done.**
 1. List every bank and account, from the ledger and from the previous year's replies.
@@ -87,8 +94,8 @@ entity, and are complete. The same request also brings back loans, guarantees, s
 | Sent or received through the client | Existence | ISA 505.7; AS 2310.14–.17 |
 | Account not confirmed (including nil balances) | Completeness; rights and obligations | ISA 505.7; AS 2310 |
 | Confirmed at a date other than year-end | Existence; cut-off | ISA 505 |
-| Overdrawn account | Classification; presentation | IAS 7.8 |
-| Foreign-currency balance | Valuation | IAS 21.23 |
+| Overdrawn account | Classification; presentation | IFRS: IAS 7.8. US GAAP: ASC 305; ASC 210-20; ASC 230 |
+| Foreign-currency balance | Valuation | IFRS: IAS 21.23. US GAAP: ASC 830-20-35-2 |
 | Every account complete; key columns present | Existence; completeness | ISA 505.7; AS 2310 |
 
 ---
@@ -107,6 +114,8 @@ in the right account, and was approved.
   innocent version of the same leak.
 - **Classification:** a cost that meets IAS 16.7 is capitalised as property, plant and equipment, while
   day-to-day servicing and repairs are expensed (IAS 16.12). Getting this wrong misstates both assets and profit.
+- US GAAP: outlays that extend an asset's life or add capability are capitalised; routine maintenance is expensed
+  (ASC 360-10).
 - Errors found in a sample stand for the population, so they are **projected**, not just corrected (ISA 530).
 
 **How it is done.**
@@ -123,7 +132,7 @@ in the right account, and was approved.
 | Service (or, failing that, invoice) date outside the year | Cut-off | ISA 315 |
 | Same vendor, amount and invoice twice | Occurrence; accuracy | ISA 240 |
 | Approval refused or not recorded | Occurrence | ISA 315 |
-| Description suggests a capital item over threshold | Classification | IAS 16.7; IAS 16.12 |
+| Description suggests a capital item over threshold | Classification | IFRS: IAS 16.7; IAS 16.12. US GAAP: ASC 360-10 |
 | Marked as recorded in the wrong account | Classification | ISA 315 |
 | Every sample item complete; key columns present | Occurrence; accuracy | ISA 500; ISA 530 |
 
@@ -152,4 +161,10 @@ their tests, but are not offered (`src/config.ts`, `ENABLED_PROCEDURES`).
 - IFRS Foundation, IAS 21: https://ifrs.org/content/dam/ifrs/publications/html-standards/english/2021/issued/ias21.html
 - IAS 37 definitions (Australian adoption, same text): https://standards.aasb.gov.au/node/2796
 - Conceptual Framework (2018), definition of a liability 4.26 (HKICPA reproduction): https://www.hkicpa.org.hk/-/media/HKICPA-Website/Members-Handbook/volumeII/framework18.pdf
+- US GAAP, via Big 4 guides (the FASB Codification itself needs a login):
+  Deloitte, *Statement of Cash Flows* roadmap, 4.2 Book and bank overdrafts: https://dart.deloitte.com/USDART/home/codification/presentation/asc230-10/roadmap-statement-cash-flow/chapter-4-cash-cash-equivalents/4-2-book-bank-overdrafts ;
+  Deloitte, *Foreign Currency* roadmap, 4.3 Subsequent measurement: https://dart.deloitte.com/USDART/home/codification/broad-transactions/asc830-10/roadmap-foreign-currency-transactions-translations/chapter-4-foreign-currency-transactions/4-3-subsequent-measurement-foreign-currency ;
+  PwC, *Property, plant, equipment and other assets* guide, 1.2: https://viewpoint.pwc.com/dt/us/en/pwc/accounting_guides/property_plant_equip/property_plant_equip_US/chapter_1_capitaliza_US/12_accounting_for_ca_US.html ;
+  KPMG, *Foreign currency* handbook: https://kpmg.com/kpmg-us/content/dam/kpmg/frv/pdf/2025/handbook-foreign-currency.pdf ;
+  FASB Concepts Statement 8, ch. 4 (definition of a liability; board decisions summarised by Deloitte): https://dart.deloitte.com/USDART/home/accounting/fasb/fasb-literature/tentative-board-decisions/2021/jun-2-2021
 - Institute of Singapore Chartered Accountants, accounts payable audit highlights (search coverage and payment cycles): https://isca.org.sg/docs/default-source/audit-assurance/events/accountspluspayable_highlightsplusofplustc.pdf

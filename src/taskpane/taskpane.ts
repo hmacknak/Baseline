@@ -15,6 +15,7 @@ import {
   pyStatuses,
   tagNote,
 } from "../review/notes";
+import { explain, frameworkOf } from "../review/framework";
 import { InsightResult, ReviewResult, runReview, suggestReviewer } from "../review/review";
 import { fmtAmount, sheetTexts } from "../review/reviewers/procedure";
 import { CATALOG, CATEGORY_ORDER, getReviewer } from "../review/reviewers/catalog";
@@ -349,7 +350,8 @@ function renderCheckItem(r: ReviewedCheck): HTMLElement {
     }
 
     if (!pass) {
-      body.appendChild(whyBlock(check.why, check.assertion, check.reference));
+      const text = explain(check, ctx);
+      body.appendChild(whyBlock(text.why, check.assertion, text.reference));
       const fix = el("p", "why");
       fix.appendChild(el("strong", undefined, "How to fix: "));
       fix.appendChild(document.createTextNode(check.fix));
@@ -469,7 +471,8 @@ function renderInsight(r: InsightResult): HTMLElement {
           el("p", "over", `Together $${fmtAmount(total)}: above your $${fmtAmount(ctx.threshold)} threshold.`),
         );
       }
-      body.appendChild(whyBlock(r.insight.why, r.insight.assertion, r.insight.reference));
+      const text = explain(r.insight, ctx);
+      body.appendChild(whyBlock(text.why, r.insight.assertion, text.reference));
     }
     card.appendChild(body);
   }
@@ -761,6 +764,7 @@ function renderCatalog() {
 function renderSettings() {
   ($("yearEnd") as HTMLInputElement).value = ctx.yearEnd ? isoFromSerial(ctx.yearEnd) : "";
   ($("threshold") as HTMLInputElement).value = ctx.threshold !== undefined ? String(ctx.threshold) : "";
+  ($("framework") as HTMLSelectElement).value = frameworkOf(ctx);
   renderSettingsHint();
 }
 
@@ -789,6 +793,7 @@ function wireSettings() {
     const next: ReviewContext = {};
     if (m) next.yearEnd = serialFromYMD(+m[1], +m[2], +m[3]);
     if (th.trim() !== "" && isFinite(Number(th))) next.threshold = Number(th);
+    if (($("framework") as HTMLSelectElement).value === "us-gaap") next.framework = "us-gaap";
     try {
       await saveContext(next);
       ctx = next;

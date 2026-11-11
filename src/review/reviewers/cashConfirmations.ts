@@ -10,8 +10,9 @@
 //   (AS 2310.14-.16); intermediaries are allowed only for direct electronic transmission (.17).
 // - Assertions: existence and rights (the money is there and belongs to the entity), completeness (all accounts,
 //   including nil and closed ones, which can hide loans, guarantees or restrictions).
-// - Presentation: overdrafts are financing unless repayable on demand and integral to cash management (IAS 7.8).
-//   Foreign-currency balances are translated at the closing rate (IAS 21.23).
+// - Presentation: overdrafts are financing unless repayable on demand and integral to cash management (IAS 7.8);
+//   under US GAAP an overdraft is a liability and its changes are financing (ASC 305, ASC 230; netting only with a
+//   right of set-off, ASC 210-20). Foreign-currency balances use the year-end rate (IAS 21.23; ASC 830-20-35-2).
 
 import { amountOf, dateOf, isBlank, textOf } from "../table";
 import { Reviewer } from "../types";
@@ -180,6 +181,10 @@ export const cashConfirmations: Reviewer = {
       severity: "low",
       assertion: "Classification; Presentation",
       reference: "IAS 7.8",
+      usGaap: {
+        reference: "ASC 305; ASC 210-20 (offsetting); ASC 230 (financing activities)",
+        why: "A negative bank balance is a loan from the bank, so under US GAAP it is presented as a liability, not as negative cash, unless a right of set-off allows netting with another account at the same bank (ASC 210-20). Changes in it are a financing cash flow. Check where it is presented and whether netting is supported.",
+      },
       why: "A negative bank balance is a borrowing. It can only sit within cash and cash equivalents if it is repayable on demand and part of day-to-day cash management (IAS 7.8); otherwise it is a liability and a financing cash flow. Check where it is presented and that it isn't netted against other cash without a right of set-off.",
       spec,
       labelKeys: LABEL,
@@ -195,7 +200,8 @@ export const cashConfirmations: Reviewer = {
       severity: "low",
       assertion: "Valuation",
       reference: "IAS 21.23",
-      why: "Cash in another currency is a monetary item, so it must be translated at the year-end closing rate (IAS 21.23). Check the rate and that the translated figure, not the foreign-currency figure, is what agrees to the ledger.",
+      usGaap: { reference: "ASC 830-20-35-2" },
+      why: "Cash in another currency is a monetary item, so it must be translated at the exchange rate at year-end. Check the rate and that the translated figure, not the foreign-currency figure, is what agrees to the ledger.",
       run(sheet) {
         const table = tableFor(sheet, spec);
         if (!table || table.columns.currency === undefined) return [];

@@ -69,7 +69,18 @@ export interface Check {
   assertion?: string;
   /** Where the requirement comes from, e.g. "ISA 505.7; PCAOB AS 2310.14". */
   reference?: string;
+  /** Wording and references to use instead when the workbook reports under US GAAP. */
+  usGaap?: FrameworkText;
   run(sheet: SheetSnapshot, ctx?: ReviewContext): Finding[];
+}
+
+/** The accounting framework the client reports under. Decides which accounting references are shown. */
+export type Framework = "ifrs" | "us-gaap";
+
+/** Framework-specific replacement for an item's `why` and/or `reference`. */
+export interface FrameworkText {
+  why?: string;
+  reference?: string;
 }
 
 /** Engagement facts set once per workbook. Dates are Excel serial day numbers. */
@@ -77,6 +88,8 @@ export interface ReviewContext {
   yearEnd?: number;
   /** Amount above which an item is worth a closer look (e.g. clearly trivial / SAD threshold). */
   threshold?: number;
+  /** Defaults to IFRS when not set. */
+  framework?: Framework;
 }
 
 export interface InsightItem {
@@ -102,6 +115,8 @@ export interface Insight {
   assertion?: string;
   /** Where the requirement comes from, e.g. "IAS 37.11". */
   reference?: string;
+  /** Wording and references to use instead when the workbook reports under US GAAP. */
+  usGaap?: FrameworkText;
   run(sheet: SheetSnapshot, ctx: ReviewContext): InsightItem[];
 }
 

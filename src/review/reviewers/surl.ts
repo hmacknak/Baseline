@@ -35,7 +35,8 @@ const LABEL = ["vendor", "invoiceNo"];
 const MIN_WINDOW_DAYS = 30;
 
 // Research basis (see docs/PROCEDURES.md):
-// - A liability is a present obligation arising from past events (IFRS Conceptual Framework 4.26). Goods or services
+// - A liability is a present obligation arising from past events (IFRS Conceptual Framework 4.26; under US GAAP,
+//   FASB Concepts Statement 8, ch. 4: a present obligation to transfer an economic benefit). Goods or services
 //   received by year-end create that obligation whether or not they have been invoiced; un-invoiced amounts are
 //   accruals (IAS 37.11).
 // - The audit risk is understatement, so the assertion is completeness, tested by working from evidence outside
@@ -76,7 +77,8 @@ export const surl: Reviewer = {
       severity: "high",
       assertion: "Completeness",
       reference: "IFRS Conceptual Framework 4.26; IAS 37.11",
-      why: "The service was received on or before year-end, so the company already owed the money at year-end: that is a liability under the Conceptual Framework, even though the invoice came later. If it isn't recorded or accrued (IAS 37.11), liabilities and expenses are understated. This is exactly the misstatement the search exists to find, and it goes on the summary of uncorrected misstatements if it isn't adjusted.",
+      usGaap: { reference: "FASB Concepts Statement 8, ch. 4 (definition of a liability); ASC 405 (liabilities)" },
+      why: "The service was received on or before year-end, so the company already owed the money at year-end: that is a liability, even though the invoice came later. If it isn't recorded or accrued, liabilities and expenses are understated. This is exactly the misstatement the search exists to find, and it goes on the summary of uncorrected misstatements if it isn't adjusted.",
       needs: ["yearEnd"],
       aliases: ["unrecorded"],
       spec,
@@ -99,6 +101,7 @@ export const surl: Reviewer = {
       severity: "high",
       assertion: "Completeness",
       reference: "IAS 37.11 (trade payables)",
+      usGaap: { reference: "ASC 405 (liabilities)" },
       why: "An invoice dated on or before year-end means the supplier had already billed the company. Unless it was paid before year-end, it should be in the year-end payables listing. A missing one points to a cut-off or recording failure, and there are often more like it.",
       needs: ["yearEnd"],
       aliases: ["unrecorded"],
@@ -121,6 +124,7 @@ export const surl: Reviewer = {
       severity: "medium",
       assertion: "Existence; Cut-off",
       reference: "IFRS Conceptual Framework 4.26",
+      usGaap: { reference: "FASB Concepts Statement 8, ch. 4 (definition of a liability)" },
       why: "If the service happened after year-end, there was no obligation at year-end, so recording it as a year-end liability overstates both liabilities and this year's expenses. The search is aimed at understatement, but it is also where an over-accrual (sometimes used to smooth results) becomes visible.",
       needs: ["yearEnd"],
       spec,
