@@ -133,7 +133,7 @@ export const expenseVouching: Reviewer = {
       id: "expense-vouching.duplicates",
       title: "Possible duplicate payments",
       severity: "high",
-      assertion: "Occurrence",
+      assertion: "Occurrence; Accuracy",
       reference: "ISA 240 (payments for goods or services not received)",
       why: "The same vendor, amount and invoice recorded twice is either an error (the invoice was paid twice) or a way money leaves the company for nothing in return. Paying for goods or services not received is one of the recognised ways controls are overridden, so duplicates need to be explained, not just noted.",
       aliases: ["duplicate"],
