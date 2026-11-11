@@ -205,3 +205,10 @@ describe("prior-year notes", () => {
     expect(pyStatuses(notes, "Expense vouching", r.all, r.insights)[0].status).toBe("still-an-issue");
   });
 });
+
+describe("duplicate payments", () => {
+  it("names occurrence and accuracy as the assertions at risk", () => {
+    const dup = expenseVouching.insights.filter(i => i.id === "expense-vouching.duplicates")[0];
+    expect(dup.assertion).toBe("Occurrence; Accuracy");
+  });
+});
