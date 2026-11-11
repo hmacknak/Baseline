@@ -20,7 +20,7 @@ The loop:
 1. The junior clicks **Review this sheet**.
 2. The bot leaves cell-linked **review notes**, like a senior would. Clicking a note jumps to the cell.
 3. **Talk:** the junior can ask "why does this matter?" or "how do I fix it?" on any note.
-4. Repeat notes become this week's skill focus (this reuses the existing Excel Coach code).
+4. Repeat notes become this week's skill focus.
 
 How it reviews:
 - **Rule checks** (always right, no AI): hard-coded numbers in formulas, `#REF!` and other errors, totals that don't
@@ -49,7 +49,7 @@ Ten more reviewers are listed as "Coming soon"; adding one is documented in `doc
   `src/review/notes.ts` is the starting point.
 - **Talk:** ask "why?" or "how do I fix it?" on any note and get a senior-style explanation from Claude. This needs a
   decision on client data and a small server to hold the API key.
-- **Skill building:** turn repeat issues into this week's habit (reuse the legacy Excel Coach).
+- **Skill building:** turn repeat issues into this week's habit.
 
 ## Open questions
 - Client data: practice/dummy workpapers only, or real ones with the firm's approval?

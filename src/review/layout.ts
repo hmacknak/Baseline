@@ -116,7 +116,7 @@ export function findTables(sheet: SheetSnapshot): DetectedTable[] {
   return tables;
 }
 
-/** First text in a row, used to name the row in messages, e.g. "row 11 (Delta Freight)". */
+/** First text in a row, used to name the row in messages, e.g. "row 11 (Vendor D)". */
 export function rowLabel(sheet: SheetSnapshot, row: number): string {
   const t = textCount(sheet, row)[0];
   return t ? `row ${row + 1} (${String(t.value).trim()})` : `row ${row + 1}`;

@@ -44,7 +44,7 @@ Every item explains **why it matters** and **how to fix it**, and clicking a cel
 
 ## Demo video
 
-[Watch the demo: AP-3 search for unrecorded liabilities](https://hmacknak.github.io/Baseline/) (also at
+Watch the demo: AP-3 search for unrecorded liabilities (on the download page, also at
 [`demo/Baseline-demo-video.mp4`](demo/Baseline-demo-video.mp4)). The spreadsheet in the video is simulated; the
 panel is the real add-in code running against it. To re-record, see `demo/video/record.mjs`.
 
@@ -76,7 +76,7 @@ There is no AI and no server in this version.
 
 ## Install it (no coding needed)
 
-1. Go to **https://hmacknak.github.io/Baseline/** and tap **Download add-in file**.
+1. Open your team's Baseline download page and tap **Download the add-in**.
 2. Open **Excel on the web** (office.com), then open any workbook.
 3. Go to **Home → Add-ins → More Add-ins → My Add-ins → Upload My Add-in**, and choose `manifest.xml`.
 4. Click **Review** on the Home tab. The checklist opens and updates as you work.
@@ -102,6 +102,5 @@ src/review/reviewers/  the catalog: workpaper basics + one file per procedure re
 src/excel/      everything that talks to Excel (reading the sheet, settings, events)
 src/taskpane/   the panel UI
 tests/          vitest tests for the engine
-legacy/         the original Excel Coach shortcut trainer, kept for reference
 docs/           vision, decisions, screenshots
 ```

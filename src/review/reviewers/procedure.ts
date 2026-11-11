@@ -27,7 +27,7 @@ function labelOf(spec: TableSpec, key: string): string {
   return spec.columns.filter(c => c.key === key)[0]?.label ?? key;
 }
 
-/** A short name for the row in messages, e.g. "row 14 (Acme Ltd)". */
+/** A short name for the row in messages, e.g. "row 14 (Vendor A)". */
 export function rowName(row: TableRow, labelKeys: string[]): string {
   for (const k of labelKeys) {
     const t = textOf(row, k);

@@ -86,7 +86,7 @@ describe("pyStatuses", () => {
 
   it("marks repeat issues, fixed issues and manual ones", () => {
     const s = sheet(
-      { A1: "Purpose: cash", A2: "Source: bank", A3: "Prepared by: JS 05/01/2026", A4: "Reviewed by: MK 09/01/2026", B5: 2, C5: "=B5*1.3" },
+      { A1: "Purpose: cash", A2: "Source: bank", A3: "Prepared by: AB 05/01/2026", A4: "Reviewed by: CD 09/01/2026", B5: 2, C5: "=B5*1.3" },
       "Cash",
     );
     const statuses = pyStatuses(notes, "Cash", runChecklist(s)).map(x => x.status);
