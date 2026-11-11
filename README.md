@@ -43,7 +43,7 @@ Every item explains **why it matters** and **how to fix it**, and clicking a cel
 
 ## Demo video
 
-Watch the demo: AP-3 search for unrecorded liabilities (on the download page, also at
+Watch the demo: workpaper basics on AP-3, then the SURL, cash confirmation and expense vouching reviewers (on the download page, also at
 [`demo/Baseline-demo-video.mp4`](demo/Baseline-demo-video.mp4)). The spreadsheet in the video is simulated; the
 panel is the real add-in code running against it. To re-record, see `demo/video/record.mjs`.
 
