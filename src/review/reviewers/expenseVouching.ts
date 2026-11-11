@@ -9,6 +9,7 @@
 // - Fraud: payments for goods or services not received, including fictitious vendors, are a recognised way
 //   management can override controls (ISA 240 application material).
 // - Classification: costs meeting IAS 16.7 are capitalised; day-to-day servicing and repairs are expensed (IAS 16.12).
+//   US GAAP: ASC 360-10 (outlays that extend useful life or add capability are capitalised; maintenance expensed).
 
 import { amountOf, dateOf, flagOf, isBlank, textOf } from "../table";
 import { Reviewer } from "../types";
@@ -108,7 +109,7 @@ export const expenseVouching: Reviewer = {
       title: "Service falls outside the year",
       severity: "high",
       assertion: "Cut-off",
-      reference: "ISA 315 (cut-off); IFRS Conceptual Framework (accrual basis)",
+      reference: "ISA 315 (cut-off)",
       why: "Expenses belong to the year the goods or services were received, not the year they were paid or invoiced. A service after year-end recorded as this year's expense overstates expenses; one from last year means last year was understated. Both are cut-off errors and often come in clusters around year-end.",
       needs: ["yearEnd"],
       aliases: ["cutoff"],
@@ -187,7 +188,8 @@ export const expenseVouching: Reviewer = {
       severity: "medium",
       assertion: "Classification",
       reference: "IAS 16.7; IAS 16.12",
-      why: "A cost that gives benefits over more than one year (equipment, vehicles, major upgrades) should be capitalised as property, plant and equipment if it meets IAS 16.7; day-to-day repairs and servicing are expensed (IAS 16.12). Expensing a capital item understates assets and this year's profit; capitalising repairs does the reverse.",
+      usGaap: { reference: "ASC 360-10 (property, plant and equipment)" },
+      why: "A cost that gives benefits over more than one year (equipment, vehicles, major upgrades) should be capitalised as property, plant and equipment; day-to-day repairs and servicing are expensed. Expensing a capital item understates assets and this year's profit; capitalising repairs does the reverse.",
       needs: ["threshold"],
       spec,
       labelKeys: LABEL,

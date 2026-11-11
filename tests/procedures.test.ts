@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { serialFromYMD as d } from "../src/review/dates";
 import { parseNotesText, pyStatuses, tagNote } from "../src/review/notes";
 import { runReview, suggestReviewer } from "../src/review/review";
+import { explain } from "../src/review/framework";
 import { CATALOG } from "../src/review/reviewers/catalog";
 import { cashConfirmations } from "../src/review/reviewers/cashConfirmations";
 import { expenseVouching } from "../src/review/reviewers/expenseVouching";
@@ -203,5 +204,41 @@ describe("prior-year notes", () => {
     const r = runReview(exp, ctx, expenseVouching);
     const notes = parseNotesText("Expense vouching | Duplicate payment to a supplier not identified");
     expect(pyStatuses(notes, "Expense vouching", r.all, r.insights)[0].status).toBe("still-an-issue");
+  });
+});
+
+// ─── Accounting framework ───────────────────────────────────────────────────
+
+describe("accounting framework", () => {
+  const items = CATALOG.filter(r => !r.alwaysOn).flatMap(r => [...r.checks, ...r.insights]);
+  const IFRS_CITE = /\b(IAS|IFRS)\b/;
+
+  it("defaults to IFRS references", () => {
+    const capital = expenseVouching.insights.filter(i => i.id === "expense-vouching.capital")[0];
+    expect(explain(capital, ctx).reference).toBe("IAS 16.7; IAS 16.12");
+  });
+
+  it("cites US GAAP instead when the workbook reports under US GAAP", () => {
+    const us = { ...ctx, framework: "us-gaap" as const };
+    const capital = expenseVouching.insights.filter(i => i.id === "expense-vouching.capital")[0];
+    expect(explain(capital, us).reference).toContain("ASC 360");
+    const overdraft = cashConfirmations.insights.filter(i => i.id === "cash-confirmations.overdraft")[0];
+    expect(explain(overdraft, us).why).toContain("liability");
+    expect(explain(overdraft, us).reference).toContain("ASC 305");
+  });
+
+  it("never shows an IFRS citation under US GAAP", () => {
+    const us = { ...ctx, framework: "us-gaap" as const };
+    for (const item of items) {
+      const text = explain(item, us);
+      expect(text.why, item.id).not.toMatch(IFRS_CITE);
+      expect(text.reference || "", item.id).not.toMatch(IFRS_CITE);
+    }
+  });
+
+  it("keeps audit references the same under either framework", () => {
+    const us = { ...ctx, framework: "us-gaap" as const };
+    const notDirect = cashConfirmations.insights.filter(i => i.id === "cash-confirmations.not-direct")[0];
+    expect(explain(notDirect, us).reference).toBe(explain(notDirect, ctx).reference);
   });
 });

@@ -87,3 +87,11 @@
   "Ready for review" state shown in the video.
 - Demo workbook made more realistic: an explained bank difference beside the unexplained one, a duplicate paid nine
   days apart at a non-round amount, last year's notes in a reviewer's voice.
+
+## 2026-11-11: US GAAP references
+- New Settings choice: accounting framework, IFRS (default) or US GAAP, saved in the workbook. Under US GAAP the
+  procedure findings cite the ASC (and FASB Concepts Statement 8 for the liability definition) instead of IFRS, and
+  the overdraft explanation changes because US GAAP presents overdrafts as liabilities.
+- Audit references (ISA, PCAOB AS) don't change with the framework.
+- Unresolved: the FASB Codification itself couldn't be opened; paragraph-level US GAAP references were checked
+  against Deloitte, PwC and KPMG guides. Only ASC 830-20-35-2 is cited at paragraph level.

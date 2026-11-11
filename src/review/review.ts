@@ -23,6 +23,7 @@ export interface ReviewResult {
 const NEEDS_LABEL: Record<keyof ReviewContext, string> = {
   yearEnd: "year-end",
   threshold: "threshold",
+  framework: "accounting framework",
 };
 
 export function runReview(sheet: SheetSnapshot, ctx: ReviewContext, reviewer?: Reviewer): ReviewResult {
