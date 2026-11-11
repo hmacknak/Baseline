@@ -1019,3 +1019,38 @@ textarea {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* Why it matters: reasoning first, then assertion and reference */
+.why-block {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.why-block .why {
+  margin: 0;
+}
+
+.why-meta {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.why-label {
+  display: inline-block;
+  margin: 0 4px 0 0;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.why-label + * ,
+.why-meta .why-label:not(:first-child) {
+  margin-left: 8px;
+}

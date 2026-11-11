@@ -173,13 +173,16 @@ describe("AR confirmations reviewer", () => {
 // ─── Catalog, suggestions, review ───────────────────────────────────────────
 
 describe("suggestReviewer", () => {
+  it("suggests the SURL reviewer for a SURL sheet", () => {
+    expect(suggestReviewer(surlSheet)?.reviewer.id).toBe("surl");
+  });
+
   it.each([
-    [surlSheet, "surl"],
-    [bankSheet, "bank-rec"],
-    [cutoffSheet, "revenue-cutoff"],
-    [confSheet, "ar-confirmations"],
-  ])("suggests the right reviewer for %#", (s, id) => {
-    expect(suggestReviewer(s)?.reviewer.id).toBe(id);
+    [bankSheet, "bank rec"],
+    [cutoffSheet, "revenue cut-off"],
+    [confSheet, "AR confirmations"],
+  ])("suggests nothing for a switched-off procedure (%#: %s)", s => {
+    expect(suggestReviewer(s)).toBeNull();
   });
 
   it("suggests nothing for a generic sheet", () => {

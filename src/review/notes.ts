@@ -45,6 +45,9 @@ const TAG_RULES: Array<{ id: CheckId; pattern: RegExp }> = [
   { id: "rec-difference", pattern: /(rec|reconciliation) (doesn'?t|does not|didn'?t) (agree|tie|balance)|unreconciled|reconciling difference/i },
   { id: "confirm-difference", pattern: /confirm\w*.*(difference|variance)|(difference|variance).*confirm|unexplained difference/i },
   { id: "confirm-no-response", pattern: /non-?respon|no response|alternative procedures?/i },
+  { id: "confirm-control", pattern: /(received|returned|forwarded|came) (via|through|from) (the )?(client|company|management)|not (sent|received) directly|control (over|of) (the )?confirm/i },
+  { id: "duplicate", pattern: /duplicat|paid twice|double[\s-]?(paid|payment|counted)/i },
+  { id: "vouch-amount", pattern: /(doesn'?t|does not|did not|not) agree (to|with) (the )?(invoice|support)|amount (per (gl|ledger) )?differs?/i },
 ];
 
 /** "Link to source" is advice about a hard-code, not a note that the sheet lacks a documented source. */

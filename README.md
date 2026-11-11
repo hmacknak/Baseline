@@ -3,8 +3,8 @@
 A live review checklist inside Excel. As a junior works on a workpaper, Baseline checks it the way a
 senior would, and if last year's reviewer raised the same issue, it says so.
 
-**Current focus: Workpaper basics** (15 checks, Mark OK with a reason, step through issues and dates, review all
-sheets). The procedure reviewers below are built but switched off for now (`src/config.ts`).
+**Procedures on:** search for unrecorded liabilities, cash confirmations and expense vouching, each with
+researched "why it matters" (assertion and standard). See [docs/PROCEDURES.md](docs/PROCEDURES.md).
 
 **Reviewer catalog.** *Workpaper basics* run on every sheet. On top of that, each sheet gets a **procedure
 reviewer** from the catalog (bank rec, search for unrecorded liabilities, revenue cut-off, AR confirmations, with
@@ -18,10 +18,9 @@ in the testing data, like an invoice dated after year-end for a December service
 
 | Reviewer | Finds |
 |---|---|
-| Bank reconciliation | rec not agreeing to the GL, stale cheques, items cleared before year-end, cheques dated after year-end, large uncleared items |
-| Search for unrecorded liabilities | post-year-end invoices for this year's services, pre-year-end invoices not in AP, items with no service date |
-| Revenue cut-off | sales recorded this year but shipped next year (and the reverse), credit notes after year-end, large near-year-end sales with no conclusion |
-| AR confirmations | unexplained differences, non-responses with no alternative procedures, large balances never sent |
+| Search for unrecorded liabilities | post-year-end invoices for this year's services, pre-year-end invoices not in payables, over-accruals for next year, missing service dates, short search windows |
+| Cash confirmations | unexplained differences, no reply, replies not received directly, unconfirmed (incl. nil) accounts, wrong confirmation date, overdrafts, foreign currency |
+| Expense vouching | amounts not agreeing to support, cut-off, possible duplicates, missing approval, likely capital items, wrong account |
 
 Each one also checks that every tested item is complete. Set the **year-end** and **threshold** once in the
 Settings tab (saved in the workbook). To add a procedure, see [docs/ADDING_A_REVIEWER.md](docs/ADDING_A_REVIEWER.md).

@@ -66,3 +66,16 @@
   flag comes back. Accepted flags are listed under each check with Undo.
 - **Step through** Issues or Dates one at a time (selects each cell), and **Review all sheets** for a one-pass summary.
 - Reading fill colours needs ExcelApi 1.9; on older Excel the highlighting check simply finds nothing.
+
+## 2026-11-12: Procedures back on: SURL, cash confirmations, expense vouching
+- `PROCEDURES_ENABLED = true`; only `ENABLED_PROCEDURES` (SURL, cash confirmations, expense vouching) appear in
+  the catalog. Bank reconciliation, revenue cut-off and AR confirmations stay in the code with their tests.
+  "Coming soon" cards were removed.
+- Each procedure check and insight now carries the **assertion** at risk and the **reference** (ISA, PCAOB AS or
+  IFRS paragraph) behind it, shown under "Why it matters". Research and sources: `docs/PROCEDURES.md`.
+- New: cash confirmations (difference, no reply, not direct, not sent incl. nil balances, wrong date, overdraft,
+  foreign currency) and expense vouching (amount vs support, cut-off, duplicates, approval, capital items, wrong
+  account). SURL adds over-accrual for next year's services and a short search window.
+- Cash confirmations are only suggested when the sheet has a bank column, so customer (AR) confirmations aren't
+  mistaken for bank ones. Expense vouching is only suggested when the sheet's name or wording says so.
+- The demo video is not re-recorded for every change; only on request.

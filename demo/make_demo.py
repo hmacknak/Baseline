@@ -76,6 +76,8 @@ lines = [
     ('7. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
     ("8. Fix something live: change AP-3 SURL F17 to =SUM(F8:F16) and watch it turn green.", None),
     ("9. Click Review all sheets to see every tab at once. FY25 Fixed Assets is ready for review.", None),
+    ('10. Procedures: open "Cash confirmations" or "Expense vouching" (or "AP-3 SURL"). Baseline offers the', None),
+    ("    matching reviewer. Set a threshold of 10000 in Settings to see every insight.", None),
     ("", None),
     ("All figures are made up. Nothing in this file leaves Excel.", MUTED),
 ]
@@ -328,6 +330,60 @@ table(
 )
 widths(ws, 20, 17, 12, 17, 18, 22)
 
+# ─── Cash confirmations ──────────────────────────────────────────────────────
+ws = wb.create_sheet("Cash confirmations")
+ws["A1"] = "Example Client Ltd.  |  C-2  Cash confirmations"
+ws["A1"].font = TITLE
+ws["A2"] = "Year ended 31 December 2025"
+ws["A3"] = "Objective: confirm existence and completeness of all bank balances directly with each bank."
+ws["A4"] = "Source: trial balance, prior-year bank replies, confirmation platform responses."
+ws["A5"] = "Prepared by: AB 14/01/2026"
+ws["F5"] = "Reviewed by:"
+table(
+    ws,
+    7,
+    ["Bank", "Account", "Currency", "Balance per books", "Balance per confirmation", "As at", "Date sent", "Date received", "Received via", "Explanation", "Conclusion"],
+    [
+        ("Bank A", "Operating", "CAD", 468_475, 468_475, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
+        ("Bank A", "Payroll", "CAD", 36_400, 31_400, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Exception"),
+        ("Bank B", "Savings", "CAD", 125_000, None, date(2025, 12, 31), date(2026, 1, 5), None, None, None, "Chasing"),
+        ("Bank C", "US dollar account", "USD", 25_000, 25_000, date(2025, 11, 30), date(2026, 1, 5), date(2026, 1, 20), "Forwarded by client", None, "Agreed"),
+        ("Bank D", "Dormant account", "CAD", 0, None, None, None, None, None, None, "Not used"),
+        ("Bank A", "Credit line", "CAD", -15_000, -15_000, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
+    ],
+    {3: MONEY, 4: MONEY, 5: DATE, 6: DATE, 7: DATE},
+)
+ws["A15"] = "Conclusion: to be completed once differences and non-replies are cleared."
+widths(ws, 10, 16, 8, 14, 14, 10, 10, 10, 18, 12, 12)
+
+# ─── Expense vouching ────────────────────────────────────────────────────────
+ws = wb.create_sheet("Expense vouching")
+ws["A1"] = "Example Client Ltd.  |  E-4  Expense vouching"
+ws["A1"].font = TITLE
+ws["A2"] = "Year ended 31 December 2025"
+ws["A3"] = "Objective: vouch a sample of operating expenses to support for occurrence, accuracy, cut-off and classification."
+ws["A4"] = "Source: general ledger expense accounts; vendor invoices. Sample of 8 items."
+ws["A5"] = "Prepared by: AB 20/01/2026"
+ws["F5"] = "Reviewed by:"
+table(
+    ws,
+    7,
+    ["Sample #", "GL date", "Vendor", "Description", "Amount per GL", "Amount per invoice", "Invoice #", "Service date", "Approved?", "Correct account?", "Conclusion"],
+    [
+        ("1", date(2025, 3, 4), "Vendor A", "Office cleaning", 1_200, 1_200, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
+        ("2", date(2025, 5, 9), "Vendor B", "Consulting", 8_500, 5_800, "B-20", date(2025, 5, 1), "Y", "Y", "Exception"),
+        ("3", date(2025, 12, 30), "Vendor C", "Annual software support", 6_000, 6_000, "C-7", date(2026, 1, 15), "Y", "Y", "Agreed"),
+        ("4", date(2025, 3, 18), "Vendor A", "Office cleaning", 1_200, 1_200, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
+        ("5", date(2025, 8, 2), "Vendor D", "New forklift", 42_000, 42_000, "D-3", date(2025, 7, 30), "N", "N", "Exception"),
+        ("6", date(2025, 9, 2), "Vendor E", "Courier", 300, 300, "E-9", date(2025, 9, 1), None, "Y", "Agreed"),
+        ("7", date(2025, 10, 14), "Vendor F", "Utilities", 2_450, 2_450, "F-31", date(2025, 9, 30), "Y", "Y", "Agreed"),
+        ("8", date(2025, 11, 20), "Vendor G", "Travel", 1_980, 1_980, "G-2", date(2025, 11, 12), "Y", "Y", None),
+    ],
+    {1: DATE, 4: MONEY, 5: MONEY, 7: DATE},
+)
+ws["A17"] = "Conclusion: to be completed once exceptions are evaluated and projected."
+widths(ws, 9, 10, 10, 22, 12, 12, 9, 10, 9, 10, 12)
+
 # ─── PY Notes ────────────────────────────────────────────────────────────────
 ws = wb.create_sheet("PY Notes")
 header_row(ws, 1, ["Sheet", "Cell", "Review note"])
@@ -342,6 +398,8 @@ py_notes = [
     ("AP-3 SURL", "", "Missing service dates on several items, so you can't conclude on the period"),
     ("AP-3 SURL", "", "January invoice for December services was not identified as an unrecorded liability"),
     ("AP-3 SURL", "H8", "Where is the tickmark legend?"),
+    ("Cash confirmations", "", "Bank confirmation received via the client, not directly"),
+    ("Expense vouching", "", "Duplicate payment to a supplier not identified"),
     ("FY24 Revenue cut-off", "", "Dec 31 invoice shipped in January was not identified"),
 ]
 for r, row in enumerate(py_notes, start=2):
