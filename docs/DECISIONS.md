@@ -88,6 +88,9 @@
 - Demo workbook made more realistic: an explained bank difference beside the unexplained one, a duplicate paid nine
   days apart at a non-round amount, last year's notes in a reviewer's voice.
 
+## 2026-11-11: "No open issues" instead of "Ready for review"
+- A clean sheet now says "No open issues" (and the workbook view adds that this is a first pass, not a review
+  sign-off). "Ready for review" read as the tool approving the work, which it can't do.
 ## 2026-11-11: US GAAP references
 - New Settings choice: accounting framework, IFRS (default) or US GAAP, saved in the workbook. Under US GAAP the
   procedure findings cite the ASC (and FASB Concepts Statement 8 for the liability definition) instead of IFRS, and

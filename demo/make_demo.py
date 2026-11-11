@@ -75,7 +75,7 @@ lines = [
     ("6. If a flag is fine, click Mark OK and give a reason. The reviewer can see it.", None),
     ('7. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
     ("8. Fix something live: change AP-3 SURL F17 to =SUM(F8:F16) and watch it turn green.", None),
-    ("9. Click Review all sheets to see every tab at once. FY25 Fixed Assets is ready for review.", None),
+    ("9. Click Review all sheets to see every tab at once. FY25 Fixed Assets shows no open issues.", None),
     ('10. Procedures: open "Cash confirmations" or "Expense vouching" (or "AP-3 SURL"). Baseline offers the', None),
     ("    matching reviewer. Set a threshold of 10000 in Settings to see every insight.", None),
     ("", None),

@@ -514,7 +514,7 @@ function renderScore() {
   const toFix = all.reduce((n, r) => n + r.findings.length, 0);
   const passed = all.filter(r => r.findings.length === 0).length;
   if (!toFix) {
-    score.appendChild(el("strong", "all-clear", "Ready for review"));
+    score.appendChild(el("strong", "all-clear", "No open issues"));
     score.appendChild(document.createTextNode(` · all ${all.length} checks clear`));
     return;
   }
@@ -632,7 +632,7 @@ async function reviewWorkbook() {
                 .slice(0, 2)
                 .map(c => c.check.title)
                 .join(" · ")
-            : "Ready for review",
+            : "No open issues",
         ),
       );
       btn.appendChild(text);
@@ -642,7 +642,7 @@ async function reviewWorkbook() {
       list.appendChild(li);
     }
     panel.appendChild(
-      el("p", "help small", needing ? `${plural(needing, "sheet")} need attention. Tap one to go to it.` : "Every sheet is ready for review."),
+      el("p", "help small", needing ? `${plural(needing, "sheet")} need attention. Tap one to go to it.` : "No open issues on any sheet. This is a first pass, not a review sign-off."),
     );
     panel.appendChild(list);
   } catch (e) {
