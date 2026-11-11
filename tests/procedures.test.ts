@@ -240,6 +240,9 @@ describe("accounting framework", () => {
     const us = { ...ctx, framework: "us-gaap" as const };
     const notDirect = cashConfirmations.insights.filter(i => i.id === "cash-confirmations.not-direct")[0];
     expect(explain(notDirect, us).reference).toBe(explain(notDirect, ctx).reference);
+  });
+});
+
 describe("duplicate payments", () => {
   it("names occurrence and accuracy as the assertions at risk", () => {
     const dup = expenseVouching.insights.filter(i => i.id === "expense-vouching.duplicates")[0];
