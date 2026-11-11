@@ -77,8 +77,14 @@ describe("external-links", () => {
 
 describe("signoff", () => {
   it("flags missing sign-offs", () => {
-    const f = run("signoff", { A1: "Cash lead", B2: 5 });
+    const f = run("signoff", { A1: "Cash lead, year ended 31 December 2025", B2: 5 });
     expect(f).toHaveLength(2);
+  });
+
+  it("leaves supporting data tabs alone", () => {
+    const data = { A1: "Customer", B1: "Invoice", C1: "Amount", A2: "Company A", B2: "1001", C2: 500, A3: "Company B", B3: "1002", C3: 700 };
+    expect(run("signoff", data)).toEqual([]);
+    expect(run("header", data)).toEqual([]);
   });
 
   it("flags a blank Prepared by", () => {
@@ -98,7 +104,9 @@ describe("signoff", () => {
 
 describe("header", () => {
   it("wants purpose and source", () => {
-    expect(run("header", { A1: "Cash" })).toHaveLength(3);
+    expect(run("header", { A1: "Cash, as at 31 December 2025" })).toHaveLength(3);
+    // "Human resources" is not a source line.
+    expect(run("header", { A1: "Purpose: test payroll", A2: "Human resources costs", A9: "Conclusion: fine" })).toHaveLength(1);
     expect(
       run("header", { A1: "Purpose: test cash", A2: "Source: bank statement", A9: "Conclusion: cash is fairly stated" }),
     ).toEqual([]);

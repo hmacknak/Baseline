@@ -35,9 +35,12 @@ export function isDateFormat(fmt: string | undefined): boolean {
   return /(^|[^a-z])(d{1,4}|m{3,5}|y{2,4})([^a-z]|$)/.test(bare) || /\b(m{1,2}[/\-.]d{1,2}|d{1,2}[/\-.]m{1,2})\b/.test(bare);
 }
 
+/** Serials below this are 1900 dates: in practice a zero or a time shown with a date format, not a date. */
+const FIRST_REAL_DATE = 367;
+
 /** A real Excel date: a number shown with a date format. */
 export function isDateCell(c: Cell | undefined): boolean {
-  return !!c && c.kind === "number" && typeof c.value === "number" && isDateFormat(c.numberFormat);
+  return !!c && c.kind === "number" && typeof c.value === "number" && c.value >= FIRST_REAL_DATE && isDateFormat(c.numberFormat);
 }
 
 export function isNumeric(c: Cell | undefined): boolean {
