@@ -26,8 +26,9 @@ for ws in wb.worksheets:
         for c in row:
             if c.value is None:
                 continue
-            filled = bool(c.fill and c.fill.fgColor and c.fill.fgColor.rgb not in (None, "00000000"))
-            cells[c.coordinate] = {"v": plain(c.value), "b": bool(c.font and c.font.b), "fmt": c.number_format, "fill": filled}
+            rgb = c.fill.fgColor.rgb if c.fill and c.fill.fill_type == "solid" and c.fill.fgColor else None
+            fill = "#" + rgb[-6:].upper() if isinstance(rgb, str) and len(rgb) >= 6 else None
+            cells[c.coordinate] = {"v": plain(c.value), "b": bool(c.font and c.font.b), "fmt": c.number_format, "fill": fill}
     out["order"].append(ws.title)
     out["sheets"][ws.title] = {
         "cells": cells,

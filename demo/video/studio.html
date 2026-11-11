@@ -78,8 +78,8 @@
 
 <script>
 // ─── Workbook model (shared with the add-in iframe via window.parent) ──────────
-const ROWS = 24, COLS = 9;
-const LETTERS = "ABCDEFGHIJ";
+const ROWS = 24, COLS = 11;
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 window.__wb = null;
 window.__changeHandlers = [];
 window.__activateHandlers = [];
@@ -157,10 +157,11 @@ function render() {
     html += `<tr><th>${r + 1}</th>`;
     for (let c = 0; c < COLS; c++) {
       const a = addr(r, c), cell = sheet.cells[a], d = display(sheet, a);
-      const cls = [d.num ? "num" : "", cell && cell.b ? "bold" : "", cell && cell.fill ? "fill" : "",
+      const fillStyle = cell && typeof cell.fill === "string" ? ` style="background:${cell.fill}"` : "";
+      const cls = [d.num ? "num" : "", cell && cell.b ? "bold" : "", cell && cell.fill === true ? "fill" : "",
         r === 0 && cell ? "title" : "", d.err ? "err" : "", a === selected ? "sel" : ""].join(" ");
       const text = d.text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-      html += `<td id="cell-${a}" class="${cls}"><span class="clip">${text}</span></td>`;
+      html += `<td id="cell-${a}" class="${cls}"${fillStyle}><span class="clip">${text}</span></td>`;
     }
     html += "</tr>";
   }

@@ -3,7 +3,9 @@
 
 import { lettersToCol, toA1 } from "./address";
 import { findHardcodedNumbers, hasExternalLink, toR1C1 } from "./formula";
-import { Cell, Check, CheckId, Finding, SheetSnapshot } from "./types";
+import { isDateFormat } from "./layout";
+import { completeness, dates, highlights, placeholders, strayNumbers, textNumbers } from "./quality";
+import { Cell, Check, CheckId, Finding, ReviewContext, SheetSnapshot } from "./types";
 
 // ─── Grid helpers ────────────────────────────────────────────────────────────
 
@@ -91,25 +93,71 @@ const hardcodes: Check = {
   },
 };
 
+/**
+ * Runs of numeric cells along a column (or row). A typed constant inside a run that is mostly the
+ * same formula is almost always a formula that was pasted over.
+ */
+function constantsAmongFormulas(sheet: SheetSnapshot, vertical: boolean): Array<{ cell: Cell; example: Cell & { formula: string } }> {
+  const out: Array<{ cell: Cell; example: Cell & { formula: string } }> = [];
+  const lines = vertical ? sheet.cells[0]?.length ?? 0 : sheet.cells.length;
+  const length = vertical ? sheet.cells.length : sheet.cells[0]?.length ?? 0;
+  for (let i = 0; i < lines; i++) {
+    let run: Cell[] = [];
+    const flush = () => {
+      const formulas = run.filter(isFormula) as Array<Cell & { formula: string }>;
+      if (run.length >= 4 && formulas.length / run.length >= 0.6) {
+        const counts = new Map<string, number>();
+        formulas.forEach(f => counts.set(r1c1(f), (counts.get(r1c1(f)) || 0) + 1));
+        let best = "";
+        counts.forEach((n, k) => {
+          if (!best || n > counts.get(best)!) best = k;
+        });
+        if (counts.get(best)! >= formulas.length * 0.5) {
+          const example = formulas.filter(f => r1c1(f) === best)[0];
+          // The first cell of a run is often an opening balance or input, so it's allowed.
+          run.slice(1).forEach(c => {
+            if (isNumberConstant(c)) out.push({ cell: c, example });
+          });
+        }
+      }
+      run = [];
+    };
+    for (let j = 0; j < length; j++) {
+      const c = vertical ? sheet.cells[j]?.[i] : sheet.cells[i]?.[j];
+      if (c && c.kind === "number" && (isFormula(c) || isNumberConstant(c))) run.push(c);
+      else flush();
+    }
+    flush();
+  }
+  return out;
+}
+
 const overwritten: Check = {
   id: "overwritten",
-  title: "No numbers typed over formulas",
+  title: "No typed numbers among formulas",
   severity: "high",
-  why: "A typed number in the middle of a formula row usually means someone pasted over a formula. The total looks right today and silently goes wrong tomorrow.",
-  fix: "Copy the formula from the neighbouring cell back into this one, or explain the override in a comment.",
+  why: "A typed number in a row or column of formulas usually means someone pasted over a formula. The total looks right today and silently goes wrong when the inputs change.",
+  fix: "Copy the formula back into the cell, or if the override is intentional, explain it in a comment.",
   run(sheet) {
     const out: Finding[] = [];
+    const seen = new Set<string>();
+    const add = (c: Cell, why: string) => {
+      if (seen.has(c.address)) return;
+      seen.add(c.address);
+      out.push({ checkId: "overwritten", cell: c.address, message: `Typed value ${c.value} ${why}` });
+    };
     for (const c of allCells(sheet)) {
       if (!isNumberConstant(c)) continue;
       for (const [a, b] of neighbourPairs(sheet, c)) {
         if (isFormula(a) && isFormula(b) && r1c1(a) === r1c1(b)) {
-          out.push({
-            checkId: "overwritten",
-            cell: c.address,
-            message: `Typed value ${c.value} sits between matching formulas (${a.address}, ${b.address})`,
-          });
+          add(c, `sits between matching formulas (${a.address}, ${b.address})`);
           break;
         }
+      }
+    }
+    for (const vertical of [true, false]) {
+      for (const { cell, example } of constantsAmongFormulas(sheet, vertical)) {
+        add(cell, `in a ${vertical ? "column" : "row"} of formulas like ${example.address} (${example.formula})`);
       }
     }
     return out;
@@ -208,25 +256,36 @@ const externalLinks: Check = {
   },
 };
 
-/** Label cells such as "Prepared by:" and whether something is filled in next to them. */
-function findLabel(sheet: SheetSnapshot, pattern: RegExp): { cell: Cell; filled: boolean } | null {
+const DATE_IN_TEXT = /\d{1,2}[/\-.]\d{1,2}([/\-.]\d{2,4})?|\d{1,2}[\s-](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}/i;
+
+/** Label cells such as "Prepared by:", whether something is filled in next to them, and whether that includes a date. */
+function findLabel(sheet: SheetSnapshot, pattern: RegExp): { cell: Cell; filled: boolean; dated: boolean } | null {
   for (const c of textCells(sheet)) {
     const text = String(c.value);
     const m = pattern.exec(text);
     if (!m) continue;
+    const parts: string[] = [];
+    let dated = false;
     const rest = text.slice(m.index + m[0].length).replace(/^[\s:\-–]+/, "");
-    if (rest.length > 0) return { cell: c, filled: true };
+    if (rest) parts.push(rest);
     for (let k = 1; k <= 3; k++) {
       const right = cellAt(sheet, c.row, c.col + k);
-      if (right && right.kind !== "empty" && String(right.value).trim() !== "") return { cell: c, filled: true };
+      if (!right || right.kind === "empty" || String(right.value).trim() === "") continue;
+      // Stop at the next label, e.g. "Reviewed by:" on the same row as "Prepared by:".
+      if (right.kind === "text" && /:\s*$|\bby\b/i.test(String(right.value))) break;
+      if (right.kind === "number" && isDateFormat(right.numberFormat)) dated = true;
+      parts.push(String(right.value));
     }
-    return { cell: c, filled: false };
+    if (!parts.length) return { cell: c, filled: false, dated: false };
+    dated = dated || parts.some(p => DATE_IN_TEXT.test(p));
+    return { cell: c, filled: true, dated };
   }
   return null;
 }
 
-const PREPARED = /prepared\s*by|preparer|prep'?d\s*by/i;
-const REVIEWED = /reviewed\s*by|reviewer/i;
+// Sign-off labels start the cell ("Prepared by: JS"), so prose mentioning "the reviewer" doesn't count.
+const PREPARED = /^\s*(prepared\s*by|preparer\b|prep'?d\s*by)/i;
+const REVIEWED = /^\s*(reviewed\s*by|reviewer\b)/i;
 
 const signoff: Check = {
   id: "signoff",
@@ -241,18 +300,22 @@ const signoff: Check = {
     if (!prep) out.push({ checkId: "signoff", message: 'No "Prepared by" sign-off on this sheet' });
     else if (!prep.filled)
       out.push({ checkId: "signoff", cell: prep.cell.address, message: '"Prepared by" is blank: add your initials and date' });
-    if (!findLabel(sheet, REVIEWED))
-      out.push({ checkId: "signoff", message: 'No "Reviewed by" line for the reviewer to sign' });
+    else if (!prep.dated)
+      out.push({ checkId: "signoff", cell: prep.cell.address, message: '"Prepared by" has no date' });
+    const rev = findLabel(sheet, REVIEWED);
+    if (!rev) out.push({ checkId: "signoff", message: 'No "Reviewed by" line for the reviewer to sign' });
+    else if (rev.filled && !rev.dated)
+      out.push({ checkId: "signoff", cell: rev.cell.address, message: '"Reviewed by" has no date' });
     return out;
   },
 };
 
 const header: Check = {
   id: "header",
-  title: "Purpose and source documented",
+  title: "Purpose, source and conclusion documented",
   severity: "low",
-  why: "A reviewer needs to know what the sheet is for and where the numbers came from before they can sign it off.",
-  fix: 'Add a short "Purpose:" line and a "Source:" line (document name, client contact, or system report) at the top.',
+  why: "A reviewer needs to know what the sheet is for, where the numbers came from, and what you concluded before they can sign it off.",
+  fix: 'Add "Purpose:" and "Source:" lines (document name, client contact or system report) at the top, and a "Conclusion:" at the bottom.',
   run(sheet) {
     if (isEmpty(sheet)) return [];
     const texts = textCells(sheet).map(c => String(c.value));
@@ -261,6 +324,8 @@ const header: Check = {
       out.push({ checkId: "header", message: "No purpose or objective stated" });
     if (!texts.some(t => /source/i.test(t)))
       out.push({ checkId: "header", message: "No source documented for the numbers" });
+    if (!texts.some(t => /^\s*conclu(sion|ded)\b/i.test(t)))
+      out.push({ checkId: "header", message: "No conclusion documented" });
     return out;
   },
 };
@@ -272,20 +337,34 @@ const tickmarks: Check = {
   title: "Tickmarks explained in a legend",
   severity: "low",
   why: "A tickmark only counts as evidence if the reader can see what it means, like agreed to invoice or footed.",
-  fix: 'Add a "Tickmark legend" box that explains every symbol used on the sheet.',
+  fix: 'Add a "Tickmark legend" that explains every symbol used on the sheet, e.g. "✓ = agreed to invoice".',
   run(sheet) {
     const texts = textCells(sheet);
     const marks = texts.filter(c => TICKMARK.test(String(c.value)));
     if (!marks.length) return [];
-    const hasLegend = texts.some(c => /legend|tick\s*mark/i.test(String(c.value)));
-    if (hasLegend) return [];
-    return [
-      {
-        checkId: "tickmarks",
-        cell: marks[0].address,
-        message: `${marks.length} tickmark${marks.length > 1 ? "s" : ""} used but no legend found`,
-      },
-    ];
+    const legend = texts.filter(c => !TICKMARK.test(String(c.value)) && /legend|tick\s*mark|[✓✔√✗✘^©®Ⓐ-Ⓩⓐ-ⓩ]\s*[=:\-–]/i.test(String(c.value)));
+    if (!legend.length) {
+      return [
+        {
+          checkId: "tickmarks",
+          cell: marks[0].address,
+          message: `${marks.length} tickmark${marks.length > 1 ? "s" : ""} used but no legend found`,
+        },
+      ];
+    }
+    // Every symbol used must be explained somewhere in the legend.
+    const legendText = legend.map(c => String(c.value)).join(" ");
+    const out: Finding[] = [];
+    const seen = new Set<string>();
+    for (const m of marks) {
+      const sym = String(m.value).trim();
+      if (seen.has(sym)) continue;
+      seen.add(sym);
+      if (legendText.indexOf(sym) < 0) {
+        out.push({ checkId: "tickmarks", cell: m.address, message: `"${sym}" is used but not explained in the legend` });
+      }
+    }
+    return out;
   },
 };
 
@@ -294,7 +373,13 @@ export const CHECKS: Check[] = [
   hardcodes,
   overwritten,
   totals,
+  textNumbers,
   inconsistent,
+  completeness,
+  placeholders,
+  dates,
+  strayNumbers,
+  highlights,
   externalLinks,
   signoff,
   header,
@@ -310,8 +395,8 @@ export interface CheckResult {
   findings: Finding[];
 }
 
-export function runChecklist(sheet: SheetSnapshot): CheckResult[] {
-  return CHECKS.map(check => ({ check, findings: check.run(sheet) }));
+export function runChecklist(sheet: SheetSnapshot, ctx?: ReviewContext): CheckResult[] {
+  return CHECKS.map(check => ({ check, findings: check.run(sheet, ctx) }));
 }
 
 export { toA1 };

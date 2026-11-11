@@ -78,3 +78,17 @@
 - **Settings → Check for updates** shows the current version and applies an update on demand.
 - Bundles are content-hashed (`taskpane.<hash>.js`), so Excel can't keep serving a stale cached copy.
 - The manifest URL never changes, so nobody needs to re-upload the add-in file to get updates.
+
+## 2026-11-11: Focus on Workpaper basics
+- **Procedure reviewers switched off** (`src/config.ts`, `PROCEDURES_ENABLED = false`). The code and tests stay;
+  the Catalog tab, suggestions, insights and threshold setting are hidden.
+- **Basics grew from 9 to 15 checks**: typed numbers anywhere in a row/column of formulas (not just between two),
+  numbers stored as text, table completeness (blank cells in mostly-filled columns; comment/tick columns optional),
+  placeholders (TBD, XXX, ???, "to be completed"), dates (prior-year year-end left after roll-forward, year typos,
+  text dates, mixed formats, review dated before preparation), stray unlabelled numbers off to the side, leftover
+  highlighting (bright fills; pale/dark heading fills and colour legends are fine), sign-offs must carry a date,
+  a conclusion must be documented, and every tickmark symbol must be in the legend.
+- **Mark OK with a reason**: any flag can be accepted with a reason, saved in the workbook. If the cell changes, the
+  flag comes back. Accepted flags are listed under each check with Undo.
+- **Step through** Issues or Dates one at a time (selects each cell), and **Review all sheets** for a one-pass summary.
+- Reading fill colours needs ExcelApi 1.9; on older Excel the highlighting check simply finds nothing.

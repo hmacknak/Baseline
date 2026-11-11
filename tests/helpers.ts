@@ -5,7 +5,11 @@ import { Cell, SheetSnapshot } from "../src/review/types";
  * Build a snapshot from { A1: value } pairs.
  * Strings starting with "=" are formulas (value treated as a number), strings starting with "#" are errors.
  */
-export function sheet(cells: Record<string, string | number | boolean>, name = "Sheet1"): SheetSnapshot {
+export function sheet(
+  cells: Record<string, string | number | boolean>,
+  name = "Sheet1",
+  extra: { formats?: Record<string, string>; fills?: Record<string, string> } = {},
+): SheetSnapshot {
   let maxRow = 0;
   let maxCol = 0;
   const parsed = Object.keys(cells).map(addr => {
@@ -40,6 +44,14 @@ export function sheet(cells: Record<string, string | number | boolean>, name = "
       cell.kind = "text";
       cell.value = p.raw;
     }
+  }
+  for (const [addr, fmt] of Object.entries(extra.formats || {})) {
+    const p = parseA1(addr)!;
+    grid[p.row][p.col].numberFormat = fmt;
+  }
+  for (const [addr, fill] of Object.entries(extra.fills || {})) {
+    const p = parseA1(addr)!;
+    grid[p.row][p.col].fill = fill;
   }
   return { name, cells: grid, originRow: 0, originCol: 0 };
 }

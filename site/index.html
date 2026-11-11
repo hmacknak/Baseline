@@ -37,8 +37,8 @@
   <body>
     <main>
       <h1>Baseline Review</h1>
-      <p>Live review feedback for workpapers, inside Excel. It catches what a senior would flag, finds the high-risk
-        items in your testing, and remembers last year's review notes.</p>
+      <p>Live review feedback for workpapers, inside Excel. It catches what a senior would flag on a first pass,
+        before the workpaper goes to review, and remembers last year's review notes.</p>
 
       <video src="Baseline-demo-video.mp4?v=__VERSION__" controls playsinline preload="metadata"></video>
 
@@ -68,19 +68,21 @@
       <h2>Try the demo</h2>
       <ol>
         <li>Open the <b>Demo workbook</b> in Excel and click <b>Review</b>.</li>
-        <li>In the panel's <b>Settings</b> tab, set year-end to 31 Dec 2025 and threshold to 10000.</li>
+        <li>In the panel's <b>Settings</b> tab, set year-end to 31 Dec 2025.</li>
         <li>Follow the workbook's <b>Start here</b> tab.</li>
       </ol>
 
       <h2>What's inside</h2>
       <div class="card">
         <table>
-          <tr><td>Workpaper basics</td><td>Always on: errors, hard-codes, broken totals, sign-offs, purpose, source, tickmarks</td></tr>
-          <tr><td>Bank reconciliation</td><td>Rec vs GL, stale cheques, items cleared before year-end, large uncleared items</td></tr>
-          <tr><td>Unrecorded liabilities</td><td>Post-year-end invoices for this year's services, pre-year-end invoices not in AP</td></tr>
-          <tr><td>Revenue cut-off</td><td>Sales booked in the wrong year, credit notes after year-end</td></tr>
-          <tr><td>AR confirmations</td><td>Unexplained differences, non-responses with no follow-up, unsent confirms</td></tr>
-          <tr><td>Prior-year review notes</td><td>Flags when last year's review notes are happening again</td></tr>
+          <tr><td>Formulas</td><td>Errors, hard-coded numbers, typed numbers among formulas, inconsistent formulas, links to other files</td></tr>
+          <tr><td>Totals</td><td>Totals that skip a line, numbers stored as text</td></tr>
+          <tr><td>Completeness</td><td>Blanks in testing tables, placeholders (TBD, XXX), purpose, source and conclusion</td></tr>
+          <tr><td>Dates</td><td>Step through every date; prior-year dates after roll-forward, year typos, dates typed as text</td></tr>
+          <tr><td>Tidiness</td><td>Leftover highlighting, stray numbers off to the side, tickmarks missing from the legend</td></tr>
+          <tr><td>Sign-off</td><td>Preparer and reviewer, with dates, in the right order</td></tr>
+          <tr><td>Whole workbook</td><td>One pass over every sheet before it goes to review</td></tr>
+          <tr><td>Prior-year notes</td><td>Flags when last year's review notes are happening again</td></tr>
         </table>
       </div>
 

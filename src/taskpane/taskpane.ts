@@ -1,6 +1,9 @@
 /* global Office */
 
-import { CheckResult } from "../review/checks";
+import { PROCEDURES_ENABLED } from "../config";
+import { runChecklist } from "../review/checks";
+import { Dismissals, ReviewedCheck, applyDismissals, findingKey, fingerprint } from "../review/dismiss";
+import { dateCells } from "../review/quality";
 import { findYearEndInText, formatSerial, isoFromSerial, serialFromYMD } from "../review/dates";
 import {
   PyNote,
@@ -18,6 +21,10 @@ import { CATALOG, CATEGORY_ORDER, getReviewer } from "../review/reviewers/catalo
 import { ReviewContext, Reviewer, SheetSnapshot } from "../review/types";
 import { CURRENT_LABEL, CURRENT_VERSION, applyUpdate, autoUpdateOnOpen, fetchLatest, isUpdate } from "../update";
 import {
+  activateSheet,
+  loadSetting,
+  readAllSheets,
+  saveSetting,
   loadAssignments,
   loadContext,
   loadNotes,
@@ -33,6 +40,8 @@ import {
 const DEBOUNCE_MS = 600;
 const MAX_SHOWN = 20;
 const DECLINED = "none";
+const DISMISSED_SETTING = "baseline.dismissed.v1";
+const SEVERITY_ORDER = ["high", "medium", "low"];
 
 let notes: PyNote[] = [];
 let ctx: ReviewContext = {};
@@ -41,6 +50,13 @@ let sheet: SheetSnapshot | null = null;
 let result: ReviewResult | null = null;
 let lastReview = 0;
 let catalogSelection: string | null = null;
+let dismissals: Dismissals = {};
+/** Workpaper basics after "Mark OK" is applied. */
+let basicsView: ReviewedCheck[] = [];
+let procedureView: ReviewedCheck[] = [];
+/** The finding whose "Mark OK" reason box is open. */
+let marking: string | null = null;
+let showClear = false;
 const expanded = new Set<string>();
 /** High-risk insights start open; this remembers the ones the junior closed. */
 const collapsed = new Set<string>();
@@ -115,10 +131,12 @@ function scheduleReview() {
 async function review() {
   try {
     sheet = await readActiveSheet();
-    result = runReview(sheet, ctx, assignedReviewer());
+    result = runReview(sheet, ctx, PROCEDURES_ENABLED ? assignedReviewer() : undefined);
+    basicsView = applyDismissals(sheet, result.basics, dismissals);
+    procedureView = applyDismissals(sheet, result.procedure, dismissals);
     lastReview = Date.now();
     renderReview();
-    renderCatalog();
+    if (PROCEDURES_ENABLED) renderCatalog();
     renderSettingsHint();
   } catch (e) {
     console.error("[Baseline] review failed", e);
@@ -177,7 +195,7 @@ function renderPyPanel() {
   const panel = $("pyPanel");
   panel.textContent = "";
   if (!sheet || !result) return;
-  const statuses = pyStatuses(notes, sheet.name, result.all, result.insights);
+  const statuses = pyStatuses(notes, sheet.name, basicsView.concat(procedureView), result.insights);
   panel.hidden = statuses.length === 0;
   if (!statuses.length) return;
 
@@ -205,61 +223,168 @@ function renderPyPanel() {
   panel.appendChild(list);
 }
 
-function renderChecklist(list: HTMLElement, results: CheckResult[]) {
-  list.textContent = "";
-  if (!sheet) return;
+async function saveDismissals(next: Dismissals, message: string) {
+  try {
+    await saveSetting(DISMISSED_SETTING, next);
+    dismissals = next;
+    marking = null;
+    toast(message);
+    await review();
+  } catch (e) {
+    console.error("[Baseline] saving accepted flags failed", e);
+    toast("Couldn't save to this workbook");
+  }
+}
 
-  for (const { check, findings } of results) {
-    const pass = findings.length === 0;
-    const pyRelated = pyNotesForCheck(notes, sheet.name, check);
-    const item = el("li", `item ${pass ? "pass" : "fail"} ${check.severity}`);
+/** A flagged item, with "Mark OK" and, while open, the reason box. */
+function renderFinding(f: ReviewedCheck["findings"][number]): HTMLElement {
+  const wrap = el("div", "finding-wrap");
+  const row = el("div", "finding");
+  if (f.cell) row.appendChild(cellLink(f.cell));
+  row.appendChild(el("span", "finding-msg", f.message));
+  const key = sheet ? findingKey(sheet.name, f) : "";
+  const ok = el("button", "ok-link", "Mark OK");
+  ok.title = "Accept this flag with a reason";
+  ok.addEventListener("click", () => {
+    marking = marking === key ? null : key;
+    renderReview();
+  });
+  row.appendChild(ok);
+  wrap.appendChild(row);
 
-    const head = el("button", "item-head");
-    head.setAttribute("aria-expanded", String(expanded.has(check.id)));
-    head.appendChild(el("span", "mark", pass ? "✓" : "✗"));
-    head.appendChild(el("span", "item-title", check.title));
-    if (!pass && pyRelated.length) head.appendChild(el("span", "py-flag", "PY"));
-    if (!pass) head.appendChild(el("span", "count", String(findings.length)));
-    head.addEventListener("click", () => {
-      if (expanded.has(check.id)) expanded.delete(check.id);
-      else expanded.add(check.id);
+  if (marking === key && sheet) {
+    const form = el("div", "ok-form");
+    const input = el("input", "ok-reason") as HTMLInputElement;
+    input.placeholder = "Why is this OK? e.g. agreed rate per contract";
+    const save = el("button", "primary", "Save");
+    const cancel = el("button", "quiet", "Cancel");
+    const snap = sheet;
+    const submit = () => {
+      const reason = input.value.trim();
+      if (!reason) {
+        toast("Add a short reason first");
+        return;
+      }
+      const next = {
+        ...dismissals,
+        [key]: { reason, fingerprint: fingerprint(snap, f), date: new Date().toISOString().slice(0, 10) },
+      };
+      saveDismissals(next, "Marked OK");
+    };
+    save.addEventListener("click", submit);
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") submit();
+      if (e.key === "Escape") {
+        marking = null;
+        renderReview();
+      }
+    });
+    cancel.addEventListener("click", () => {
+      marking = null;
       renderReview();
     });
-    item.appendChild(head);
-
-    if (expanded.has(check.id)) {
-      const body = el("div", "item-body");
-      if (pass) body.appendChild(el("p", "why", "Nothing to fix here."));
-
-      findings.slice(0, MAX_SHOWN).forEach(f => {
-        const row = el("div", "finding");
-        if (f.cell) row.appendChild(cellLink(f.cell));
-        row.appendChild(el("span", "finding-msg", f.message));
-        body.appendChild(row);
-      });
-      if (findings.length > MAX_SHOWN) body.appendChild(el("p", "more", `…and ${findings.length - MAX_SHOWN} more`));
-
-      if (!pass && pyRelated.length) {
-        const callout = el("div", "py-callout");
-        callout.appendChild(el("strong", undefined, "Heads up, this happened last year: "));
-        callout.appendChild(document.createTextNode(pyRelated.map(n => `"${n.text}"`).join("; ")));
-        body.appendChild(callout);
-      }
-
-      if (!pass) {
-        const why = el("p", "why");
-        why.appendChild(el("strong", undefined, "Why it matters: "));
-        why.appendChild(document.createTextNode(check.why));
-        body.appendChild(why);
-        const fix = el("p", "why");
-        fix.appendChild(el("strong", undefined, "How to fix: "));
-        fix.appendChild(document.createTextNode(check.fix));
-        body.appendChild(fix);
-      }
-      item.appendChild(body);
-    }
-    list.appendChild(item);
+    form.appendChild(input);
+    form.appendChild(save);
+    form.appendChild(cancel);
+    wrap.appendChild(form);
+    setTimeout(() => input.focus(), 0);
   }
+  return wrap;
+}
+
+function renderCheckItem(r: ReviewedCheck): HTMLElement {
+  const { check, findings, dismissed } = r;
+  const pass = findings.length === 0;
+  const pyRelated = sheet ? pyNotesForCheck(notes, sheet.name, check) : [];
+  const item = el("li", `item ${pass ? "pass" : "fail"} ${check.severity}`);
+
+  const head = el("button", "item-head");
+  head.setAttribute("aria-expanded", String(expanded.has(check.id)));
+  head.appendChild(el("span", "mark", pass ? "✓" : "✗"));
+  head.appendChild(el("span", "item-title", check.title));
+  if (!pass && pyRelated.length) head.appendChild(el("span", "py-flag", "PY"));
+  if (!pass) head.appendChild(el("span", "count", String(findings.length)));
+  else if (dismissed.length) head.appendChild(el("span", "count ok-count", `${dismissed.length} OK`));
+  head.addEventListener("click", () => {
+    if (expanded.has(check.id)) expanded.delete(check.id);
+    else expanded.add(check.id);
+    renderReview();
+  });
+  item.appendChild(head);
+
+  if (expanded.has(check.id)) {
+    const body = el("div", "item-body");
+    if (pass && !dismissed.length) body.appendChild(el("p", "why", "Nothing to fix here."));
+
+    findings.slice(0, MAX_SHOWN).forEach(f => body.appendChild(renderFinding(f)));
+    if (findings.length > MAX_SHOWN) body.appendChild(el("p", "more", `…and ${findings.length - MAX_SHOWN} more`));
+
+    if (!pass && pyRelated.length) {
+      const callout = el("div", "py-callout");
+      callout.appendChild(el("strong", undefined, "Heads up, this happened last year: "));
+      callout.appendChild(document.createTextNode(pyRelated.map(n => `"${n.text}"`).join("; ")));
+      body.appendChild(callout);
+    }
+
+    if (!pass) {
+      const why = el("p", "why");
+      why.appendChild(el("strong", undefined, "Why it matters: "));
+      why.appendChild(document.createTextNode(check.why));
+      body.appendChild(why);
+      const fix = el("p", "why");
+      fix.appendChild(el("strong", undefined, "How to fix: "));
+      fix.appendChild(document.createTextNode(check.fix));
+      body.appendChild(fix);
+    }
+
+    if (dismissed.length) {
+      const box = el("div", "accepted");
+      box.appendChild(el("p", "accepted-head", `Marked OK (${dismissed.length})`));
+      dismissed.forEach(d => {
+        const row = el("div", "finding");
+        if (d.finding.cell) row.appendChild(cellLink(d.finding.cell));
+        const text = el("span", "finding-msg");
+        text.appendChild(el("span", "accepted-reason", d.dismissal.reason));
+        text.appendChild(el("span", "accepted-meta", ` · ${d.finding.message} · ${d.dismissal.date}`));
+        row.appendChild(text);
+        const undo = el("button", "ok-link", "Undo");
+        undo.addEventListener("click", () => {
+          const next = { ...dismissals };
+          delete next[d.key];
+          saveDismissals(next, "Flag restored");
+        });
+        row.appendChild(undo);
+        box.appendChild(row);
+      });
+      body.appendChild(box);
+    }
+    item.appendChild(body);
+  }
+  return item;
+}
+
+/** Open items first, most important first; checks that are clear fold into one line. */
+function renderChecklist(list: HTMLElement, results: ReviewedCheck[]) {
+  list.textContent = "";
+  if (!sheet) return;
+  const open = results
+    .filter(r => r.findings.length)
+    .sort((a, b) => SEVERITY_ORDER.indexOf(a.check.severity) - SEVERITY_ORDER.indexOf(b.check.severity));
+  const clear = results.filter(r => !r.findings.length);
+  open.forEach(r => list.appendChild(renderCheckItem(r)));
+  if (!clear.length) return;
+  const toggle = el("li", "item clear-toggle");
+  const btn = el("button", "item-head");
+  btn.appendChild(el("span", "mark", "✓"));
+  btn.appendChild(el("span", "item-title", `${plural(clear.length, "check")} clear`));
+  btn.appendChild(el("span", "count", showClear ? "Hide" : "Show"));
+  btn.addEventListener("click", () => {
+    showClear = !showClear;
+    renderReview();
+  });
+  toggle.appendChild(btn);
+  list.appendChild(toggle);
+  if (showClear) clear.forEach(r => list.appendChild(renderCheckItem(r)));
 }
 
 function renderInsight(r: InsightResult): HTMLElement {
@@ -355,7 +480,7 @@ function renderProcedure() {
   );
   box.appendChild(head);
   result.insights.forEach(r => box.appendChild(renderInsight(r)));
-  renderChecklist($("procList"), result.procedure);
+  renderChecklist($("procList"), procedureView);
 }
 
 function renderScore() {
@@ -366,20 +491,155 @@ function renderScore() {
     score.textContent = "This sheet is empty. Start working and the checklist will update as you go.";
     return;
   }
-  const passed = result.all.filter(r => r.findings.length === 0).length;
-  score.appendChild(el("strong", undefined, `${passed}/${result.all.length}`));
-  score.appendChild(
-    document.createTextNode(passed === result.all.length ? " checks clear. Ready for review." : " checks clear"),
-  );
+  const all = basicsView.concat(procedureView);
+  const toFix = all.reduce((n, r) => n + r.findings.length, 0);
+  const passed = all.filter(r => r.findings.length === 0).length;
+  if (!toFix) {
+    score.appendChild(el("strong", "all-clear", "Ready for review"));
+    score.appendChild(document.createTextNode(` · all ${all.length} checks clear`));
+    return;
+  }
+  score.appendChild(el("strong", undefined, `${toFix} to fix`));
+  score.appendChild(document.createTextNode(` · ${passed} of ${all.length} checks clear`));
+}
+
+// ─── Step through issues or dates ───────────────────────────────────────────
+
+type StepMode = "issues" | "dates";
+let stepMode: StepMode = "issues";
+let stepIndex = -1;
+
+interface Step {
+  cell: string;
+  text: string;
+}
+
+function steps(): Step[] {
+  if (!sheet) return [];
+  if (stepMode === "dates") {
+    return dateCells(sheet).map(d => ({
+      cell: d.cell,
+      text: `${formatSerial(d.date)}${d.asText ? " (typed as text)" : ""}`,
+    }));
+  }
+  const out: Step[] = [];
+  for (const r of basicsView.concat(procedureView)) {
+    for (const f of r.findings) if (f.cell) out.push({ cell: f.cell, text: f.message });
+  }
+  return out;
+}
+
+function renderStepper() {
+  const box = $("stepper");
+  box.hidden = !sheet || !sheet.cells.length;
+  const list = steps();
+  Array.prototype.slice.call(document.querySelectorAll(".step-mode")).forEach((b: HTMLButtonElement) => {
+    b.classList.toggle("active", b.dataset.mode === stepMode);
+  });
+  if (stepIndex >= list.length) stepIndex = list.length - 1;
+  ($("stepPrev") as HTMLButtonElement).disabled = !list.length;
+  ($("stepNext") as HTMLButtonElement).disabled = !list.length;
+  const what = stepMode === "dates" ? "date" : "issue";
+  $("stepPos").textContent = list.length
+    ? stepIndex >= 0
+      ? `${stepIndex + 1} of ${list.length}`
+      : plural(list.length, what)
+    : `No ${what}s`;
+  const detail = $("stepDetail");
+  detail.textContent = "";
+  if (stepIndex >= 0 && list[stepIndex]) {
+    detail.appendChild(el("span", "step-cell", list[stepIndex].cell));
+    detail.appendChild(document.createTextNode(list[stepIndex].text));
+  }
+}
+
+function step(delta: number) {
+  const list = steps();
+  if (!list.length) return;
+  stepIndex = stepIndex < 0 ? (delta > 0 ? 0 : list.length - 1) : (stepIndex + delta + list.length) % list.length;
+  selectCell(list[stepIndex].cell).catch(() => toast("Couldn't select that cell"));
+  renderStepper();
+}
+
+function wireStepper() {
+  Array.prototype.slice.call(document.querySelectorAll(".step-mode")).forEach((b: HTMLButtonElement) => {
+    b.addEventListener("click", () => {
+      stepMode = (b.dataset.mode as StepMode) || "issues";
+      stepIndex = -1;
+      renderStepper();
+    });
+  });
+  $("stepPrev").addEventListener("click", () => step(-1));
+  $("stepNext").addEventListener("click", () => step(1));
+}
+
+// ─── Whole-workbook review ───────────────────────────────────────────────────
+
+async function reviewWorkbook() {
+  const panel = $("workbookPanel");
+  panel.hidden = false;
+  panel.textContent = "Reviewing every sheet…";
+  try {
+    const sheets = await readAllSheets();
+    panel.textContent = "";
+    const head = el("div", "wb-head");
+    head.appendChild(el("strong", undefined, "Whole workbook"));
+    const close = el("button", "link", "Close");
+    close.addEventListener("click", () => {
+      panel.hidden = true;
+    });
+    head.appendChild(close);
+    panel.appendChild(head);
+    let needing = 0;
+    const list = el("ul", "wb-list");
+    for (const snap of sheets) {
+      if (!snap.cells.length) continue;
+      const checks = applyDismissals(snap, runChecklist(snap, ctx), dismissals);
+      const open = checks.filter(c => c.findings.length);
+      const count = open.reduce((n, c) => n + c.findings.length, 0);
+      if (count) needing++;
+      const li = el("li");
+      const btn = el("button", `wb-row ${count ? "fail" : "pass"}`);
+      btn.appendChild(el("span", "mark", count ? "✗" : "✓"));
+      const text = el("span", "wb-text");
+      text.appendChild(el("strong", undefined, snap.name));
+      text.appendChild(
+        el(
+          "span",
+          "wb-sub",
+          count
+            ? open
+                .sort((a, b) => SEVERITY_ORDER.indexOf(a.check.severity) - SEVERITY_ORDER.indexOf(b.check.severity))
+                .slice(0, 2)
+                .map(c => c.check.title)
+                .join(" · ")
+            : "Ready for review",
+        ),
+      );
+      btn.appendChild(text);
+      if (count) btn.appendChild(el("span", "count", String(count)));
+      btn.addEventListener("click", () => activateSheet(snap.name).catch(() => toast("Couldn't open that sheet")));
+      li.appendChild(btn);
+      list.appendChild(li);
+    }
+    panel.appendChild(
+      el("p", "help small", needing ? `${plural(needing, "sheet")} need attention. Tap one to go to it.` : "Every sheet is ready for review."),
+    );
+    panel.appendChild(list);
+  } catch (e) {
+    console.error("[Baseline] workbook review failed", e);
+    panel.textContent = "Couldn't read every sheet. Try again.";
+  }
 }
 
 function renderReview() {
   renderStatus();
-  renderSuggestion();
+  if (PROCEDURES_ENABLED) renderSuggestion();
   renderScore();
+  renderStepper();
   renderPyPanel();
-  renderProcedure();
-  if (result) renderChecklist($("checklist"), result.basics);
+  if (PROCEDURES_ENABLED) renderProcedure();
+  renderChecklist($("checklist"), basicsView);
   $("truncated").hidden = !(sheet && sheet.truncated);
 }
 
@@ -664,11 +924,19 @@ Office.onReady(async () => {
   if (await autoUpdateOnOpen()) return;
   wireTabs();
   wireUpdates();
+  wireStepper();
+  $("reviewAll").addEventListener("click", reviewWorkbook);
+  if (!PROCEDURES_ENABLED) {
+    Array.prototype.slice.call(document.querySelectorAll(".procedures-only")).forEach((n: HTMLElement) => {
+      n.hidden = true;
+    });
+  }
   wireNotesTab();
   wireSettings();
   // Re-tag on load so notes saved by an older version pick up improved keyword rules.
   notes = loadNotes().map(n => ({ ...n, tags: tagNote(n.text) }));
   ctx = loadContext();
+  dismissals = loadSetting<Dismissals>(DISMISSED_SETTING) || {};
   assignments = loadAssignments();
   renderNotesTab();
   await review();

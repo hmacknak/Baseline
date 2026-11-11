@@ -3,6 +3,9 @@
 A live review checklist inside Excel. As a junior works on a workpaper, Baseline checks it the way a
 senior would, and if last year's reviewer raised the same issue, it says so.
 
+**Current focus: Workpaper basics** (15 checks, Mark OK with a reason, step through issues and dates, review all
+sheets). The procedure reviewers below are built but switched off for now (`src/config.ts`).
+
 **Reviewer catalog.** *Workpaper basics* run on every sheet. On top of that, each sheet gets a **procedure
 reviewer** from the catalog (bank rec, search for unrecorded liabilities, revenue cut-off, AR confirmations, with
 more coming). Baseline suggests one from the sheet's name and headings, and the junior confirms. A procedure reviewer

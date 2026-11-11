@@ -14,6 +14,10 @@ export interface Cell {
   value: string | number | boolean | null;
   /** The A1 formula including the leading "=", or null for constants and blanks. */
   formula: string | null;
+  /** Excel number format, e.g. "dd-mmm-yy" or "#,##0". Absent when unknown. */
+  numberFormat?: string;
+  /** Fill colour as "#RRGGBB" when the cell is shaded; absent for no fill or when unknown. */
+  fill?: string;
 }
 
 export interface SheetSnapshot {

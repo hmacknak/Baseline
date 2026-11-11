@@ -19,7 +19,7 @@
       </div>
       <nav class="tabs" role="tablist">
         <button class="tab active" data-tab="review" role="tab" aria-selected="true">Review</button>
-        <button class="tab" data-tab="catalog" role="tab" aria-selected="false">Catalog</button>
+        <button class="tab procedures-only" data-tab="catalog" role="tab" aria-selected="false">Catalog</button>
         <button class="tab" data-tab="notes" role="tab" aria-selected="false">
           PY notes <span id="notesCount" class="pill" hidden></span>
         </button>
@@ -34,7 +34,25 @@
       </div>
       <section id="tab-review" class="panel">
         <div id="suggest" class="suggest" hidden></div>
-        <div id="score" class="score"></div>
+        <div class="score-row">
+          <div id="score" class="score"></div>
+          <button id="reviewAll" class="link">Review all sheets</button>
+        </div>
+        <div id="workbookPanel" class="workbook-panel" hidden></div>
+
+        <div id="stepper" class="stepper" hidden>
+          <div class="step-bar">
+            <div class="segmented" role="group" aria-label="Step through">
+              <button class="step-mode active" data-mode="issues">Issues</button>
+              <button class="step-mode" data-mode="dates">Dates</button>
+            </div>
+            <span id="stepPos" class="step-pos"></span>
+            <button id="stepPrev" class="step-btn" aria-label="Previous">Prev</button>
+            <button id="stepNext" class="step-btn" aria-label="Next">Next</button>
+          </div>
+          <div id="stepDetail" class="step-detail"></div>
+        </div>
+
         <div id="pyPanel" class="py" hidden></div>
 
         <div id="procSection" hidden>
@@ -48,7 +66,7 @@
         </div>
         <button id="addReviewer" class="add-reviewer" hidden>+ Add a procedure reviewer from the catalog</button>
 
-        <div class="section-head">
+        <div class="section-head procedures-only">
           <span class="monogram small">WB</span>
           <h2>Workpaper basics</h2>
           <span class="section-sub">Always on</span>
@@ -59,7 +77,7 @@
         </p>
       </section>
 
-      <section id="tab-catalog" class="panel" hidden>
+      <section id="tab-catalog" class="panel procedures-only" hidden>
         <p class="help">
           Pick the reviewer for the procedure on this sheet. Workpaper basics always run. A procedure reviewer adds
           its own checklist and finds high-risk items in your testing.
@@ -69,19 +87,22 @@
       </section>
 
       <section id="tab-settings" class="panel" hidden>
-        <p class="help">Saved in this workbook. Procedure reviewers use these to find high-risk items.</p>
+        <p class="help">Saved in this workbook.</p>
         <label class="field">
           <span>Year-end</span>
           <input id="yearEnd" type="date" />
         </label>
         <p id="yearEndHint" class="help small" hidden></p>
-        <label class="field">
-          <span>Threshold</span>
-          <input id="threshold" type="number" min="0" step="any" placeholder="e.g. 10000" />
-        </label>
-        <p class="help small">
-          Items at or above this amount get extra attention (for example your clearly trivial or testing threshold).
-        </p>
+        <p class="help small">Used to spot prior-year dates left behind after roll-forward.</p>
+        <div class="procedures-only">
+          <label class="field">
+            <span>Threshold</span>
+            <input id="threshold" type="number" min="0" step="any" placeholder="e.g. 10000" />
+          </label>
+          <p class="help small">
+            Items at or above this amount get extra attention (for example your clearly trivial or testing threshold).
+          </p>
+        </div>
         <div class="buttons">
           <button id="saveSettings" class="primary">Save settings</button>
         </div>

@@ -200,8 +200,8 @@ describe("runReview", () => {
     expect(r.all.length).toBe(r.basics.length + r.procedure.length);
     const notes = parseNotesText("FY24 SURL | Missing service dates on several items");
     expect(pyStatuses(notes, "FY25 SURL", r.all)[0].status).toBe("still-an-issue");
-    // Without the procedure reviewer the note can't be judged automatically.
-    expect(pyStatuses(notes, "FY25 SURL", r.basics)[0].status).toBe("check-manually");
+    // Workpaper basics check table completeness on their own, so the note is judged without the reviewer too.
+    expect(pyStatuses(notes, "FY25 SURL", r.basics)[0].status).toBe("still-an-issue");
   });
 
   it("has unique ids and resolvable reviewers", () => {

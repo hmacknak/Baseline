@@ -68,16 +68,14 @@ lines = [
     ("Baseline Review: demo workbook", TITLE),
     ("", None),
     ("1. Open the add-in: Home → Review.", None),
-    ("2. Settings tab: set year-end to 31 Dec 2025 (or click 'Use it') and threshold to 10000. Save.", None),
-    ('3. Click the "FY25 Cash" tab. Baseline suggests the Bank reconciliation reviewer. Click "Use it".', None),
-    ("   Insights show the rec is $1,200 off the GL, a stale cheque, one that cleared before year-end, and more.", None),
-    ("4. Expand a red item and click a cell link, e.g. B10, to jump to it.", None),
-    ('5. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
-    ("6. Fix something live: change FY25 Cash B10 to =SUM(B6:B9). The total and the GL difference both clear.", None),
-    ('7. Open the Catalog tab to see every reviewer. Try "AP-3 SURL", "FY25 Revenue cut-off" and', None),
-    ('   "FY25 AR confirmations": each gets its own suggestion, checklist and high-risk items.', None),
-    ('8. "FY25 AR" has a typed-over formula, an inconsistent formula and #DIV/0! errors.', None),
-    ('9. "FY25 Fixed Assets" is a clean sheet that passes every check.', None),
+    ("2. Settings tab: set year-end to 31 Dec 2025 (click 'Use it'). Save.", None),
+    ('3. Click the "AP-3 SURL" tab. Baseline lists what to fix, most important first.', None),
+    ("4. Expand an item to see why it matters and how to fix it. Click a cell reference to jump to it.", None),
+    ("5. Use Step through: Issues to walk every problem, or Dates to check every date in order.", None),
+    ("6. If a flag is fine, click Mark OK and give a reason. The reviewer can see it.", None),
+    ('7. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
+    ("8. Fix something live: change AP-3 SURL F17 to =SUM(F8:F16) and watch it turn green.", None),
+    ("9. Click Review all sheets to see every tab at once. FY25 Fixed Assets is ready for review.", None),
     ("", None),
     ("All figures are made up. Nothing in this file leaves Excel.", MUTED),
 ]
@@ -154,7 +152,7 @@ widths(ws, 34, 18, 34, 12, 13, 16)
 
 # ─── FY25 AR (3 failing checks) ──────────────────────────────────────────────
 ws = wb.create_sheet("FY25 AR")
-ws["A1"] = "Accounts receivable: aging, 31 Dec 2025"
+ws["A1"] = "Accounts receivable: aging, 31 Dec 2024"  # Not rolled forward, on purpose.
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: test the AR aging and allowance"
 ws["A3"] = "Source: AR aging report from the client's system, 3 Jan 2026"
@@ -233,6 +231,7 @@ for col in "BDE":
 ws["A13"] = "Tickmark legend"
 ws["A13"].font = BOLD
 ws["A14"] = "✓ = agreed cost to invoice and useful life to policy"
+ws["A16"] = "Conclusion: additions and depreciation are fairly stated."
 widths(ws, 30, 12, 16, 14, 16, 6)
 
 # ─── AP-3 SURL (the featured procedure in the demo video) ─────────────────────
@@ -275,6 +274,11 @@ ws["F20"] = "=F17/1284600"  # Hard-coded population instead of a link to F19, on
 ws["F20"].number_format = PCT
 # Missing on purpose: tickmark legend (the ✓ marks in column H are unexplained).
 ws["A22"] = "Conclusion: to be completed once exceptions are cleared."
+ws["F11"].fill = PatternFill("solid", fgColor="FFFF00")  # Leftover highlight, on purpose.
+ws["K12"] = 12_750  # Scratch number off to the side, on purpose.
+ws["F13"] = "2,150"  # Amount stored as text, on purpose.
+ws["E15"] = date(2016, 2, 10)  # Year typo in the paid date, on purpose.
+ws["E15"].number_format = DATE
 widths(ws, 20, 10, 10, 10, 10, 10, 7, 5, 30)
 
 # ─── FY25 Revenue cut-off ────────────────────────────────────────────────────

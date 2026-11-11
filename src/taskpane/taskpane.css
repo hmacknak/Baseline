@@ -772,3 +772,250 @@ textarea {
   border-top: 1px solid var(--border);
   font-size: 13px;
 }
+
+/* ─── Workpaper basics polish ──────────────────────────────────────────── */
+
+.score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.score-row .score {
+  flex: 1;
+  margin: 0;
+}
+
+.score .all-clear {
+  color: var(--ok);
+}
+
+.stepper {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 12px;
+  background: var(--surface);
+}
+
+.step-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.segmented button {
+  border: 0;
+  padding: 3px 10px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button.active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.step-pos {
+  flex: 1;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.step-btn {
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.step-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.step-detail:empty {
+  display: none;
+}
+
+.step-detail {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.step-cell {
+  display: inline-block;
+  margin-right: 6px;
+  font-family: Consolas, Menlo, monospace;
+  color: var(--link);
+}
+
+.finding-wrap + .finding-wrap {
+  border-top: 1px dotted var(--border);
+}
+
+.finding {
+  align-items: baseline;
+}
+
+.finding-msg {
+  flex: 1;
+}
+
+.ok-link {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-decoration: underline;
+}
+
+.ok-link:hover {
+  color: var(--link);
+}
+
+.ok-form {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.ok-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.ok-form button {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.ok-form .primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.ok-form .quiet {
+  background: none;
+}
+
+.ok-count {
+  color: var(--ok);
+}
+
+.accepted {
+  margin-top: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.accepted-head {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.accepted-reason {
+  font-weight: 600;
+}
+
+.accepted-meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.clear-toggle .item-title {
+  color: var(--muted);
+}
+
+.clear-toggle .mark {
+  color: var(--ok);
+}
+
+.workbook-panel {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.wb-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.wb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 2px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  text-align: left;
+}
+
+.wb-row:hover {
+  background: var(--surface);
+}
+
+.wb-row.pass .mark {
+  color: var(--ok);
+}
+
+.wb-row.fail .mark {
+  color: var(--high);
+}
+
+.wb-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wb-sub {
+  color: var(--muted);
+  font-size: 12px;
+}

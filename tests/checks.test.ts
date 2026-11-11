@@ -88,7 +88,7 @@ describe("signoff", () => {
   });
 
   it("accepts filled sign-offs inline or in the next cell", () => {
-    expect(run("signoff", { A1: "Prepared by: JS 01/10", A2: "Reviewed by:", B2: "MK" })).toEqual([]);
+    expect(run("signoff", { A1: "Prepared by: JS 01/10", A2: "Reviewed by:", B2: "MK 05/10" })).toEqual([]);
   });
 
   it("ignores empty sheets", () => {
@@ -98,15 +98,17 @@ describe("signoff", () => {
 
 describe("header", () => {
   it("wants purpose and source", () => {
-    expect(run("header", { A1: "Cash" })).toHaveLength(2);
-    expect(run("header", { A1: "Purpose: test cash", A2: "Source: bank statement" })).toEqual([]);
+    expect(run("header", { A1: "Cash" })).toHaveLength(3);
+    expect(
+      run("header", { A1: "Purpose: test cash", A2: "Source: bank statement", A9: "Conclusion: cash is fairly stated" }),
+    ).toEqual([]);
   });
 });
 
 describe("tickmarks", () => {
   it("flags tickmarks with no legend", () => {
     expect(run("tickmarks", { A1: 5, B1: "✓", B2: "✓" })).toHaveLength(1);
-    expect(run("tickmarks", { A1: 5, B1: "✓", A5: "Tickmark legend" })).toEqual([]);
+    expect(run("tickmarks", { A1: 5, B1: "✓", A5: "Tickmark legend", A6: "✓ = agreed to invoice" })).toEqual([]);
   });
 });
 
@@ -114,8 +116,8 @@ describe("runChecklist", () => {
   it("returns one result per checklist item", () => {
     const results = runChecklist(sheet({ A1: "x" }));
     expect(results.map(r => r.check.id)).toEqual([
-      "errors", "hardcodes", "overwritten", "totals", "inconsistent",
-      "external-links", "signoff", "header", "tickmarks",
+      "errors", "hardcodes", "overwritten", "totals", "text-numbers", "inconsistent", "table-complete",
+      "placeholders", "dates", "stray", "highlights", "external-links", "signoff", "header", "tickmarks",
     ]);
   });
 });
