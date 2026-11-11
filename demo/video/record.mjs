@@ -91,10 +91,21 @@ const panelTop = async () => {
   await wait(600);
 };
 const item = title => addin.locator(".item", { hasText: title }).locator(".item-head");
+const insight = title => addin.locator(".insight", { hasText: title });
+async function show(locator, block = "start") {
+  await locator.evaluate((el, b) => el.scrollIntoView({ behavior: "smooth", block: b }), block);
+  await wait(700);
+}
+async function useSuggested() {
+  await panelTop();
+  await moveTo(addin.locator("#suggest"), 0.3, 0.4);
+  await caption("Baseline recognises the workpaper and <b>suggests the right reviewer</b>.", 3200);
+  await click(addin.locator("#suggest button.primary"), { after: 1200 });
+}
 
 // ─── Title card ───────────────────────────────────────────────────────────────
 await card(`<div><div class="logo">B</div><h1>Baseline Review</h1>
-  <p>Workpaper basics: a first-pass review, live in Excel</p>
+  <p>A first-pass review, live in Excel: workpaper basics and audit procedures</p>
   <div class="note">Demo · simulated spreadsheet, real add-in · all names fictional</div></div>`);
 workbook.active = "AP-3 SURL";
 await page.evaluate(wb => window.__init(wb), workbook);
@@ -106,9 +117,11 @@ await card(null, 900);
 await caption("An associate is preparing <b>AP-3, the search for unrecorded liabilities</b>.<small>Baseline reviews it the way a senior would on a first pass, live, as they work.</small>", 4800);
 
 // ─── 2. Year-end, once ──────────────────────────────────────────────────────
-await caption("Set the year-end once. It's saved in the workbook.", 600);
+await caption("Set the year-end and threshold once. They're saved in the workbook.", 600);
 await click(addin.locator('.tab[data-tab="settings"]'), { after: 500 });
 await click(addin.locator("#yearEndHint button"), { after: 400 });
+await click(addin.locator("#threshold"), { after: 200 });
+await addin.locator("#threshold").type("10000", { delay: 60 });
 await click(addin.locator("#saveSettings"), { after: 600 });
 await click(addin.locator('.tab[data-tab="review"]'), { after: 600 });
 await panelTop();
@@ -167,7 +180,41 @@ await panelTop();
 await moveTo(addin.locator("#score"), 0.2, 0.5);
 await caption("<b>Ready for review.</b> Last year's notes now show <b>Looks fixed</b>.", 4600);
 
-// ─── 8. Whole workbook ───────────────────────────────────────────────────────
+// ─── 8. The procedure: SURL ─────────────────────────────────────────────────
+await caption("The basics are clean. Now <b>the procedure itself</b>.", 2600);
+await useSuggested();
+await show(insight("Invoices after year-end for this year's services"));
+await moveTo(insight("Invoices after year-end for this year's services").locator(".insight-item").first(), 0.4, 0.5);
+await caption("It reads the testing table: <b>January invoices for December services</b> that were never recorded.", 4600);
+await moveTo(insight("Invoices after year-end for this year's services").locator(".why-block"), 0.4, 0.4);
+await caption("Every finding says <b>why it matters</b>, the <b>assertion</b> at risk and the <b>standard</b> behind it.", 5200);
+
+// ─── 9. Cash confirmations ───────────────────────────────────────────────────
+await caption(null, 200);
+await activate("Cash confirmations");
+await useSuggested();
+await show(insight("Not sent or received directly"));
+await moveTo(insight("Not sent or received directly").locator(".insight-item").first(), 0.4, 0.5);
+await caption("Cash confirmations: a bank reply <b>forwarded by the client</b> isn't direct evidence.", 4400);
+await moveTo(insight("Not sent or received directly").locator(".why-meta"), 0.4, 0.5);
+await caption("ISA 505 and PCAOB AS 2310 require the auditor to <b>control the confirmation</b>.", 4600);
+await show(insight("Overdrawn accounts"), "center");
+await caption("It also catches unexplained differences, missing replies, unconfirmed accounts and overdrafts.", 4200);
+
+// ─── 10. Expense vouching ────────────────────────────────────────────────────
+await caption(null, 200);
+await activate("Expense vouching");
+await useSuggested();
+await show(insight("Possible duplicate payments"));
+await moveTo(insight("Possible duplicate payments").locator(".insight-item").first(), 0.4, 0.5);
+await caption("Expense vouching: <b>the same invoice paid twice</b>, sitting in the sample.", 4200);
+await moveTo(insight("Possible duplicate payments").locator(".py-callout, .why-block").first(), 0.4, 0.4);
+await caption("And it remembers <b>last year's review note</b> about exactly this.", 4400);
+await show(insight("Looks like a capital item"), "center");
+await caption("Plus amounts that don't agree, cut-off, missing approval and <b>a forklift booked as an expense</b>.", 4600);
+
+// ─── 11. Whole workbook ──────────────────────────────────────────────────────
+await caption(null, 200);
 await click(addin.locator("#reviewAll"), { after: 1200 });
 await caption("One click reviews <b>every sheet</b> before it goes to the senior.", 4600);
 await caption(null, 400);
