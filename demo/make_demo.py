@@ -346,8 +346,9 @@ table(
     [
         ("Bank A", "Operating", "CAD", 468_475, 468_475, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
         ("Bank A", "Payroll", "CAD", 36_400, 31_400, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Exception"),
+        ("Bank B", "Current", "CAD", 84_260, 91_735, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 15), "Confirmation platform", "Outstanding cheques 7,475 per bank rec C-1", "Agreed to bank rec"),
         ("Bank B", "Savings", "CAD", 125_000, None, date(2025, 12, 31), date(2026, 1, 5), None, None, None, "Chasing"),
-        ("Bank C", "US dollar account", "USD", 25_000, 25_000, date(2025, 11, 30), date(2026, 1, 5), date(2026, 1, 20), "Forwarded by client", None, "Agreed"),
+        ("Bank C", "US dollar account", "USD", 25_000, 25_000, date(2025, 11, 30), date(2026, 1, 5), date(2026, 1, 20), "Forwarded by client controller (email)", None, "Agreed"),
         ("Bank D", "Dormant account", "CAD", 0, None, None, None, None, None, None, "Not used"),
         ("Bank A", "Credit line", "CAD", -15_000, -15_000, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
     ],
@@ -370,10 +371,10 @@ table(
     7,
     ["Sample #", "GL date", "Vendor", "Description", "Amount per GL", "Amount per invoice", "Invoice #", "Service date", "Approved?", "Correct account?", "Conclusion"],
     [
-        ("1", date(2025, 3, 4), "Vendor A", "Office cleaning", 1_200, 1_200, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
+        ("1", date(2025, 3, 4), "Vendor A", "Office cleaning", 1_236.40, 1_236.40, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
         ("2", date(2025, 5, 9), "Vendor B", "Consulting", 8_500, 5_800, "B-20", date(2025, 5, 1), "Y", "Y", "Exception"),
         ("3", date(2025, 12, 30), "Vendor C", "Annual software support", 6_000, 6_000, "C-7", date(2026, 1, 15), "Y", "Y", "Agreed"),
-        ("4", date(2025, 3, 18), "Vendor A", "Office cleaning", 1_200, 1_200, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
+        ("4", date(2025, 3, 13), "Vendor A", "Office cleaning", 1_236.40, 1_236.40, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
         ("5", date(2025, 8, 2), "Vendor D", "New forklift", 42_000, 42_000, "D-3", date(2025, 7, 30), "N", "N", "Exception"),
         ("6", date(2025, 9, 2), "Vendor E", "Courier", 300, 300, "E-9", date(2025, 9, 1), None, "Y", "Agreed"),
         ("7", date(2025, 10, 14), "Vendor F", "Utilities", 2_450, 2_450, "F-31", date(2025, 9, 30), "Y", "Y", "Agreed"),
@@ -399,7 +400,7 @@ py_notes = [
     ("AP-3 SURL", "", "January invoice for December services was not identified as an unrecorded liability"),
     ("AP-3 SURL", "H8", "Where is the tickmark legend?"),
     ("Cash confirmations", "", "Bank confirmation received via the client, not directly"),
-    ("Expense vouching", "", "Duplicate payment to a supplier not identified"),
+    ("Expense vouching", "", "Duplicate payment not identified; vendor not queried. Follow up."),
     ("FY24 Revenue cut-off", "", "Dec 31 invoice shipped in January was not identified"),
 ]
 for r, row in enumerate(py_notes, start=2):

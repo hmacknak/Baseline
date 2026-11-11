@@ -117,6 +117,10 @@ module.exports = async (env, options) => {
             to: "Baseline-demo-video.mp4",
           },
           {
+            from: "demo/Baseline-demo-short.mp4",
+            to: "Baseline-demo-short.mp4",
+          },
+          {
             from: "site/version.json",
             to: "version.json",
             transform(content) {
