@@ -92,7 +92,7 @@ ws = wb.create_sheet("FY25 Cash")
 ws["A1"] = "Cash: bank reconciliation, 31 Dec 2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: reconcile the operating account balance to the bank statement"
-ws["A3"] = "Prepared by: AB 06/10/2025"
+ws["A3"] = "Prepared by: AB 06-Feb-2026"
 # Missing on purpose: "Reviewed by" line and a "Source" line.
 
 header_row(ws, 5, ["Item", "Amount", "Tick"])
@@ -158,7 +158,7 @@ ws["A1"] = "Accounts receivable: aging, 31 Dec 2024"  # Not rolled forward, on p
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: test the AR aging and allowance"
 ws["A3"] = "Source: AR aging report from the client's system, 3 Jan 2026"
-ws["A4"] = "Prepared by: AB 06/10/2025"
+ws["A4"] = "Prepared by: AB 06-Feb-2026"
 ws["C4"] = "Reviewed by:"
 
 header_row(ws, 6, ["Customer", "0-30", "31-60", "61-90", "Total", "% of total"])
@@ -202,7 +202,7 @@ ws["A1"] = "Fixed assets: additions and depreciation, FY2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: recalculate straight-line depreciation on FY25 additions"
 ws["A3"] = "Source: fixed asset register export, 2 Jan 2026"
-ws["A4"] = "Prepared by: AB 06/10/2025"
+ws["A4"] = "Prepared by: AB 06-Feb-2026"
 ws["C4"] = "Reviewed by:"
 
 header_row(ws, 6, ["Asset", "Cost", "Useful life (yrs)", "Depreciation", "Net book value", "Tick"])
@@ -242,23 +242,23 @@ ws["A1"] = "Example Client Ltd.  |  AP-3  Search for unrecorded liabilities"
 ws["A1"].font = TITLE
 ws["A2"] = "Year ended 31 December 2025"
 ws["A3"] = "Objective: identify liabilities at 31 Dec 2025 not recorded in accounts payable (completeness)."
-ws["A4"] = "Source: Jan to Feb 2026 cash disbursements journal and vendor invoices. Selection: all payments over $5,000."
-ws["A5"] = "Prepared by: AB 12/01/2026"
+ws["A4"] = "Source: Jan to Feb 2026 cash disbursements journal and vendor invoices. Selection: all payments over $2,000."
+ws["A5"] = "Prepared by: AB 24-Feb-2026"
 ws["E5"] = "Reviewed by:"
 table(
     ws,
     7,
     ["Vendor", "Invoice #", "Inv date", "Service to", "Paid", "Amount", "In AP?", "Tick", "Conclusion"],
     [
-        ("Vendor A", "INV-4471", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_400, "N", "✓", "Exception: Dec service, not in AP"),
-        ("Vendor B", "BS-1102", date(2026, 1, 5), date(2026, 1, 31), date(2026, 1, 9), 6_000, "N", "✓", "Jan subscription, FY26"),
-        ("Vendor C", "CP-88213", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_200, "N", "✓", "Investigate: Dec invoice"),
-        ("Vendor D", "DF-5520", date(2026, 1, 8), None, date(2026, 1, 22), 12_750, "N", "✓", None),
-        ("Vendor E", "EL-0931", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_000, "Y", "✓", "In AP listing at YE"),
-        ("Vendor F", "FF-2290", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_150, "N", "✓", "FY26 expense"),
-        ("Vendor G", "GR-7741", date(2026, 1, 20), date(2025, 12, 31), date(2026, 2, 3), 24_600, "Y", "✓", "Accrued at YE, see AP-2"),
-        ("Vendor H", "HS-3310", date(2026, 2, 2), date(2026, 1, 31), date(2026, 2, 10), 7_800, "N", "✓", "FY26 expense"),
-        ("Vendor I", "IC-1907", date(2026, 1, 9), date(2025, 12, 20), date(2026, 1, 30), 11_250, "N", "✓", None),
+        ("Vendor A", "INV-4471", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_426, "N", "✓", "Exception: Dec service, not in AP"),
+        ("Vendor B", "BS-1102", date(2026, 1, 5), date(2026, 1, 31), date(2026, 1, 9), 5_980, "N", "✓", "Jan subscription, FY26"),
+        ("Vendor C", "CP-88213", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_214, "N", "✓", "Investigate: Dec invoice"),
+        ("Vendor D", "DF-5520", date(2026, 1, 8), None, date(2026, 1, 22), 12_764, "N", "✓", None),
+        ("Vendor E", "EL-0931", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_038, "Y", "✓", "In AP listing at YE"),
+        ("Vendor F", "FF-2290", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_146, "N", "✓", "FY26 expense"),
+        ("Vendor G", "GR-7741", date(2026, 1, 20), date(2025, 12, 31), date(2026, 2, 3), 24_611, "Y", "✓", "Accrued at YE, see AP-2"),
+        ("Vendor H", "HS-3310", date(2026, 2, 2), date(2026, 1, 31), date(2026, 2, 10), 7_825, "N", "✓", "FY26 expense"),
+        ("Vendor I", "IC-1907", date(2026, 1, 9), date(2025, 12, 20), date(2026, 1, 30), 11_243, "N", "✓", None),
     ],
     {2: DATE, 3: DATE, 4: DATE, 5: MONEY},
 )
@@ -268,7 +268,7 @@ ws["F17"] = "=SUM(F8:F15)"  # Stops a row short: leaves out Vendor I (F16), on p
 ws["F17"].number_format = MONEY
 ws["F17"].font = BOLD
 ws["F17"].border = TOTAL_BORDER
-ws["A19"] = "Population: payments over $5,000"
+ws["A19"] = "Population: payments over $2,000"
 ws["F19"] = 1_284_600
 ws["F19"].number_format = MONEY
 ws["A20"] = "Coverage of population"
@@ -277,8 +277,8 @@ ws["F20"].number_format = PCT
 # Missing on purpose: tickmark legend (the ✓ marks in column H are unexplained).
 ws["A22"] = "Conclusion: to be completed once exceptions are cleared."
 ws["F11"].fill = PatternFill("solid", fgColor="FFFF00")  # Leftover highlight, on purpose.
-ws["K12"] = 12_750  # Scratch number off to the side, on purpose.
-ws["F13"] = "2,150"  # Amount stored as text, on purpose.
+ws["K12"] = 12_764  # Scratch number off to the side, on purpose.
+ws["F13"] = "2,146"  # Amount stored as text, on purpose.
 ws["E15"] = date(2016, 2, 10)  # Year typo in the paid date, on purpose.
 ws["E15"].number_format = DATE
 widths(ws, 20, 10, 10, 10, 10, 10, 7, 5, 30)
@@ -289,7 +289,7 @@ ws["A1"] = "Revenue cut-off testing, 31 Dec 2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: test sales either side of year-end are recorded in the right period"
 ws["A3"] = "Source: sales journal 20 Dec 2025 to 10 Jan 2026, shipping logs"
-ws["A4"] = "Prepared by: AB 06/10/2025"
+ws["A4"] = "Prepared by: AB 06-Feb-2026"
 ws["D4"] = "Reviewed by:"
 table(
     ws,
@@ -313,7 +313,7 @@ ws["A1"] = "AR confirmations, 31 Dec 2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: confirm significant customer balances directly with customers"
 ws["A3"] = "Source: AR aging at 31 Dec 2025, confirmation responses"
-ws["A4"] = "Prepared by: AB 06/10/2025"
+ws["A4"] = "Prepared by: AB 06-Feb-2026"
 ws["D4"] = "Reviewed by:"
 table(
     ws,
@@ -337,7 +337,7 @@ ws["A1"].font = TITLE
 ws["A2"] = "Year ended 31 December 2025"
 ws["A3"] = "Objective: confirm existence and completeness of all bank balances directly with each bank."
 ws["A4"] = "Source: trial balance, prior-year bank replies, confirmation platform responses."
-ws["A5"] = "Prepared by: AB 14/01/2026"
+ws["A5"] = "Prepared by: AB 28-Jan-2026"
 ws["F5"] = "Reviewed by:"
 table(
     ws,
@@ -348,7 +348,7 @@ table(
         ("Bank A", "Payroll", "CAD", 36_400, 31_400, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Exception"),
         ("Bank B", "Current", "CAD", 84_260, 91_735, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 15), "Confirmation platform", "Outstanding cheques 7,475 per bank rec C-1", "Agreed to bank rec"),
         ("Bank B", "Savings", "CAD", 125_000, None, date(2025, 12, 31), date(2026, 1, 5), None, None, None, "Chasing"),
-        ("Bank C", "US dollar account", "USD", 25_000, 25_000, date(2025, 11, 30), date(2026, 1, 5), date(2026, 1, 20), "Forwarded by client controller (email)", None, "Agreed"),
+        ("Bank C", "US dollar account", "USD", 25_318, 25_318, date(2025, 11, 30), date(2026, 1, 5), date(2026, 1, 20), "Forwarded by client controller (email)", None, "Agreed"),
         ("Bank D", "Dormant account", "CAD", 0, None, None, None, None, None, None, "Not used"),
         ("Bank A", "Credit line", "CAD", -15_000, -15_000, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
     ],
@@ -364,7 +364,7 @@ ws["A1"].font = TITLE
 ws["A2"] = "Year ended 31 December 2025"
 ws["A3"] = "Objective: vouch a sample of operating expenses to support for occurrence, accuracy, cut-off and classification."
 ws["A4"] = "Source: general ledger expense accounts; vendor invoices. Sample of 8 items."
-ws["A5"] = "Prepared by: AB 20/01/2026"
+ws["A5"] = "Prepared by: AB 27-Jan-2026"
 ws["F5"] = "Reviewed by:"
 table(
     ws,
@@ -373,9 +373,9 @@ table(
     [
         ("1", date(2025, 3, 4), "Vendor A", "Office cleaning", 1_236.40, 1_236.40, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
         ("2", date(2025, 5, 9), "Vendor B", "Consulting", 8_500, 5_800, "B-20", date(2025, 5, 1), "Y", "Y", "Exception"),
-        ("3", date(2025, 12, 30), "Vendor C", "Annual software support", 6_000, 6_000, "C-7", date(2026, 1, 15), "Y", "Y", "Agreed"),
+        ("3", date(2025, 12, 30), "Vendor C", "Annual software support", 5_940, 5_940, "C-7", date(2026, 1, 15), "Y", "Y", "Agreed"),
         ("4", date(2025, 3, 13), "Vendor A", "Office cleaning", 1_236.40, 1_236.40, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
-        ("5", date(2025, 8, 2), "Vendor D", "New forklift", 42_000, 42_000, "D-3", date(2025, 7, 30), "N", "N", "Exception"),
+        ("5", date(2025, 8, 2), "Vendor D", "New forklift", 41_850, 41_850, "D-3", date(2025, 7, 30), "N", "N", "Exception"),
         ("6", date(2025, 9, 2), "Vendor E", "Courier", 300, 300, "E-9", date(2025, 9, 1), None, "Y", "Agreed"),
         ("7", date(2025, 10, 14), "Vendor F", "Utilities", 2_450, 2_450, "F-31", date(2025, 9, 30), "Y", "Y", "Agreed"),
         ("8", date(2025, 11, 20), "Vendor G", "Travel", 1_980, 1_980, "G-2", date(2025, 11, 12), "Y", "Y", None),

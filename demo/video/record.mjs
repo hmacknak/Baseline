@@ -157,7 +157,7 @@ async function forwardedBankReply() {
   await moveTo(insight("Not sent or received directly").locator(".insight-item").first(), 0.4, 0.5);
   await caption("Bank reply <b>forwarded by the client</b>, not received directly.", 4200);
   await moveTo(insight("Not sent or received directly").locator(".why-meta"), 0.4, 0.5);
-  await caption("Not reliable evidence until the auditor controls it. <b>ISA 505 / AS 2310.</b>", 5200);
+  await caption("Reply reliability is in doubt until received directly. <b>ISA 505 / AS 2310.</b>", 5200);
 }
 
 if (MODE === "full") {
@@ -202,7 +202,7 @@ if (MODE === "full") {
   await click(addin.locator("#suggest button.primary"), { after: 1200 });
   await show(insight("Invoices after year-end for this year's services"));
   await moveTo(insight("Invoices after year-end for this year's services").locator(".insight-item").first(), 0.4, 0.5);
-  await caption("A <b>January invoice for December services</b>, never recorded.", 4200);
+  await caption("A <b>January invoice for December services</b>, not marked as recorded.", 4200);
   await moveTo(insight("Invoices after year-end for this year's services").locator(".why-block"), 0.4, 0.3);
   await caption("Each finding says why it matters, the <b>assertion at risk</b> and the <b>standard behind it</b>.", 4000);
   await moveTo(insight("Invoices after year-end for this year's services").locator(".why-meta"), 0.4, 0.5);

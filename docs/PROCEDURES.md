@@ -10,6 +10,13 @@ Assertions follow ISA 315 (Revised 2019): for transactions, **occurrence, comple
 classification**; for balances, **existence, rights and obligations, completeness, accuracy/valuation and
 allocation**.
 
+**PCAOB engagements.** PCAOB AS 2110 groups assertions differently: existence or occurrence, completeness,
+valuation or allocation, rights and obligations, presentation and disclosure. There is no separate cut-off
+assertion, so a cut-off finding maps to occurrence (expenses recorded too early) or completeness (recorded too
+late). Each finding therefore cites the PCAOB standard next to the ISA. The accounting references (IAS 37,
+IAS 16, IAS 7, IAS 21, Conceptual Framework) are IFRS; for a US GAAP client the matching ASC topics apply and are
+not yet shown. Paragraph numbers for PCAOB standards are cited only where they were confirmed.
+
 ---
 
 ## 1. Search for unrecorded liabilities (SURL)
@@ -35,12 +42,12 @@ allocation**.
 
 | Rule | Assertion | Reference |
 |---|---|---|
-| Post-year-end invoice for a service on or before year-end, not recorded | Completeness | Conceptual Framework 4.26; IAS 37.11 |
+| Post-year-end invoice for a service on or before year-end, not recorded | Completeness | Conceptual Framework 4.26; IAS 37.11; PCAOB AS 2301 |
 | Invoice dated on or before year-end, marked not recorded | Completeness | IAS 37.11 |
 | Recorded at year-end but the service was next year (over-accrual) | Existence; cut-off | Conceptual Framework 4.26 |
 | No service date, so the year can't be decided | Completeness; cut-off | ISA 500 |
-| Search window ends less than 30 days after year-end | Completeness | ISA 560 |
-| Every selection complete; key columns present | Completeness | ISA 500; ISA 230 |
+| Search window ends less than 30 days after year-end | Completeness | ISA 560; PCAOB AS 2801 |
+| Every selection complete; key columns present | Completeness | ISA 500; ISA 230; PCAOB AS 1105; AS 1215 |
 
 ---
 
@@ -55,6 +62,8 @@ entity, and are complete. The same request also brings back loans, guarantees, s
   through the company can be intercepted or altered.
 - **ISA 505.7:** the auditor maintains control over confirmation requests (what to confirm, the right confirming
   party, sending the requests).
+- **ISA 505.10 and A11:** doubts about the reliability of a response, such as one received indirectly through
+  the client, call for further evidence (A14: for example, contact the bank or ask it to re-send directly).
 - **ISA 505.12–.13:** non-responses need alternative procedures. Where a confirmation is necessary, the auditor
   must determine the implications of not obtaining it. ISA 505 also requires exceptions to be investigated
   (paragraph not confirmed).
@@ -84,7 +93,7 @@ entity, and are complete. The same request also brings back loans, guarantees, s
 |---|---|---|
 | Books and bank differ with no explanation | Existence; accuracy | ISA 505; AS 2310 |
 | Sent, no reply | Existence; rights and obligations | ISA 505.12–.13; AS 2310 |
-| Sent or received through the client | Existence | ISA 505.7; AS 2310.14–.17 |
+| Sent or received through the client | Existence | ISA 505.7, .10, A11; AS 2310.14–.17 |
 | Account not confirmed (including nil balances) | Completeness; rights and obligations | ISA 505.7; AS 2310 |
 | Confirmed at a date other than year-end | Existence; cut-off | ISA 505 |
 | Overdrawn account | Classification; presentation | IAS 7.8 |
@@ -119,13 +128,13 @@ in the right account, and was approved.
 
 | Rule | Assertion | Reference |
 |---|---|---|
-| Ledger amount doesn't agree to support | Accuracy | ISA 315; ISA 530 |
-| Service (or, failing that, invoice) date outside the year | Cut-off | ISA 315 |
-| Same vendor, amount and invoice twice | Occurrence | ISA 240 |
+| Ledger amount doesn't agree to support | Accuracy | ISA 315; ISA 530; PCAOB AS 2315 |
+| Service (or, failing that, invoice) date outside the year | Cut-off | ISA 315; PCAOB AS 2110 (assertions) |
+| Same vendor, amount and invoice twice | Occurrence | ISA 240; PCAOB AS 2401 |
 | Approval refused or not recorded | Occurrence | ISA 315 |
 | Description suggests a capital item over threshold | Classification | IAS 16.7; IAS 16.12 |
 | Marked as recorded in the wrong account | Classification | ISA 315 |
-| Every sample item complete; key columns present | Occurrence; accuracy | ISA 500; ISA 530 |
+| Every sample item complete; key columns present | Occurrence; accuracy | ISA 500; ISA 530; PCAOB AS 1105; AS 2315 |
 
 ---
 

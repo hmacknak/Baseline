@@ -39,7 +39,8 @@
   .tabs .t { padding: 5px 14px; color: #444; }
   .tabs .t.on { background: #fff; color: #107c41; font-weight: 700; border-bottom: 3px solid #107c41; }
   /* Captions */
-  .caption { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); max-width: 900px; z-index: 50;
+  /* Centred over the sheet so a caption never hides the add-in panel. */
+  .caption { position: absolute; left: 450px; bottom: 46px; transform: translateX(-50%); max-width: 740px; z-index: 50;
     background: rgba(17, 24, 39, .92); color: #fff; padding: 12px 22px; border-radius: 10px; font-size: 22px; line-height: 1.35;
     text-align: center; opacity: 0; transition: opacity .35s; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
   .caption.show { opacity: 1; }
@@ -54,7 +55,7 @@
   .card .logo { width: 84px; height: 84px; border-radius: 18px; background: #105e48; border: 3px solid #4ec9a0;
     display: inline-grid; place-items: center; font-size: 52px; font-weight: 700; margin-bottom: 18px; }
   /* Fake cursor */
-  .cursor { position: absolute; z-index: 90; left: 640px; top: 400px; width: 22px; height: 22px; pointer-events: none;
+  .cursor { position: absolute; z-index: 70; left: 640px; top: 400px; width: 22px; height: 22px; pointer-events: none;
     transition: left .7s cubic-bezier(.3,.7,.3,1), top .7s cubic-bezier(.3,.7,.3,1); }
   .cursor svg { filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
   .ripple { position: absolute; z-index: 89; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
