@@ -1,14 +1,20 @@
 // Records the Baseline demo video: simulated Excel on the left, the real add-in on the right.
 //
 //   npm run build && python3 demo/video/export_workbook.py
-//   npm i --no-save playwright-core && node demo/video/record.mjs
-//   ffmpeg -i demo/video/out/raw.webm -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart demo/Baseline-demo-video.mp4
+//   npm i --no-save playwright-core && node demo/video/record.mjs full    (about 2.5 minutes)
+//                                       node demo/video/record.mjs short   (under 1 minute)
+//   ffmpeg -i demo/video/out/raw-full.webm -map_metadata -1 -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart demo/Baseline-demo-video.mp4
+//   ffmpeg -i demo/video/out/raw-short.webm -map_metadata -1 -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart demo/Baseline-demo-short.mp4
+//
+// Storyboard: one finding per sheet, captions carry the story, year-end and threshold are pre-set
+// (shown in a caption, not clicked through).
 //
 // Set CHROMIUM_PATH if Chromium isn't at the default location.
 import { chromium } from "playwright-core";
 import fs from "fs";
 import path from "path";
 
+const MODE = process.argv[2] === "short" ? "short" : "full";
 const DIR = path.dirname(new URL(import.meta.url).pathname);
 const DIST = path.resolve(DIR, "../../dist");
 const OUT = path.join(DIR, "out");
@@ -96,137 +102,149 @@ async function show(locator, block = "start") {
   await locator.evaluate((el, b) => el.scrollIntoView({ behavior: "smooth", block: b }), block);
   await wait(700);
 }
-async function useSuggested() {
-  await panelTop();
-  await moveTo(addin.locator("#suggest"), 0.3, 0.4);
-  await caption("Baseline recognises the workpaper and <b>suggests the right reviewer</b>.", 3200);
-  await click(addin.locator("#suggest button.primary"), { after: 1200 });
-}
 
-// ─── Title card ───────────────────────────────────────────────────────────────
+const opens = title => addin.locator(".item", { hasText: title });
+const linkIn = (title, cell) => opens(title).locator(".cell-link", { hasText: new RegExp(`^${cell}$`) }).first();
+
+// Year-end 31 Dec 2025 and a 12,500 threshold, as if set earlier in Settings.
+await page.evaluate(() => {
+  window.__seedSettings = { "baseline.context.v1": { yearEnd: 46022, threshold: 12500 } };
+});
+
+// ─── 1. Title card ───────────────────────────────────────────────────────────
 await card(`<div><div class="logo">B</div><h1>Baseline Review</h1>
-  <p>A first-pass review, live in Excel: workpaper basics and audit procedures</p>
+  <p>Juniors get review notes for the same small mistakes.<br>Baseline flags them while they work.</p>
   <div class="note">Demo · simulated spreadsheet, real add-in · all names fictional</div></div>`);
 workbook.active = "AP-3 SURL";
 await page.evaluate(wb => window.__init(wb), workbook);
 await addin.locator(".item").first().waitFor();
-await wait(3500);
-await card(null, 900);
+if (MODE === "short") {
+  // Load last year's notes off screen.
+  await addin.locator('.tab[data-tab="notes"]').click();
+  await addin.locator("#importNotes").click();
+  await addin.locator('.tab[data-tab="review"]').click();
+}
+await wait(5200);
+await card(null, 800);
 
-// ─── 1. The workpaper ───────────────────────────────────────────────────────
-await caption("An associate is preparing <b>AP-3, the search for unrecorded liabilities</b>.<small>Baseline reviews it the way a senior would on a first pass, live, as they work.</small>", 4800);
+async function totalSkipsALine() {
+  await click(item("Totals include every line"), { after: 600 });
+  await click(linkIn("Totals include every line", "F17"), { after: 700 });
+  await caption("A total that skips a line. Baseline <b>jumps to the cell</b> and explains why.", 1200);
+  await moveTo(opens("Totals include every line").locator(".why-block, .why").first(), 0.4, 0.4);
+  await wait(4600);
+  await click(item("Totals include every line"), { after: 300 });
+}
 
-// ─── 2. Year-end, once ──────────────────────────────────────────────────────
-await caption("Set the year-end and threshold once. They're saved in the workbook.", 600);
-await click(addin.locator('.tab[data-tab="settings"]'), { after: 500 });
-await click(addin.locator("#yearEndHint button"), { after: 400 });
-await click(addin.locator("#threshold"), { after: 200 });
-await addin.locator("#threshold").type("10000", { delay: 60 });
-await click(addin.locator("#saveSettings"), { after: 600 });
-await click(addin.locator('.tab[data-tab="review"]'), { after: 600 });
-await panelTop();
+async function lastYearsNotes(load) {
+  if (load) {
+    await caption("Load last year's review notes…", 400);
+    await click(addin.locator('.tab[data-tab="notes"]'), { after: 500 });
+    await click(addin.locator("#importNotes"), { after: 1000 });
+    await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
+  }
+  await panelTop();
+  await moveTo(addin.locator("#pyPanel"), 0.3, 0.3);
+  await caption("Last year's review notes are loaded. <b>Issues that repeat are flagged.</b>", 5400);
+}
 
-// ─── 3. What to fix, most important first ────────────────────────────────────
-await moveTo(addin.locator("#score"), 0.2, 0.5);
-await caption("Everything a reviewer would send back, <b>most important first</b>.", 3800);
-await moveTo(addin.locator("#checklist"), 0.4, 0.3);
-await caption("Hard-coded numbers, a short total, a number stored as text, blanks in the testing table…", 4400);
-await click(item("No hard-coded numbers inside formulas"), { after: 600 });
-await moveTo(addin.locator("#checklist .item-body").first(), 0.4, 0.4);
-await caption("Each flag explains <b>why a reviewer cares</b> and <b>how to fix it</b>.", 4600);
-await click(addin.locator("#checklist .item-body .cell-link").first(), { after: 600 });
-await caption("One click jumps to the cell.", 2600);
-await click(item("No hard-coded numbers inside formulas"), { after: 300 });
+async function forwardedBankReply() {
+  await caption(null, 200);
+  await activate("Cash confirmations");
+  await panelTop();
+  await click(addin.locator("#suggest button.primary"), { after: 1100 });
+  await show(insight("Not sent or received directly"));
+  await moveTo(insight("Not sent or received directly").locator(".insight-item").first(), 0.4, 0.5);
+  await caption("Bank reply <b>forwarded by the client</b>, not received directly.", 4200);
+  await moveTo(insight("Not sent or received directly").locator(".why-meta"), 0.4, 0.5);
+  await caption("Not reliable evidence until the auditor controls it. <b>ISA 505 / AS 2310.</b>", 5200);
+}
 
-// ─── 4. Dates ────────────────────────────────────────────────────────────────
-await caption("Dates get their own pass.", 400);
-await click(addin.locator('.step-mode[data-mode="dates"]'), { after: 400 });
-for (let i = 0; i < 3; i++) await click(addin.locator("#stepNext"), { after: 500 });
-await caption("<b>Step through every date</b> on the sheet, one at a time.", 3400);
-await click(item("Dates are consistent"), { after: 600 });
-await caption("And Baseline spots the odd one out: <b>a 2016 date in a column of 2026 dates</b>.", 4400);
-await click(item("Dates are consistent"), { after: 300 });
+if (MODE === "full") {
+  // ─── 2. Ranked issues ───────────────────────────────────────────────────────
+  await caption("A first-pass review of <b>AP-3, the search for unrecorded liabilities</b>.", 400);
+  await moveTo(addin.locator("#score"), 0.2, 0.5);
+  await wait(2600);
+  await moveTo(addin.locator("#checklist"), 0.4, 0.4);
+  await caption("Issues ranked, <b>most important first</b>. Year-end and threshold are already set.", 4600);
 
-// ─── 5. Tidiness and Mark OK ─────────────────────────────────────────────────
-await caption("It also catches loose ends: <b>leftover highlighting</b> and <b>stray numbers off to the side</b>.", 4200);
-await click(item("No leftover highlighting"), { after: 500 });
-await click(addin.locator("#checklist .item", { hasText: "No leftover highlighting" }).locator(".ok-link").first(), { after: 300 });
-await addin.locator(".ok-reason").type("Agreed to client follow-up, 14 Jan", { delay: 35 });
-await caption("If a flag is fine, <b>Mark OK with a reason</b>. The reviewer can see it.", 1800);
-await click(addin.locator(".ok-form .primary"), { after: 1200 });
+  // ─── 3. Total skips a line ──────────────────────────────────────────────────
+  await totalSkipsALine();
 
-// ─── 6. Last year's notes ────────────────────────────────────────────────────
-await caption("Load last year's review notes…", 400);
-await click(addin.locator('.tab[data-tab="notes"]'), { after: 500 });
-await click(addin.locator("#importNotes"), { after: 1100 });
-await click(addin.locator('.tab[data-tab="review"]'), { after: 300 });
-await panelTop();
-await moveTo(addin.locator("#pyPanel"), 0.3, 0.3);
-await caption("…and Baseline shows which of <b>last year's issues are happening again</b>.", 4400);
+  // ─── 4. The 2016 date ───────────────────────────────────────────────────────
+  await click(item("Dates are consistent"), { after: 500 });
+  await click(linkIn("Dates are consistent", "E15"), { after: 600 });
+  await caption("Dates are checked together, so <b>a 2016 among 2026</b> stands out.", 4600);
+  await click(item("Dates are consistent"), { after: 300 });
 
-// ─── 7. Clear the points ─────────────────────────────────────────────────────
-await caption("The associate clears the points before the senior ever opens the file…", 400);
-await editCell("D11", "05-Jan-26", { value: 46027, fmt: "dd-mmm-yy" });
-await editCell("I11", "Jan freight, FY26");
-await editCell("I16", "Exception: Dec service, not in AP");
-await editCell("F13", "2150", { fmt: "#,##0;(#,##0)" });
-await editCell("E15", "10-Feb-26", { value: 46063, fmt: "dd-mmm-yy" });
-await editCell("F17", "=SUM(F8:F16)");
-await editCell("F20", "=F17/F19");
-await editCell("K12", "");
-await editCell("A22", "Conclusion: two December liabilities not recorded; see exceptions.");
-await editCell("A23", "Tickmark legend: ✓ = agreed to vendor invoice and cleared cheque");
-await panelTop();
-await moveTo(addin.locator("#score"), 0.2, 0.5);
-await caption("<b>Ready for review.</b> Last year's notes now show <b>Looks fixed</b>.", 4600);
+  // ─── 5. Mark OK with a reason ───────────────────────────────────────────────
+  await click(item("No leftover highlighting"), { after: 500 });
+  await click(opens("No leftover highlighting").locator(".ok-link").first(), { after: 300 });
+  await addin.locator(".ok-reason").type("Highlight marks the item queried with the client", { delay: 30 });
+  await caption("<b>Mark OK needs a reason.</b> If the cell changes, the flag comes back.", 1600);
+  await click(addin.locator(".ok-form .primary"), { after: 2600 });
 
-// ─── 8. The procedure: SURL ─────────────────────────────────────────────────
-await caption("The basics are clean. Now <b>the procedure itself</b>.", 2600);
-await useSuggested();
-await show(insight("Invoices after year-end for this year's services"));
-await moveTo(insight("Invoices after year-end for this year's services").locator(".insight-item").first(), 0.4, 0.5);
-await caption("It reads the testing table: <b>January invoices for December services</b> that were never recorded.", 4600);
-await moveTo(insight("Invoices after year-end for this year's services").locator(".why-block"), 0.4, 0.4);
-await caption("Every finding says <b>why it matters</b>, the <b>assertion</b> at risk and the <b>standard</b> behind it.", 5200);
+  // ─── 6. Last year's notes ───────────────────────────────────────────────────
+  await lastYearsNotes(true);
 
-// ─── 9. Cash confirmations ───────────────────────────────────────────────────
-await caption(null, 200);
-await activate("Cash confirmations");
-await useSuggested();
-await show(insight("Not sent or received directly"));
-await moveTo(insight("Not sent or received directly").locator(".insight-item").first(), 0.4, 0.5);
-await caption("Cash confirmations: a bank reply <b>forwarded by the client</b> isn't direct evidence.", 4400);
-await moveTo(insight("Not sent or received directly").locator(".why-meta"), 0.4, 0.5);
-await caption("ISA 505 and PCAOB AS 2310 require the auditor to <b>control the confirmation</b>.", 4600);
-await show(insight("Overdrawn accounts"), "center");
-await caption("It also catches unexplained differences, missing replies, unconfirmed accounts and overdrafts.", 4200);
+  // ─── 7. Two fixes ───────────────────────────────────────────────────────────
+  await caption("Fix the cell and the flag clears…", 300);
+  await editCell("F17", "=SUM(F8:F16)");
+  await editCell("A23", "Tickmark legend: ✓ = agreed to vendor invoice and cleared cheque");
+  await panelTop();
+  await moveTo(addin.locator("#pyPanel"), 0.3, 0.5);
+  await caption("…and last year's tickmark note now shows <b>Looks fixed</b>.", 4400);
 
-// ─── 10. Expense vouching ────────────────────────────────────────────────────
-await caption(null, 200);
-await activate("Expense vouching");
-await useSuggested();
-await show(insight("Possible duplicate payments"));
-await moveTo(insight("Possible duplicate payments").locator(".insight-item").first(), 0.4, 0.5);
-await caption("Expense vouching: <b>the same invoice paid twice</b>, sitting in the sample.", 4200);
-await moveTo(insight("Possible duplicate payments").locator(".py-callout, .why-block").first(), 0.4, 0.4);
-await caption("And it remembers <b>last year's review note</b> about exactly this.", 4400);
-await show(insight("Looks like a capital item"), "center");
-await caption("Plus amounts that don't agree, cut-off, missing approval and <b>a forklift booked as an expense</b>.", 4600);
+  // ─── 8–9. SURL reviewer ─────────────────────────────────────────────────────
+  await caption(null, 200);
+  await moveTo(addin.locator("#suggest"), 0.3, 0.4);
+  await caption("Baseline recognises the workpaper type and <b>suggests the matching reviewer</b>.", 3600);
+  await click(addin.locator("#suggest button.primary"), { after: 1200 });
+  await show(insight("Invoices after year-end for this year's services"));
+  await moveTo(insight("Invoices after year-end for this year's services").locator(".insight-item").first(), 0.4, 0.5);
+  await caption("A <b>January invoice for December services</b>, never recorded.", 4200);
+  await moveTo(insight("Invoices after year-end for this year's services").locator(".why-block"), 0.4, 0.3);
+  await caption("Each finding says why it matters, the <b>assertion at risk</b> and the <b>standard behind it</b>.", 4000);
+  await moveTo(insight("Invoices after year-end for this year's services").locator(".why-meta"), 0.4, 0.5);
+  await wait(4000);
 
-// ─── 11. Whole workbook ──────────────────────────────────────────────────────
-await caption(null, 200);
-await click(addin.locator("#reviewAll"), { after: 1200 });
-await caption("One click reviews <b>every sheet</b> before it goes to the senior.", 4600);
-await caption(null, 400);
+  // ─── 10. Cash confirmations ─────────────────────────────────────────────────
+  await forwardedBankReply();
 
-// ─── End card ────────────────────────────────────────────────────────────────
+  // ─── 11. Expense vouching ───────────────────────────────────────────────────
+  await caption(null, 200);
+  await activate("Expense vouching");
+  await panelTop();
+  await click(addin.locator("#suggest button.primary"), { after: 1100 });
+  await show(insight("Possible duplicate payments"));
+  await moveTo(insight("Possible duplicate payments").locator(".insight-item").first(), 0.4, 0.5);
+  await caption("<b>Same invoice paid twice</b>, nine days apart.", 4000);
+  await moveTo(insight("Possible duplicate payments").locator(".py-callout"), 0.4, 0.5);
+  await caption("Last year's review raised <b>the same issue</b>.", 4600);
+
+  // ─── 12. Whole workbook ─────────────────────────────────────────────────────
+  await caption(null, 200);
+  await click(addin.locator("#reviewAll"), { after: 1200 });
+  await caption("One click reviews <b>every sheet</b>. Settings are saved in the workbook.", 5400);
+  await caption(null, 400);
+} else {
+  // ─── Short cut: one basic, the repeat callout, the bank reply ───────────────
+  await moveTo(addin.locator("#checklist"), 0.4, 0.4);
+  await caption("A first-pass review, <b>live in Excel</b>, most important first.", 3000);
+  await totalSkipsALine();
+  await lastYearsNotes(false);
+  await forwardedBankReply();
+  await caption(null, 300);
+}
+
+// ─── 13. End card ────────────────────────────────────────────────────────────
 await card(`<div><div class="logo">B</div><h1>Baseline Review</h1>
-  <p>Complete workpapers. Fewer review notes. Juniors who learn as they go.</p></div>`, 4500);
+  <p>The review note, delivered before the review.</p></div>`, 5000);
 
 const video = page.video();
 await context.close();
 await browser.close();
 const src = await video.path();
-fs.copyFileSync(src, path.join(OUT, "raw.webm"));
+fs.copyFileSync(src, path.join(OUT, `raw-${MODE}.webm`));
 console.log("errors:", errors);
-console.log("video:", path.join(OUT, "raw.webm"));
+console.log("video:", path.join(OUT, `raw-${MODE}.webm`));

@@ -79,3 +79,11 @@
 - Cash confirmations are only suggested when the sheet has a bank column, so customer (AR) confirmations aren't
   mistaken for bank ones. Expense vouching is only suggested when the sheet's name or wording says so.
 - The demo video is not re-recorded for every change; only on request.
+
+## 2026-11-11: Demo video storyboard v2
+- Full demo cut to about 2.5 minutes, plus a 54-second cut for email and chat (`demo/Baseline-demo-short.mp4`).
+  One finding per sheet; year-end and threshold are pre-set in the recording and mentioned in a caption.
+- Wording follows an external review of the captions: "first-pass review", never implying it replaces review; no
+  "Ready for review" state shown in the video.
+- Demo workbook made more realistic: an explained bank difference beside the unexplained one, a duplicate paid nine
+  days apart at a non-round amount, last year's notes in a reviewer's voice.

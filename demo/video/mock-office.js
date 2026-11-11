@@ -81,6 +81,8 @@
   };
 
   const settings = {};
+  // The recorder can pre-set workbook settings (year-end, threshold) so they aren't set on screen.
+  const seeded = k => (P.__seedSettings || {})[k];
   window.Excel = {
     SheetVisibility: { visible: "Visible" },
     run: async cb => cb({ workbook: { worksheets }, sync: async () => {} }),
@@ -89,7 +91,7 @@
     AsyncResultStatus: { Succeeded: "succeeded" },
     onReady(cb) { const go = () => (P.__wb ? cb() : setTimeout(go, 50)); setTimeout(go, 0); return Promise.resolve(); },
     context: { document: { settings: {
-      get: k => settings[k],
+      get: k => (k in settings ? settings[k] : seeded(k)),
       set: (k, v) => { settings[k] = JSON.parse(JSON.stringify(v)); },
       saveAsync: cb => cb({ status: "succeeded" }),
     } } },
