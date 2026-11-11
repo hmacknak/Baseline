@@ -89,6 +89,28 @@ function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
+/** "Why it matters" block: the reasoning, then the assertion at risk and the standard it comes from. */
+function whyBlock(why: string, assertion?: string, reference?: string): HTMLElement {
+  const box = el("div", "why-block");
+  const p = el("p", "why");
+  p.appendChild(el("strong", undefined, "Why it matters: "));
+  p.appendChild(document.createTextNode(why));
+  box.appendChild(p);
+  if (assertion || reference) {
+    const meta = el("p", "why-meta");
+    if (assertion) {
+      meta.appendChild(el("span", "why-label", "Assertion"));
+      meta.appendChild(document.createTextNode(assertion));
+    }
+    if (reference) {
+      meta.appendChild(el("span", "why-label", "Reference"));
+      meta.appendChild(document.createTextNode(reference));
+    }
+    box.appendChild(meta);
+  }
+  return box;
+}
+
 function cellLink(address: string): HTMLButtonElement {
   const link = el("button", "cell-link", address);
   link.title = `Go to ${address}`;
@@ -171,7 +193,7 @@ function renderSuggestion() {
   if (!s) return;
   box.hidden = false;
   const text = el("p");
-  text.appendChild(document.createTextNode("This looks like a "));
+  text.appendChild(document.createTextNode("This sheet looks like "));
   text.appendChild(el("strong", undefined, s.reviewer.name));
   text.appendChild(document.createTextNode(". Use that reviewer?"));
   box.appendChild(text);
@@ -327,10 +349,7 @@ function renderCheckItem(r: ReviewedCheck): HTMLElement {
     }
 
     if (!pass) {
-      const why = el("p", "why");
-      why.appendChild(el("strong", undefined, "Why it matters: "));
-      why.appendChild(document.createTextNode(check.why));
-      body.appendChild(why);
+      body.appendChild(whyBlock(check.why, check.assertion, check.reference));
       const fix = el("p", "why");
       fix.appendChild(el("strong", undefined, "How to fix: "));
       fix.appendChild(document.createTextNode(check.fix));
@@ -450,10 +469,7 @@ function renderInsight(r: InsightResult): HTMLElement {
           el("p", "over", `Together $${fmtAmount(total)}: above your $${fmtAmount(ctx.threshold)} threshold.`),
         );
       }
-      const why = el("p", "why");
-      why.appendChild(el("strong", undefined, "Why it's risky: "));
-      why.appendChild(document.createTextNode(r.insight.why));
-      body.appendChild(why);
+      body.appendChild(whyBlock(r.insight.why, r.insight.assertion, r.insight.reference));
     }
     card.appendChild(body);
   }

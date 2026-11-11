@@ -283,7 +283,7 @@ function findLabel(sheet: SheetSnapshot, pattern: RegExp): { cell: Cell; filled:
   return null;
 }
 
-// Sign-off labels start the cell ("Prepared by: JS"), so prose mentioning "the reviewer" doesn't count.
+// Sign-off labels start the cell ("Prepared by: AB"), so prose mentioning "the reviewer" doesn't count.
 const PREPARED = /^\s*(prepared\s*by|preparer\b|prep'?d\s*by)/i;
 const REVIEWED = /^\s*(reviewed\s*by|reviewer\b)/i;
 

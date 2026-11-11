@@ -65,6 +65,10 @@ export interface Check {
   fix: string;
   /** Extra PY-note tags this check answers to, e.g. "completeness". */
   aliases?: string[];
+  /** Financial statement assertion at risk, e.g. "Completeness". */
+  assertion?: string;
+  /** Where the requirement comes from, e.g. "ISA 505.7; PCAOB AS 2310.14". */
+  reference?: string;
   run(sheet: SheetSnapshot, ctx?: ReviewContext): Finding[];
 }
 
@@ -94,6 +98,10 @@ export interface Insight {
   needs?: Array<keyof ReviewContext>;
   /** PY-note tags this insight answers to, e.g. "cutoff". */
   aliases?: string[];
+  /** Financial statement assertion at risk, e.g. "Existence". */
+  assertion?: string;
+  /** Where the requirement comes from, e.g. "IAS 37.11". */
+  reference?: string;
   run(sheet: SheetSnapshot, ctx: ReviewContext): InsightItem[];
 }
 

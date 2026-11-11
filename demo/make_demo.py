@@ -76,6 +76,8 @@ lines = [
     ('7. PY notes tab → Import from "PY Notes" sheet. The yellow box shows last year\'s issues happening again.', None),
     ("8. Fix something live: change AP-3 SURL F17 to =SUM(F8:F16) and watch it turn green.", None),
     ("9. Click Review all sheets to see every tab at once. FY25 Fixed Assets is ready for review.", None),
+    ('10. Procedures: open "Cash confirmations" or "Expense vouching" (or "AP-3 SURL"). Baseline offers the', None),
+    ("    matching reviewer. Set a threshold of 10000 in Settings to see every insight.", None),
     ("", None),
     ("All figures are made up. Nothing in this file leaves Excel.", MUTED),
 ]
@@ -90,7 +92,7 @@ ws = wb.create_sheet("FY25 Cash")
 ws["A1"] = "Cash: bank reconciliation, 31 Dec 2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: reconcile the operating account balance to the bank statement"
-ws["A3"] = "Prepared by: JS 06/10/2025"
+ws["A3"] = "Prepared by: AB 06/10/2025"
 # Missing on purpose: "Reviewed by" line and a "Source" line.
 
 header_row(ws, 5, ["Item", "Amount", "Tick"])
@@ -123,7 +125,7 @@ ws["B13"] = "=B12*1.37"  # Hard-coded FX rate, on purpose.
 ws["B13"].number_format = MONEY
 ws["A14"] = "FX rate USD→CAD"
 ws["B14"] = 1.37
-ws["C14"] = "per Bank of Canada 31 Dec close"
+ws["C14"] = "per central bank closing rate, 31 Dec"
 
 ws["A11"] = "Balance per general ledger"
 ws["B11"] = 468_475  # The rec is $1,200 off until B10 includes B9.
@@ -135,10 +137,10 @@ table(
     17,
     ["Cheque #", "Payee", "Date", "Amount", "Cleared date", "Comment"],
     [
-        ("1041", "Northwind Traders", date(2025, 5, 2), 2_400, None, "Not yet cleared"),  # stale
-        ("1102", "Contoso Ltd", date(2025, 12, 20), 31_500, date(2025, 12, 29), None),  # cleared before YE
-        ("1110", "Tailspin Toys", date(2025, 12, 30), 12_000, None, None),  # large, uncleared, no comment
-        ("1111", "Adventure Works", date(2025, 12, 31), 5_375, date(2026, 1, 6), None),
+        ("1041", "Company A", date(2025, 5, 2), 2_400, None, "Not yet cleared"),  # stale
+        ("1102", "Company B", date(2025, 12, 20), 31_500, date(2025, 12, 29), None),  # cleared before YE
+        ("1110", "Company E", date(2025, 12, 30), 12_000, None, None),  # large, uncleared, no comment
+        ("1111", "Company D", date(2025, 12, 31), 5_375, date(2026, 1, 6), None),
     ],
     {2: DATE, 3: MONEY, 4: DATE},
 )
@@ -156,16 +158,16 @@ ws["A1"] = "Accounts receivable: aging, 31 Dec 2024"  # Not rolled forward, on p
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: test the AR aging and allowance"
 ws["A3"] = "Source: AR aging report from the client's system, 3 Jan 2026"
-ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["A4"] = "Prepared by: AB 06/10/2025"
 ws["C4"] = "Reviewed by:"
 
 header_row(ws, 6, ["Customer", "0-30", "31-60", "61-90", "Total", "% of total"])
 customers = [
-    ("Northwind Traders", 18_200, 4_100, 900),
-    ("Contoso Ltd", 22_750, 0, 3_300),
-    ("Fabrikam Inc", 9_800, 2_250, 0),
-    ("Adventure Works", 14_100, 6_400, 1_750),
-    ("Tailspin Toys", 7_300, 0, 0),
+    ("Company A", 18_200, 4_100, 900),
+    ("Company B", 22_750, 0, 3_300),
+    ("Company C", 9_800, 2_250, 0),
+    ("Company D", 14_100, 6_400, 1_750),
+    ("Company E", 7_300, 0, 0),
 ]
 for i, (name, a, b, c) in enumerate(customers):
     r = 7 + i
@@ -200,7 +202,7 @@ ws["A1"] = "Fixed assets: additions and depreciation, FY2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: recalculate straight-line depreciation on FY25 additions"
 ws["A3"] = "Source: fixed asset register export, 2 Jan 2026"
-ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["A4"] = "Prepared by: AB 06/10/2025"
 ws["C4"] = "Reviewed by:"
 
 header_row(ws, 6, ["Asset", "Cost", "Useful life (yrs)", "Depreciation", "Net book value", "Tick"])
@@ -236,33 +238,33 @@ widths(ws, 30, 12, 16, 14, 16, 6)
 
 # ─── AP-3 SURL (the featured procedure in the demo video) ─────────────────────
 ws = wb.create_sheet("AP-3 SURL")
-ws["A1"] = "Cedar Valley Foods Ltd.  |  AP-3  Search for unrecorded liabilities"
+ws["A1"] = "Example Client Ltd.  |  AP-3  Search for unrecorded liabilities"
 ws["A1"].font = TITLE
 ws["A2"] = "Year ended 31 December 2025"
 ws["A3"] = "Objective: identify liabilities at 31 Dec 2025 not recorded in accounts payable (completeness)."
 ws["A4"] = "Source: Jan to Feb 2026 cash disbursements journal and vendor invoices. Selection: all payments over $5,000."
-ws["A5"] = "Prepared by: JS 12/01/2026"
+ws["A5"] = "Prepared by: AB 12/01/2026"
 ws["E5"] = "Reviewed by:"
 table(
     ws,
     7,
     ["Vendor", "Invoice #", "Inv date", "Service to", "Paid", "Amount", "In AP?", "Tick", "Conclusion"],
     [
-        ("Acme Plumbing", "INV-4471", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_400, "N", "✓", "Exception: Dec service, not in AP"),
-        ("Bolt Software", "BS-1102", date(2026, 1, 5), date(2026, 1, 31), date(2026, 1, 9), 6_000, "N", "✓", "Jan subscription, FY26"),
-        ("City Power", "CP-88213", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_200, "N", "✓", "Investigate: Dec invoice"),
-        ("Delta Freight", "DF-5520", date(2026, 1, 8), None, date(2026, 1, 22), 12_750, "N", "✓", None),
-        ("Echo Legal", "EL-0931", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_000, "Y", "✓", "In AP listing at YE"),
-        ("Fresh Foods Co", "FF-2290", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_150, "N", "✓", "FY26 expense"),
-        ("Granite Rentals", "GR-7741", date(2026, 1, 20), date(2025, 12, 31), date(2026, 2, 3), 24_600, "Y", "✓", "Accrued at YE, see AP-2"),
-        ("Harbor Security", "HS-3310", date(2026, 2, 2), date(2026, 1, 31), date(2026, 2, 10), 7_800, "N", "✓", "FY26 expense"),
-        ("Ironwood Consulting", "IC-1907", date(2026, 1, 9), date(2025, 12, 20), date(2026, 1, 30), 11_250, "N", "✓", None),
+        ("Vendor A", "INV-4471", date(2026, 1, 12), date(2025, 12, 18), date(2026, 1, 20), 18_400, "N", "✓", "Exception: Dec service, not in AP"),
+        ("Vendor B", "BS-1102", date(2026, 1, 5), date(2026, 1, 31), date(2026, 1, 9), 6_000, "N", "✓", "Jan subscription, FY26"),
+        ("Vendor C", "CP-88213", date(2025, 12, 28), date(2025, 12, 15), date(2026, 1, 15), 3_200, "N", "✓", "Investigate: Dec invoice"),
+        ("Vendor D", "DF-5520", date(2026, 1, 8), None, date(2026, 1, 22), 12_750, "N", "✓", None),
+        ("Vendor E", "EL-0931", date(2026, 1, 3), date(2025, 12, 10), date(2026, 1, 25), 9_000, "Y", "✓", "In AP listing at YE"),
+        ("Vendor F", "FF-2290", date(2026, 1, 14), date(2026, 1, 10), date(2026, 1, 28), 2_150, "N", "✓", "FY26 expense"),
+        ("Vendor G", "GR-7741", date(2026, 1, 20), date(2025, 12, 31), date(2026, 2, 3), 24_600, "Y", "✓", "Accrued at YE, see AP-2"),
+        ("Vendor H", "HS-3310", date(2026, 2, 2), date(2026, 1, 31), date(2026, 2, 10), 7_800, "N", "✓", "FY26 expense"),
+        ("Vendor I", "IC-1907", date(2026, 1, 9), date(2025, 12, 20), date(2026, 1, 30), 11_250, "N", "✓", None),
     ],
     {2: DATE, 3: DATE, 4: DATE, 5: MONEY},
 )
 ws["A17"] = "Total tested"
 ws["A17"].font = BOLD
-ws["F17"] = "=SUM(F8:F15)"  # Stops a row short: leaves out Ironwood (F16), on purpose.
+ws["F17"] = "=SUM(F8:F15)"  # Stops a row short: leaves out Vendor I (F16), on purpose.
 ws["F17"].number_format = MONEY
 ws["F17"].font = BOLD
 ws["F17"].border = TOTAL_BORDER
@@ -287,19 +289,19 @@ ws["A1"] = "Revenue cut-off testing, 31 Dec 2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: test sales either side of year-end are recorded in the right period"
 ws["A3"] = "Source: sales journal 20 Dec 2025 to 10 Jan 2026, shipping logs"
-ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["A4"] = "Prepared by: AB 06/10/2025"
 ws["D4"] = "Reviewed by:"
 table(
     ws,
     6,
     ["Invoice #", "Customer", "Invoice date", "Ship date", "Amount", "Conclusion"],
     [
-        ("INV-880", "Adventure Works", date(2025, 12, 22), date(2025, 12, 21), 4_000, "OK"),
-        ("INV-899", "Tailspin Toys", date(2025, 12, 29), date(2025, 12, 29), 22_000, None),
-        ("INV-901", "Northwind Traders", date(2025, 12, 31), date(2026, 1, 3), 48_000, "Shipped Jan"),
-        ("INV-902", "Contoso Ltd", date(2026, 1, 2), date(2025, 12, 30), 15_500, "Shipped Dec"),
-        ("CN-14", "Fabrikam Inc", date(2026, 1, 6), date(2026, 1, 6), -9_800, "Credit note"),
-        ("INV-910", "Wide World", date(2026, 1, 8), date(2026, 1, 7), 7_250, "OK"),
+        ("INV-880", "Company D", date(2025, 12, 22), date(2025, 12, 21), 4_000, "OK"),
+        ("INV-899", "Company E", date(2025, 12, 29), date(2025, 12, 29), 22_000, None),
+        ("INV-901", "Company A", date(2025, 12, 31), date(2026, 1, 3), 48_000, "Shipped Jan"),
+        ("INV-902", "Company B", date(2026, 1, 2), date(2025, 12, 30), 15_500, "Shipped Dec"),
+        ("CN-14", "Company C", date(2026, 1, 6), date(2026, 1, 6), -9_800, "Credit note"),
+        ("INV-910", "Company F", date(2026, 1, 8), date(2026, 1, 7), 7_250, "OK"),
     ],
     {2: DATE, 3: DATE, 4: MONEY},
 )
@@ -311,22 +313,76 @@ ws["A1"] = "AR confirmations, 31 Dec 2025"
 ws["A1"].font = TITLE
 ws["A2"] = "Purpose: confirm significant customer balances directly with customers"
 ws["A3"] = "Source: AR aging at 31 Dec 2025, confirmation responses"
-ws["A4"] = "Prepared by: JS 06/10/2025"
+ws["A4"] = "Prepared by: AB 06/10/2025"
 ws["D4"] = "Reviewed by:"
 table(
     ws,
     6,
     ["Customer", "Balance per ledger", "Date sent", "Confirmed balance", "Explanation", "Alternative procedures"],
     [
-        ("Northwind Traders", 23_200, date(2026, 1, 10), 23_200, None, None),
-        ("Contoso Ltd", 26_050, date(2026, 1, 10), 22_750, None, None),
-        ("Fabrikam Inc", 14_050, date(2026, 1, 10), None, None, None),
-        ("Adventure Works", 22_250, date(2026, 1, 10), None, None, "Agreed to Jan receipts"),
-        ("Tailspin Toys", 17_300, None, None, None, None),
+        ("Company A", 23_200, date(2026, 1, 10), 23_200, None, None),
+        ("Company B", 26_050, date(2026, 1, 10), 22_750, None, None),
+        ("Company C", 14_050, date(2026, 1, 10), None, None, None),
+        ("Company D", 22_250, date(2026, 1, 10), None, None, "Agreed to Jan receipts"),
+        ("Company E", 17_300, None, None, None, None),
     ],
     {1: MONEY, 2: DATE, 3: MONEY},
 )
 widths(ws, 20, 17, 12, 17, 18, 22)
+
+# ─── Cash confirmations ──────────────────────────────────────────────────────
+ws = wb.create_sheet("Cash confirmations")
+ws["A1"] = "Example Client Ltd.  |  C-2  Cash confirmations"
+ws["A1"].font = TITLE
+ws["A2"] = "Year ended 31 December 2025"
+ws["A3"] = "Objective: confirm existence and completeness of all bank balances directly with each bank."
+ws["A4"] = "Source: trial balance, prior-year bank replies, confirmation platform responses."
+ws["A5"] = "Prepared by: AB 14/01/2026"
+ws["F5"] = "Reviewed by:"
+table(
+    ws,
+    7,
+    ["Bank", "Account", "Currency", "Balance per books", "Balance per confirmation", "As at", "Date sent", "Date received", "Received via", "Explanation", "Conclusion"],
+    [
+        ("Bank A", "Operating", "CAD", 468_475, 468_475, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
+        ("Bank A", "Payroll", "CAD", 36_400, 31_400, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Exception"),
+        ("Bank B", "Savings", "CAD", 125_000, None, date(2025, 12, 31), date(2026, 1, 5), None, None, None, "Chasing"),
+        ("Bank C", "US dollar account", "USD", 25_000, 25_000, date(2025, 11, 30), date(2026, 1, 5), date(2026, 1, 20), "Forwarded by client", None, "Agreed"),
+        ("Bank D", "Dormant account", "CAD", 0, None, None, None, None, None, None, "Not used"),
+        ("Bank A", "Credit line", "CAD", -15_000, -15_000, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
+    ],
+    {3: MONEY, 4: MONEY, 5: DATE, 6: DATE, 7: DATE},
+)
+ws["A15"] = "Conclusion: to be completed once differences and non-replies are cleared."
+widths(ws, 10, 16, 8, 14, 14, 10, 10, 10, 18, 12, 12)
+
+# ─── Expense vouching ────────────────────────────────────────────────────────
+ws = wb.create_sheet("Expense vouching")
+ws["A1"] = "Example Client Ltd.  |  E-4  Expense vouching"
+ws["A1"].font = TITLE
+ws["A2"] = "Year ended 31 December 2025"
+ws["A3"] = "Objective: vouch a sample of operating expenses to support for occurrence, accuracy, cut-off and classification."
+ws["A4"] = "Source: general ledger expense accounts; vendor invoices. Sample of 8 items."
+ws["A5"] = "Prepared by: AB 20/01/2026"
+ws["F5"] = "Reviewed by:"
+table(
+    ws,
+    7,
+    ["Sample #", "GL date", "Vendor", "Description", "Amount per GL", "Amount per invoice", "Invoice #", "Service date", "Approved?", "Correct account?", "Conclusion"],
+    [
+        ("1", date(2025, 3, 4), "Vendor A", "Office cleaning", 1_200, 1_200, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
+        ("2", date(2025, 5, 9), "Vendor B", "Consulting", 8_500, 5_800, "B-20", date(2025, 5, 1), "Y", "Y", "Exception"),
+        ("3", date(2025, 12, 30), "Vendor C", "Annual software support", 6_000, 6_000, "C-7", date(2026, 1, 15), "Y", "Y", "Agreed"),
+        ("4", date(2025, 3, 18), "Vendor A", "Office cleaning", 1_200, 1_200, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
+        ("5", date(2025, 8, 2), "Vendor D", "New forklift", 42_000, 42_000, "D-3", date(2025, 7, 30), "N", "N", "Exception"),
+        ("6", date(2025, 9, 2), "Vendor E", "Courier", 300, 300, "E-9", date(2025, 9, 1), None, "Y", "Agreed"),
+        ("7", date(2025, 10, 14), "Vendor F", "Utilities", 2_450, 2_450, "F-31", date(2025, 9, 30), "Y", "Y", "Agreed"),
+        ("8", date(2025, 11, 20), "Vendor G", "Travel", 1_980, 1_980, "G-2", date(2025, 11, 12), "Y", "Y", None),
+    ],
+    {1: DATE, 4: MONEY, 5: MONEY, 7: DATE},
+)
+ws["A17"] = "Conclusion: to be completed once exceptions are evaluated and projected."
+widths(ws, 9, 10, 10, 22, 12, 12, 9, 10, 9, 10, 12)
 
 # ─── PY Notes ────────────────────────────────────────────────────────────────
 ws = wb.create_sheet("PY Notes")
@@ -342,6 +398,8 @@ py_notes = [
     ("AP-3 SURL", "", "Missing service dates on several items, so you can't conclude on the period"),
     ("AP-3 SURL", "", "January invoice for December services was not identified as an unrecorded liability"),
     ("AP-3 SURL", "H8", "Where is the tickmark legend?"),
+    ("Cash confirmations", "", "Bank confirmation received via the client, not directly"),
+    ("Expense vouching", "", "Duplicate payment to a supplier not identified"),
     ("FY24 Revenue cut-off", "", "Dec 31 invoice shipped in January was not identified"),
 ]
 for r, row in enumerate(py_notes, start=2):

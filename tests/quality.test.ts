@@ -30,7 +30,7 @@ describe("typed numbers among formulas", () => {
 describe("tables are complete", () => {
   const s = sheet({
     A1: "Vendor", B1: "Invoice date", C1: "Amount", D1: "Comment",
-    A2: "Acme", B2: d(2026, 1, 5), C2: 100,
+    A2: "Vendor A", B2: d(2026, 1, 5), C2: 100,
     A3: "Bolt", B3: d(2026, 1, 6), C3: 200, D3: "ok",
     A4: "City", C4: 300,
     A5: "Delta", B5: d(2026, 1, 9), C5: 400,
@@ -83,7 +83,7 @@ describe("dates", () => {
   });
 
   it("flags a review dated before preparation", () => {
-    const s = sheet({ A1: "Prepared by: JS 20-Jan-26", A2: "Reviewed by: MK 15-Jan-26" });
+    const s = sheet({ A1: "Prepared by: AB 20-Jan-26", A2: "Reviewed by: CD 15-Jan-26" });
     expect(getCheck("dates").run(s, ctx)[0].message).toContain("before it was prepared");
   });
 
@@ -147,7 +147,7 @@ describe("leftover highlighting", () => {
 
 describe("sign-off dates and tickmark legend", () => {
   it("wants a date on the preparer sign-off", () => {
-    const f = getCheck("signoff").run(sheet({ A1: "Prepared by: JS", A2: "Reviewed by:" }));
+    const f = getCheck("signoff").run(sheet({ A1: "Prepared by: AB", A2: "Reviewed by:" }));
     expect(f.map(x => x.message)).toEqual(['"Prepared by" has no date']);
   });
 
@@ -159,7 +159,7 @@ describe("sign-off dates and tickmark legend", () => {
 
 describe("sign-off labels", () => {
   it("ignores prose that mentions the reviewer", () => {
-    const f = getCheck("signoff").run(sheet({ A1: "Prepared by: JS 05/01/2026", A2: "Reviewed by:", A4: "Send to the reviewer when done" }));
+    const f = getCheck("signoff").run(sheet({ A1: "Prepared by: AB 05/01/2026", A2: "Reviewed by:", A4: "Send to the reviewer when done" }));
     expect(f).toEqual([]);
   });
 });

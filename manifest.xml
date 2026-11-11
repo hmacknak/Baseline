@@ -12,9 +12,9 @@
   <Description DefaultValue="Live review checklist for workpapers, with last year's review notes built in."/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://github.com/hmacknak/Baseline"/>
+  <SupportUrl DefaultValue="https://localhost:3000/index.html"/>
   <AppDomains>
-    <AppDomain>https://hmacknak.github.io</AppDomain>
+    <AppDomain>https://localhost:3000</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Workbook"/>

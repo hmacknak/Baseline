@@ -27,7 +27,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
+      - id: pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
       - run: npm run build
+        env:
+          # The hosting address comes from GitHub Pages at build time, not from the source code.
+          ADDIN_BASE_URL: ${{ steps.pages.outputs.base_url }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

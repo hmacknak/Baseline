@@ -88,7 +88,7 @@ describe("signoff", () => {
   });
 
   it("accepts filled sign-offs inline or in the next cell", () => {
-    expect(run("signoff", { A1: "Prepared by: JS 01/10", A2: "Reviewed by:", B2: "MK 05/10" })).toEqual([]);
+    expect(run("signoff", { A1: "Prepared by: AB 01/10", A2: "Reviewed by:", B2: "CD 05/10" })).toEqual([]);
   });
 
   it("ignores empty sheets", () => {

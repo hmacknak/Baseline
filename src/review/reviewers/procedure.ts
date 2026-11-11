@@ -27,7 +27,7 @@ function labelOf(spec: TableSpec, key: string): string {
   return spec.columns.filter(c => c.key === key)[0]?.label ?? key;
 }
 
-/** A short name for the row in messages, e.g. "row 14 (Acme Ltd)". */
+/** A short name for the row in messages, e.g. "row 14 (Vendor A)". */
 export function rowName(row: TableRow, labelKeys: string[]): string {
   for (const k of labelKeys) {
     const t = textOf(row, k);
@@ -46,13 +46,21 @@ export function completenessCheck(opts: {
   required: Array<string | string[]>;
   labelKeys: string[];
   tableHint: string;
+  /** Procedure-specific explanation; defaults to a general one. */
+  why?: string;
+  assertion?: string;
+  reference?: string;
 }): Check {
   return {
     id: opts.id,
     title: "Every tested item is complete",
     severity: "high",
     aliases: ["completeness"],
-    why: "A blank date, amount or conclusion means the item isn't evidenced. It's one of the most common reasons a workpaper comes back from review.",
+    assertion: opts.assertion,
+    reference: opts.reference,
+    why:
+      opts.why ||
+      "A blank date, amount or conclusion means the item isn't evidenced. It's one of the most common reasons a workpaper comes back from review.",
     fix: "Fill in the missing cells. If something genuinely doesn't apply, write N/A with a short reason so the reviewer knows it was considered.",
     run(sheet) {
       const table = tableFor(sheet, opts.spec);
@@ -109,6 +117,8 @@ export function rowInsight(opts: {
   why: string;
   needs?: Array<keyof ReviewContext>;
   aliases?: string[];
+  assertion?: string;
+  reference?: string;
   spec: TableSpec;
   /** Return a reason string to flag the row, or null to pass it. */
   test(row: TableRow, ctx: ReviewContext): { detail: string; cellKey: string; amount?: number | null } | null;
@@ -121,6 +131,8 @@ export function rowInsight(opts: {
     why: opts.why,
     needs: opts.needs,
     aliases: opts.aliases,
+    assertion: opts.assertion,
+    reference: opts.reference,
     run(sheet, ctx) {
       const table = tableFor(sheet, opts.spec);
       if (!table) return [];

@@ -28,15 +28,15 @@ const surlSheet = sheet(
     A1: "Search for unrecorded liabilities, 31 Dec 2025",
     A3: "Vendor", B3: "Invoice date", C3: "Service date", D3: "Payment date", E3: "Amount", F3: "Recorded in AP?", G3: "Conclusion",
     // Jan invoice for December services, not recorded → unrecorded liability.
-    A4: "Acme Plumbing", B4: d(2026, 1, 12), C4: d(2025, 12, 18), D4: d(2026, 1, 20), E4: 18400, F4: "N", G4: "Exception",
+    A4: "Vendor A", B4: d(2026, 1, 12), C4: d(2025, 12, 18), D4: d(2026, 1, 20), E4: 18400, F4: "N", G4: "Exception",
     // Jan invoice for January services → next year, fine.
-    A5: "Bolt Software", B5: d(2026, 1, 5), C5: d(2026, 1, 1), D5: d(2026, 1, 9), E5: 6000, F5: "N", G5: "OK",
+    A5: "Vendor B", B5: d(2026, 1, 5), C5: d(2026, 1, 1), D5: d(2026, 1, 9), E5: 6000, F5: "N", G5: "OK",
     // December invoice not in AP.
-    A6: "City Power", B6: d(2025, 12, 28), C6: d(2025, 12, 15), D6: d(2026, 1, 15), E6: 3200, F6: "No", G6: "Exception",
+    A6: "Vendor C", B6: d(2025, 12, 28), C6: d(2025, 12, 15), D6: d(2026, 1, 15), E6: 3200, F6: "No", G6: "Exception",
     // Missing service date and conclusion.
-    A7: "Delta Freight", B7: d(2026, 1, 8), D7: d(2026, 1, 22), E7: 12750, F7: "N",
+    A7: "Vendor D", B7: d(2026, 1, 8), D7: d(2026, 1, 22), E7: 12750, F7: "N",
     // Recorded properly.
-    A8: "Echo Legal", B8: d(2026, 1, 3), C8: d(2025, 12, 10), D8: d(2026, 1, 25), E8: 9000, F8: "Y", G8: "Recorded",
+    A8: "Vendor E", B8: d(2026, 1, 3), C8: d(2025, 12, 10), D8: d(2026, 1, 25), E8: 9000, F8: "Y", G8: "Recorded",
   },
   "FY25 SURL",
 );
@@ -56,8 +56,8 @@ describe("SURL reviewer", () => {
 
   it("reports each missing cell", () => {
     expect(completeness(surl, surlSheet)).toEqual([
-      "row 7 (Delta Freight): service date missing",
-      "row 7 (Delta Freight): conclusion missing",
+      "row 7 (Vendor D): service date missing",
+      "row 7 (Vendor D): conclusion missing",
     ]);
   });
 
@@ -83,11 +83,11 @@ const bankSheet = sheet(
     A4: "Adjusted bank balance", B4: 467275,
     A5: "Balance per general ledger", B5: 468475,
     A7: "Cheque #", B7: "Payee", C7: "Date", D7: "Amount", E7: "Cleared date", F7: "Comment",
-    A8: "1041", B8: "Northwind", C8: d(2025, 5, 2), D8: 2400, F8: "Not yet cleared",
-    A9: "1102", B9: "Contoso", C9: d(2025, 12, 20), D9: 31500, E9: d(2025, 12, 29),
-    A10: "1109", B10: "Fabrikam", C10: d(2026, 1, 4), D10: 7300, E10: d(2026, 1, 9),
-    A11: "1110", B11: "Tailspin", C11: d(2025, 12, 30), D11: 12000,
-    A12: "1111", B12: "Adventure", C12: d(2025, 12, 31), D12: 900, E12: d(2026, 1, 6),
+    A8: "1041", B8: "Company A", C8: d(2025, 5, 2), D8: 2400, F8: "Not yet cleared",
+    A9: "1102", B9: "Company B", C9: d(2025, 12, 20), D9: 31500, E9: d(2025, 12, 29),
+    A10: "1109", B10: "Company C", C10: d(2026, 1, 4), D10: 7300, E10: d(2026, 1, 9),
+    A11: "1110", B11: "Company E", C11: d(2025, 12, 30), D11: 12000,
+    A12: "1111", B12: "Company D", C12: d(2025, 12, 31), D12: 900, E12: d(2026, 1, 6),
   },
   "FY25 Cash",
 );
@@ -118,11 +118,11 @@ const cutoffSheet = sheet(
   {
     A1: "Revenue cut-off testing",
     A2: "Invoice #", B2: "Customer", C2: "Invoice date", D2: "Ship date", E2: "Amount", F2: "Conclusion",
-    A3: "INV-901", B3: "Northwind", C3: d(2025, 12, 31), D3: d(2026, 1, 3), E3: 48000, F3: "Exception",
-    A4: "INV-902", B4: "Contoso", C4: d(2026, 1, 2), D4: d(2025, 12, 30), E4: 15500, F4: "Exception",
-    A5: "CN-14", B5: "Fabrikam", C5: d(2026, 1, 6), D5: d(2026, 1, 6), E5: -9800, F5: "Check",
-    A6: "INV-899", B6: "Tailspin", C6: d(2025, 12, 29), D6: d(2025, 12, 29), E6: 22000,
-    A7: "INV-880", B7: "Adventure", C7: d(2025, 12, 10), D7: d(2025, 12, 9), E7: 4000, F7: "OK",
+    A3: "INV-901", B3: "Company A", C3: d(2025, 12, 31), D3: d(2026, 1, 3), E3: 48000, F3: "Exception",
+    A4: "INV-902", B4: "Company B", C4: d(2026, 1, 2), D4: d(2025, 12, 30), E4: 15500, F4: "Exception",
+    A5: "CN-14", B5: "Company C", C5: d(2026, 1, 6), D5: d(2026, 1, 6), E5: -9800, F5: "Check",
+    A6: "INV-899", B6: "Company E", C6: d(2025, 12, 29), D6: d(2025, 12, 29), E6: 22000,
+    A7: "INV-880", B7: "Company D", C7: d(2025, 12, 10), D7: d(2025, 12, 9), E7: 4000, F7: "OK",
   },
   "FY25 Revenue cut-off",
 );
@@ -149,11 +149,11 @@ const confSheet = sheet(
   {
     A1: "AR confirmations",
     A2: "Customer", B2: "Balance per ledger", C2: "Date sent", D2: "Confirmed balance", E2: "Explanation", F2: "Alternative procedures",
-    A3: "Northwind", B3: 23200, C3: d(2026, 1, 10), D3: 23200,
-    A4: "Contoso", B4: 26050, C4: d(2026, 1, 10), D4: 22750,
-    A5: "Fabrikam", B5: 14050, C5: d(2026, 1, 10),
-    A6: "Adventure", B6: 22250, C6: d(2026, 1, 10), F6: "Agreed to Jan receipts",
-    A7: "Tailspin", B7: 17300,
+    A3: "Company A", B3: 23200, C3: d(2026, 1, 10), D3: 23200,
+    A4: "Company B", B4: 26050, C4: d(2026, 1, 10), D4: 22750,
+    A5: "Company C", B5: 14050, C5: d(2026, 1, 10),
+    A6: "Company D", B6: 22250, C6: d(2026, 1, 10), F6: "Agreed to Jan receipts",
+    A7: "Company E", B7: 17300,
   },
   "FY25 AR confirmations",
 );
@@ -166,20 +166,23 @@ describe("AR confirmations reviewer", () => {
   });
 
   it("reports the missing sent date", () => {
-    expect(completeness(arConfirmations, confSheet)).toEqual(["row 7 (Tailspin): date sent missing"]);
+    expect(completeness(arConfirmations, confSheet)).toEqual(["row 7 (Company E): date sent missing"]);
   });
 });
 
 // ─── Catalog, suggestions, review ───────────────────────────────────────────
 
 describe("suggestReviewer", () => {
+  it("suggests the SURL reviewer for a SURL sheet", () => {
+    expect(suggestReviewer(surlSheet)?.reviewer.id).toBe("surl");
+  });
+
   it.each([
-    [surlSheet, "surl"],
-    [bankSheet, "bank-rec"],
-    [cutoffSheet, "revenue-cutoff"],
-    [confSheet, "ar-confirmations"],
-  ])("suggests the right reviewer for %#", (s, id) => {
-    expect(suggestReviewer(s)?.reviewer.id).toBe(id);
+    [bankSheet, "bank rec"],
+    [cutoffSheet, "revenue cut-off"],
+    [confSheet, "AR confirmations"],
+  ])("suggests nothing for a switched-off procedure (%#: %s)", s => {
+    expect(suggestReviewer(s)).toBeNull();
   });
 
   it("suggests nothing for a generic sheet", () => {

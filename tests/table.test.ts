@@ -26,7 +26,7 @@ describe("dates", () => {
 
   it("ignores things that aren't dates", () => {
     expect(toSerial(1200)).toBeNull();
-    expect(toSerial("Acme Ltd")).toBeNull();
+    expect(toSerial("Vendor A")).toBeNull();
     expect(toSerial("")).toBeNull();
   });
 
@@ -58,7 +58,7 @@ describe("readTable", () => {
     const s = sheet({
       A1: "SURL testing",
       A3: "Supplier", B3: "Inv date", C3: "Invoice amount",
-      A4: "Acme", B4: YE + 5, C4: 100,
+      A4: "Vendor A", B4: YE + 5, C4: 100,
       A5: "Bolt Co", C5: 200,
       A6: "Total", C6: "=SUM(C4:C5)",
     });

@@ -24,7 +24,11 @@ function buildVersion() {
   }
   return { sha, label: `${new Date().toISOString().slice(0, 10)} (${sha})` };
 }
-const urlProd = "https://hmacknak.github.io/Baseline/"; // GitHub Pages, published by .github/workflows/pages.yml
+// Where the built add-in is hosted. Set ADDIN_BASE_URL at build time (the publish workflow passes the
+// GitHub Pages address); the placeholder keeps any real address out of the source.
+const urlProd = (process.env.ADDIN_BASE_URL || "https://addins.example.com/baseline/").replace(/\/?$/, "/");
+const originDev = new URL(urlDev).origin;
+const originProd = new URL(urlProd).origin;
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();
@@ -129,7 +133,10 @@ module.exports = async (env, options) => {
               if (dev) {
                 return content;
               } else {
-                return content.toString().replace(new RegExp(urlDev, "g"), urlProd);
+                return content
+                  .toString()
+                  .replace(new RegExp(urlDev, "g"), urlProd)
+                  .replace(new RegExp(originDev, "g"), originProd);
               }
             },
           },
