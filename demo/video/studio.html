@@ -26,6 +26,8 @@
   .grid td.num { text-align: right; }
   .grid td.bold { font-weight: 700; }
   .grid td.title { font-size: 16px; font-weight: 700; }
+  .grid td.sub { font-size: 14px; }
+  .grid td.center { text-align: center; }
   .grid td.fill { background: #e8f1ee; }
   .grid td.err { color: #c00000; }
   .grid td.sel { outline: 2px solid #107c41; outline-offset: -2px; z-index: 2; }
@@ -157,9 +159,20 @@ function render() {
     html += `<tr><th>${r + 1}</th>`;
     for (let c = 0; c < COLS; c++) {
       const a = addr(r, c), cell = sheet.cells[a], d = display(sheet, a);
-      const fillStyle = cell && typeof cell.fill === "string" ? ` style="background:${cell.fill}"` : "";
-      const cls = [d.num ? "num" : "", cell && cell.b ? "bold" : "", cell && cell.fill === true ? "fill" : "",
-        r === 0 && cell ? "title" : "", d.err ? "err" : "", a === selected ? "sel" : ""].join(" ");
+      // Formatting comes from the cell, or from the sheet's style map when the cell is empty (an empty table box).
+      const look = cell || (sheet.styles && sheet.styles[a]) || {};
+      const css = [];
+      if (typeof look.fill === "string") css.push(`background:${look.fill}`);
+      if (look.color) css.push(`color:${look.color}`);
+      if (look.i) css.push("font-style:italic");
+      for (const [k, side] of [["t", "top"], ["b", "bottom"], ["l", "left"], ["r", "right"]]) {
+        const style = look.bd && look.bd[k];
+        if (style) css.push(`border-${side}:${style === "double" ? "3px double #333" : style === "medium" ? "2px solid #333" : "1px solid #7f7f7f"}`);
+      }
+      const fillStyle = css.length ? ` style="${css.join(";")}"` : "";
+      const cls = [d.num ? "num" : "", cell && cell.b ? "bold" : "", look.fill === true ? "fill" : "",
+        look.sz >= 14 ? "title" : look.sz >= 12 ? "sub" : "", look.al === "center" ? "center" : "",
+        d.err ? "err" : "", a === selected ? "sel" : ""].join(" ");
       const text = d.text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
       html += `<td id="cell-${a}" class="${cls}"${fillStyle}><span class="clip">${text}</span></td>`;
     }
@@ -188,7 +201,7 @@ window.__typing = text => showFormula(text);
 window.__setCell = (a, v, fmt) => {
   const sheet = window.__wb.sheets[window.__wb.active];
   if (v === "" || v === null) delete sheet.cells[a];
-  else sheet.cells[a] = Object.assign({}, sheet.cells[a] || { b: false, fmt: "General", fill: false }, { v }, fmt ? { fmt } : {});
+  else sheet.cells[a] = Object.assign({}, sheet.cells[a] || Object.assign({ b: false, fmt: "General", fill: false }, (sheet.styles || {})[a]), { v }, fmt ? { fmt } : {});
   selected = a; render();
   const td = document.getElementById("cell-" + a); if (td) td.classList.add("flash");
   window.__changeHandlers.forEach(h => h({ address: a }));

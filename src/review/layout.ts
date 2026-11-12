@@ -67,6 +67,7 @@ export interface DetectedTable {
 }
 
 const TOTAL_ROW = /^\s*(sub[\s-]?)?total\b|^\s*grand total/i;
+const NOTE_ROW = /^\s*(conclu(sion|ded)|notes?\b|tick\s*-?\s*marks?|legend|source|purpose|prepared\s*by|reviewed\s*by)/i;
 
 function textCount(sheet: SheetSnapshot, r: number): Cell[] {
   const line = sheet.cells[r - sheet.originRow] || [];
@@ -100,6 +101,9 @@ export function findTables(sheet: SheetSnapshot): DetectedTable[] {
       if (isTotalRow(sheet, next)) break;
       const inRow = Array.from(headers.keys()).map(col => cellAt(sheet, next, col));
       if (inRow.every(isBlank)) break;
+      // A lone sentence under the table (a conclusion or a note) ends it; it isn't an item with blanks.
+      const filled = inRow.filter(c => !isBlank(c));
+      if (filled.length === 1 && isText(filled[0]) && (filled[0].value.trim().length > 40 || NOTE_ROW.test(filled[0].value))) break;
       rows.push(next);
       next++;
     }

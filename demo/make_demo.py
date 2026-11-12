@@ -27,8 +27,15 @@ OUT = Path(__file__).with_name("Baseline-demo.xlsx")
 
 BOLD = Font(bold=True)
 TITLE = Font(bold=True, size=14)
+SUBTITLE = Font(bold=True, size=12)
 MUTED = Font(italic=True, color="666666")
-HEAD_FILL = PatternFill("solid", fgColor="E8F1EE")
+# Workpaper conventions: dark table headings, boxed tables, red tickmarks, blue cross-references.
+HEAD_FILL = PatternFill("solid", fgColor="1F3864")
+HEAD_FONT = Font(bold=True, color="FFFFFF")
+TICK = Font(bold=True, color="C00000")
+XREF = Font(bold=True, color="0563C1")
+THIN = Side(style="thin", color="7F7F7F")
+BOX = Border(top=THIN, bottom=THIN, left=THIN, right=THIN)
 TOTAL_BORDER = Border(top=Side(style="thin"), bottom=Side(style="double"))
 MONEY = "#,##0;(#,##0)"
 PCT = "0.0%"
@@ -38,20 +45,51 @@ DATE = "dd-mmm-yy"
 def header_row(ws, row, labels):
     for i, label in enumerate(labels, start=1):
         c = ws.cell(row=row, column=i, value=label)
-        c.font = BOLD
+        c.font = HEAD_FONT
         c.fill = HEAD_FILL
+        c.border = BOX
 
 
 def table(ws, top, headers, rows, formats):
-    """Write a header row and item rows; formats maps a 0-based column to a number format."""
+    """Write a boxed header row and item rows; formats maps a 0-based column to a number format."""
     header_row(ws, top, headers)
     for i, row in enumerate(rows, start=1):
         for j, v in enumerate(row):
+            c = ws.cell(row=top + i, column=j + 1)
+            c.border = BOX  # Blank cells are boxed too, so a missing answer shows as an empty box.
             if v is None:
                 continue
-            c = ws.cell(row=top + i, column=j + 1, value=v)
+            c.value = v
             if j in formats:
                 c.number_format = formats[j]
+
+
+def workpaper_header(ws, subject, ref, prepared, box_col, objective, source, split=False):
+    """The standard top of a workpaper: client, subject and period on the left; reference and sign-offs boxed
+    on the right; then the objective and the source / work performed."""
+    ws["A1"] = "Example Client Ltd."
+    ws["A1"].font = TITLE
+    ws["A2"] = subject
+    ws["A2"].font = SUBTITLE
+    ws["A3"] = "Year ended 31 December 2025"
+    box = [("W/P ref:", ref), ("Prepared by:", prepared), ("Reviewed by:", None)]
+    for r, (label, value) in enumerate(box, start=1):
+        if split:
+            # Label and value in neighbouring cells, for sheets whose right-hand columns are narrow.
+            left = ws.cell(row=r, column=box_col, value=label)
+            right = ws.cell(row=r, column=box_col + 1, value=value)
+            left.border = Border(top=THIN, bottom=THIN, left=THIN)
+            right.border = Border(top=THIN, bottom=THIN, right=THIN)
+            cells = [left, right]
+        else:
+            c = ws.cell(row=r, column=box_col, value=f"{label} {value}" if value else label)
+            c.border = BOX
+            cells = [c]
+        if r == 1:
+            for c in cells:
+                c.font = BOLD
+    ws["A4"] = objective
+    ws["A5"] = source
 
 
 def widths(ws, *w):
@@ -238,13 +276,15 @@ widths(ws, 30, 12, 16, 14, 16, 6)
 
 # ─── AP-3 SURL (the featured procedure in the demo video) ─────────────────────
 ws = wb.create_sheet("AP-3 SURL")
-ws["A1"] = "Example Client Ltd.  |  AP-3  Search for unrecorded liabilities"
-ws["A1"].font = TITLE
-ws["A2"] = "Year ended 31 December 2025"
-ws["A3"] = "Objective: identify liabilities at 31 Dec 2025 not recorded in accounts payable (completeness)."
-ws["A4"] = "Source: Jan to Feb 2026 cash disbursements journal and vendor invoices. Selection: all payments over $5,000."
-ws["A5"] = "Prepared by: AB 12/01/2026"
-ws["E5"] = "Reviewed by:"
+workpaper_header(
+    ws,
+    "Search for unrecorded liabilities",
+    "AP-3",
+    "AB 12-Jan-26",
+    9,
+    "Objective: identify liabilities at 31 Dec 2025 not recorded in accounts payable (completeness).",
+    "Source: Jan to Feb 2026 cash disbursements journal and vendor invoices. Selection: all payments over $5,000.",
+)
 table(
     ws,
     7,
@@ -271,6 +311,8 @@ ws["F17"].border = TOTAL_BORDER
 ws["A19"] = "Population: payments over $5,000"
 ws["F19"] = 1_284_600
 ws["F19"].number_format = MONEY
+ws["G19"] = "AP-1"  # Cross-reference to the lead schedule the population agrees to.
+ws["G19"].font = XREF
 ws["A20"] = "Coverage of population"
 ws["F20"] = "=F17/1284600"  # Hard-coded population instead of a link to F19, on purpose.
 ws["F20"].number_format = PCT
@@ -332,17 +374,20 @@ widths(ws, 20, 17, 12, 17, 18, 22)
 
 # ─── Cash confirmations ──────────────────────────────────────────────────────
 ws = wb.create_sheet("Cash confirmations")
-ws["A1"] = "Example Client Ltd.  |  C-2  Cash confirmations"
-ws["A1"].font = TITLE
-ws["A2"] = "Year ended 31 December 2025"
-ws["A3"] = "Objective: confirm existence and completeness of all bank balances directly with each bank."
-ws["A4"] = "Source: trial balance, prior-year bank replies, confirmation platform responses."
-ws["A5"] = "Prepared by: AB 14/01/2026"
-ws["F5"] = "Reviewed by:"
+workpaper_header(
+    ws,
+    "Cash confirmations",
+    "C-2",
+    "AB 14-Jan-26",
+    8,
+    "Objective: confirm existence and completeness of all bank balances directly with each bank.",
+    "Source: trial balance, prior-year bank replies, confirmation platform responses.",
+    split=True,
+)
 table(
     ws,
     7,
-    ["Bank", "Account", "Currency", "Balance per books", "Balance per confirmation", "As at", "Date sent", "Date received", "Received via", "Explanation", "Conclusion"],
+    ["Bank", "Account", "Currency", "Per books", "Per bank", "As at", "Date sent", "Date received", "Received via", "Explanation", "Conclusion"],
     [
         ("Bank A", "Operating", "CAD", 468_475, 468_475, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Agreed"),
         ("Bank A", "Payroll", "CAD", 36_400, 31_400, date(2025, 12, 31), date(2026, 1, 5), date(2026, 1, 14), "Confirmation platform", None, "Exception"),
@@ -355,21 +400,24 @@ table(
     {3: MONEY, 4: MONEY, 5: DATE, 6: DATE, 7: DATE},
 )
 ws["A15"] = "Conclusion: to be completed once differences and non-replies are cleared."
-widths(ws, 10, 16, 8, 14, 14, 10, 10, 10, 18, 12, 12)
+widths(ws, 9, 14, 8, 11, 11, 10, 10, 12, 28, 14, 12)
 
 # ─── Expense vouching ────────────────────────────────────────────────────────
 ws = wb.create_sheet("Expense vouching")
-ws["A1"] = "Example Client Ltd.  |  E-4  Expense vouching"
-ws["A1"].font = TITLE
-ws["A2"] = "Year ended 31 December 2025"
-ws["A3"] = "Objective: vouch a sample of operating expenses to support for occurrence, accuracy, cut-off and classification."
-ws["A4"] = "Source: general ledger expense accounts; vendor invoices. Sample of 8 items."
-ws["A5"] = "Prepared by: AB 20/01/2026"
-ws["F5"] = "Reviewed by:"
+workpaper_header(
+    ws,
+    "Expense vouching",
+    "E-4",
+    "AB 20-Jan-26",
+    8,
+    "Objective: vouch a sample of operating expenses to support for occurrence, accuracy, cut-off and classification.",
+    "Source: general ledger expense accounts; vendor invoices. Sample of 8 items.",
+    split=True,
+)
 table(
     ws,
     7,
-    ["Sample #", "GL date", "Vendor", "Description", "Amount per GL", "Amount per invoice", "Invoice #", "Service date", "Approved?", "Correct account?", "Conclusion"],
+    ["Sample #", "GL date", "Vendor", "Description", "GL amount", "Per invoice", "Invoice #", "Service date", "Approved?", "Correct account?", "Conclusion"],
     [
         ("1", date(2025, 3, 4), "Vendor A", "Office cleaning", 1_236.40, 1_236.40, "A-11", date(2025, 2, 28), "Y", "Y", "Agreed"),
         ("2", date(2025, 5, 9), "Vendor B", "Consulting", 8_500, 5_800, "B-20", date(2025, 5, 1), "Y", "Y", "Exception"),
@@ -383,7 +431,7 @@ table(
     {1: DATE, 4: MONEY, 5: MONEY, 7: DATE},
 )
 ws["A17"] = "Conclusion: to be completed once exceptions are evaluated and projected."
-widths(ws, 9, 10, 10, 22, 12, 12, 9, 10, 9, 10, 12)
+widths(ws, 9, 10, 10, 21, 10, 10, 9, 11, 12, 14, 12)
 
 # ─── PY Notes ────────────────────────────────────────────────────────────────
 ws = wb.create_sheet("PY Notes")
@@ -412,5 +460,13 @@ widths(ws, 20, 8, 70)
 
 wb.calculation = CalcProperties(fullCalcOnLoad=True)
 wb.active = 0
+# Tickmarks are red, the way they are marked on a real file.
+for sheet_ in wb.worksheets:
+    for row_ in sheet_.iter_rows():
+        for c_ in row_:
+            if c_.value == "✓":
+                c_.font = TICK
+                c_.alignment = Alignment(horizontal="center")
+
 wb.save(OUT)
 print(f"wrote {OUT}")
