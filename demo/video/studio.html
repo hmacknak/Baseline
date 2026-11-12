@@ -41,7 +41,7 @@
   .tabs .t { padding: 5px 14px; color: #444; }
   .tabs .t.on { background: #fff; color: #107c41; font-weight: 700; border-bottom: 3px solid #107c41; }
   /* Captions */
-  .caption { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); max-width: 900px; z-index: 50;
+  .caption { position: absolute; left: 450px; bottom: 46px; transform: translateX(-50%); width: max-content; max-width: 800px; z-index: 50;
     background: rgba(17, 24, 39, .92); color: #fff; padding: 12px 22px; border-radius: 10px; font-size: 22px; line-height: 1.35;
     text-align: center; opacity: 0; transition: opacity .35s; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
   .caption.show { opacity: 1; }
@@ -53,6 +53,11 @@
   .card h1 { margin: 0 0 12px; font-size: 54px; }
   .card p { margin: 6px 0; font-size: 24px; color: #cfe8df; }
   .card .note { margin-top: 26px; font-size: 16px; color: #9cc5b6; }
+  .card ul.three { list-style: none; margin: 22px 0 0; padding: 0; display: flex; gap: 14px; justify-content: center; }
+  .card ul.three li { font-size: 19px; color: #e6f4ee; border: 1px solid #3f8f76; border-radius: 999px; padding: 8px 18px; }
+  .card .partno { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #4ec9a0; display: inline-grid; place-items: center;
+    font-size: 34px; font-weight: 700; margin-bottom: 16px; }
+  .card h1.parttitle { font-size: 46px; }
   .card .logo { width: 84px; height: 84px; border-radius: 18px; background: #105e48; border: 3px solid #4ec9a0;
     display: inline-grid; place-items: center; font-size: 52px; font-weight: 700; margin-bottom: 18px; }
   /* Fake cursor */
@@ -208,7 +213,11 @@ window.__setCell = (a, v, fmt) => {
 };
 window.__valueOf = (sheetName, a) => cellValue(window.__wb.sheets[sheetName], a);
 window.__caption = (html) => { const c = document.getElementById("caption"); if (!html) { c.classList.remove("show"); return; } c.innerHTML = html; c.classList.add("show"); };
-window.__card = (html) => { const c = document.getElementById("card"); if (!html) { c.classList.remove("show"); return; } c.innerHTML = html; c.classList.add("show"); };
+window.__card = (html) => {
+  const c = document.getElementById("card"), cur = document.getElementById("cursor");
+  if (!html) { c.classList.remove("show"); cur.style.opacity = 1; return; }
+  c.innerHTML = html; c.classList.add("show"); cur.style.opacity = 0;
+};
 window.__cursor = (x, y) => { const c = document.getElementById("cursor"); c.style.left = x + "px"; c.style.top = y + "px"; };
 window.__ripple = (x, y) => { const r = document.createElement("div"); r.className = "ripple"; r.style.left = x + "px"; r.style.top = y + "px"; document.body.appendChild(r); setTimeout(() => r.remove(), 600); };
 window.__init = (wb) => { window.__wb = wb; render(); };

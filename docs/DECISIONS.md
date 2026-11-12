@@ -125,3 +125,11 @@ Measured on 180 sheets from 130 public sample workbooks (`tools/noise`), then fi
 - The planted findings are unchanged. The simulated spreadsheet used for the video now shows borders, font
   colours and fills. Both videos were re-recorded.
 - A lone sentence directly under a table (a conclusion or note) is no longer read as a table row with blanks.
+
+## 2026-11-12: Demo video in three parts
+- The video now says what Baseline is ("Live feedback on your workpaper, as you work") and shows three things, each
+  behind a short title card: workpaper basics; procedure review and the why; last year's review notes. The "why"
+  gets the most screen time because it is the part that teaches.
+- Dropped from the video: the "fewer review notes" framing, workpaper-reference jargon in captions, Mark OK and
+  Review all sheets. Captions sit over the sheet so they never cover the panel.
+- The download page and README use the same description.
