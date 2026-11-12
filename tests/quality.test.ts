@@ -224,3 +224,16 @@ describe("noise on ordinary workbooks", () => {
     expect(getCheck("highlights").run(sheet(cells, "T", { fills }))).toEqual([]);
   });
 });
+
+describe("a conclusion under a table", () => {
+  it("is not treated as an item with blanks", () => {
+    const s = sheet({
+      A1: "Bank", B1: "Per books", C1: "Per bank",
+      A2: "Bank A", B2: 100, C2: 100,
+      A3: "Bank B", B3: 200, C3: 200,
+      A4: "Bank C", B4: 300, C4: 300,
+      A5: "Conclusion: to be completed once differences are cleared.",
+    });
+    expect(getCheck("table-complete").run(s)).toEqual([]);
+  });
+});

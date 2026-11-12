@@ -117,3 +117,11 @@ Measured on 180 sheets from 130 public sample workbooks (`tools/noise`), then fi
   Step-through and "Review all sheets" include procedure findings. Sheets are sized by their contents, not their
   formatting, so a small workpaper with formatting dragged down is no longer cut off.
 - Not done yet: marking a procedure finding OK; expiring last year's "Mark OK" decisions on roll-forward.
+
+## 2026-11-12: Demo workbook looks like a workpaper
+- The three procedure sheets now use a standard workpaper layout: client, subject and period top left; a boxed
+  W/P reference and sign-offs top right; objective and source; a boxed testing table with a dark heading row;
+  red tickmarks; a blue cross-reference to the lead schedule. Generic conventions, not any firm's template.
+- The planted findings are unchanged. The simulated spreadsheet used for the video now shows borders, font
+  colours and fills. Both videos were re-recorded.
+- A lone sentence directly under a table (a conclusion or note) is no longer read as a table row with blanks.
