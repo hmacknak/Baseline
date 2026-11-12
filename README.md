@@ -1,8 +1,8 @@
 # Baseline Review
 
-A live review checklist inside Excel. As a junior works on a workpaper, Baseline gives a first-pass review
-of the small, repeatable issues reviewers flag, and if last year's reviewer raised the same issue, it says so. It
-doesn't replace the review.
+Live feedback on a workpaper, as you work, inside Excel. Baseline does three things: it checks the basics
+(complete, consistent, adds up), it reviews the procedure and explains why each flag matters, and it brings in
+last year's review notes. It doesn't replace the review.
 
 **Procedures on:** search for unrecorded liabilities, cash confirmations and expense vouching, each with
 researched "why it matters" (assertion and standard). See [docs/PROCEDURES.md](docs/PROCEDURES.md).
@@ -44,8 +44,8 @@ Every item explains **why it matters** and **how to fix it**, and clicking a cel
 
 ## Demo video
 
-Watch the demo: workpaper basics on AP-3, then the SURL, cash confirmation and expense vouching reviewers, about 2.5
-minutes (on the download page, also at [`demo/Baseline-demo-video.mp4`](demo/Baseline-demo-video.mp4)). A 1-minute
+Watch the demo: what Baseline is, then workpaper basics, the procedure review and its "why", and last year's
+review notes, about 2.5 minutes (on the download page, also at [`demo/Baseline-demo-video.mp4`](demo/Baseline-demo-video.mp4)). A 1-minute
 cut for email is at [`demo/Baseline-demo-short.mp4`](demo/Baseline-demo-short.mp4). The spreadsheet in the video is simulated; the
 panel is the real add-in code running against it. To re-record, see `demo/video/record.mjs`.
 
