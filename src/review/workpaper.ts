@@ -34,8 +34,15 @@ const NOTES_SHEET = /^\s*py\s*(review\s*)?notes?\s*$/i;
 const HEADING_ROWS = 6;
 
 const cache = new WeakMap<SheetSnapshot, boolean>();
+const marked = new WeakSet<SheetSnapshot>();
+
+/** The user chose a procedure reviewer for this sheet, so it is a workpaper whatever it looks like. */
+export function markAsWorkpaper(sheet: SheetSnapshot): void {
+  marked.add(sheet);
+}
 
 export function looksLikeWorkpaper(sheet: SheetSnapshot): boolean {
+  if (marked.has(sheet)) return true;
   const hit = cache.get(sheet);
   if (hit !== undefined) return hit;
   const notes = NOTES_SHEET.test(sheet.name);

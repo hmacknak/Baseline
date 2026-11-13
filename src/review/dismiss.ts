@@ -52,6 +52,6 @@ export function applyDismissals(sheet: SheetSnapshot, results: CheckResult[], di
       if (d && d.fingerprint === fingerprint(sheet, f)) dismissed.push({ finding: f, key, dismissal: d });
       else open.push(f);
     }
-    return { check: r.check, findings: open, dismissed };
+    return { check: r.check, findings: open, dismissed, skipped: r.skipped };
   });
 }

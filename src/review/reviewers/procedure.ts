@@ -1,8 +1,8 @@
 // Building blocks for procedure reviewers: find the table once, check it's complete,
 // and turn per-row rules into insights. A new procedure is mostly column names plus rules.
 
-import { formatSerial } from "../dates";
-import { ColumnSpec, Table, TableRow, cellAddress, isBlank, readTable, textOf } from "../table";
+import { formatSerial, numericDateOrder } from "../dates";
+import { ColumnSpec, Table, TableRow, amountOf, cellAddress, dateOf, flagOf, isBlank, isNotApplicable, readTable, textOf } from "../table";
 import { Cell, Check, Finding, FrameworkText, Insight, InsightItem, ReviewContext, Severity, SheetSnapshot } from "../types";
 
 export interface TableSpec {
@@ -93,6 +93,70 @@ export function completenessCheck(opts: {
   };
 }
 
+const NO_DATE_YET = /^(not yet|not received|not sent|outstanding|pending|awaiting|none|no\b|o\/s)/i;
+
+/** Column keys an insight reads. A list inside the list means any one of them is enough. */
+export type Requires = Array<string | string[]>;
+
+/**
+ * Why an insight can't run on this sheet, or undefined if it can. An insight with no table or no column to read
+ * would otherwise return nothing and look like a pass.
+ */
+export function missingColumns(sheet: SheetSnapshot, spec: TableSpec, requires: Requires): string | undefined {
+  const table = tableFor(sheet, spec);
+  if (!table) return "Not run: couldn't find the testing table on this sheet";
+  const missing = requires
+    .map(req => (typeof req === "string" ? [req] : req))
+    .filter(keys => keys.every(k => table.columns[k] === undefined));
+  if (!missing.length) return undefined;
+  const names = missing.map(keys => keys.map(k => `"${labelOf(spec, k)}"`).join(" or "));
+  return `Not run: the table has no ${names.join(" and no ")} column`;
+}
+
+/**
+ * "Baseline can read every answer." The row rules read dates, amounts and yes/no answers. A value they can't read
+ * is skipped by those rules, so it is reported here instead of passing unnoticed.
+ */
+export function readabilityCheck(opts: { id: string; spec: TableSpec; labelKeys: string[] }): Check {
+  return {
+    id: opts.id,
+    title: "Baseline can read every answer",
+    severity: "medium",
+    why: "The procedure checks read the dates, amounts and yes/no answers in the testing table. Where one can't be read, the checks that depend on it skip that row, so a problem there would go unnoticed. A reviewer reading the same cell may be just as unsure what it means.",
+    fix: "Enter a real date, a number, or Y / N in the cell, and put any explanation in the conclusion or comment column. Use N/A where it genuinely doesn't apply.",
+    run(sheet) {
+      const table = tableFor(sheet, opts.spec);
+      if (!table) return [];
+      const out: Finding[] = [];
+      for (const row of table.rows) {
+        for (const col of opts.spec.columns) {
+          if (col.kind === "text" || table.columns[col.key] === undefined) continue;
+          const c = row.cells[col.key];
+          if (!c || isBlank(c) || c.kind === "error") continue;
+          const raw = String(c.value).trim();
+          if (typeof c.value === "string" && isNotApplicable(raw)) continue;
+          let problem = "";
+          if (col.kind === "date") {
+            // "Not yet" or "Outstanding" in a date column means there is no date; the row rules treat it as blank.
+            if (typeof c.value === "string" && NO_DATE_YET.test(raw)) continue;
+            if (numericDateOrder(c.value) === "ambiguous" && table.dateOrder === "unknown") {
+              problem = `"${raw}" is typed as text and could be day/month or month/day: enter it as a real date`;
+            } else if (dateOf(row, col.key) === null) problem = `"${raw}" in "${col.label}" isn't a date Baseline can read`;
+          } else if (col.kind === "amount" && amountOf(row, col.key) === null) {
+            problem = `"${raw}" in "${col.label}" isn't a number`;
+          } else if (col.kind === "flag" && flagOf(row, col.key) === null) {
+            problem = `"${raw}" in "${col.label}" isn't a clear yes or no`;
+          }
+          if (problem) {
+            out.push({ checkId: opts.id, cell: cellAddress(table, row, col.key), message: `${rowName(row, opts.labelKeys)}: ${problem}` });
+          }
+        }
+      }
+      return out;
+    },
+  };
+}
+
 /** "Your table is missing a column we need", reported once per missing column. */
 export function columnsCheck(opts: { id: string; spec: TableSpec; needed: string[] }): Check {
   return {
@@ -123,6 +187,8 @@ export function rowInsight(opts: {
   reference?: string;
   usGaap?: FrameworkText;
   spec: TableSpec;
+  /** Columns the rule reads. If one is missing the insight reports "not run" instead of passing. */
+  requires?: Requires;
   /** Return a reason string to flag the row, or null to pass it. */
   test(row: TableRow, ctx: ReviewContext): { detail: string; cellKey: string; amount?: number | null } | null;
   labelKeys: string[];
@@ -137,6 +203,7 @@ export function rowInsight(opts: {
     assertion: opts.assertion,
     reference: opts.reference,
     usGaap: opts.usGaap,
+    unavailable: sheet => missingColumns(sheet, opts.spec, opts.requires || []),
     run(sheet, ctx) {
       const table = tableFor(sheet, opts.spec);
       if (!table) return [];

@@ -16,7 +16,7 @@
 
 import { amountOf, dateOf, isBlank, textOf } from "../table";
 import { Reviewer } from "../types";
-import { TableSpec, columnsCheck, completenessCheck, detectScore, fmtAmount, fmtDate, rowInsight, tableFor } from "./procedure";
+import { columnsCheck, completenessCheck, detectScore, fmtAmount, fmtDate, readabilityCheck, rowInsight, tableFor, TableSpec } from "./procedure";
 
 const spec: TableSpec = {
   minColumns: 3,
@@ -55,6 +55,9 @@ const LABEL = ["bank", "account"];
 /** Signs that a response passed through the entity rather than coming straight from the bank. */
 const VIA_ENTITY = /\b(client|entity|company|management|cfo|controller|finance (team|dept)|treasur(y|er)|accountant|bookkeeper|forward(ed)?|fwd|scan(ned)?|copy|photocop)/i;
 
+/** Text in the "received" column that means no reply has come in. */
+const NO_REPLY = /^(no|not|none|n\b|outstanding|pending|awaiting|chas|follow|tbc|tbd|o\/s)/i;
+
 export const cashConfirmations: Reviewer = {
   id: "cash-confirmations",
   name: "Cash confirmations",
@@ -85,10 +88,12 @@ export const cashConfirmations: Reviewer = {
       why: "A confirmation only counts as evidence if the file shows which account it covers, what the books said, when it was sent and what you concluded. Gaps here are the first thing a reviewer or inspector checks, because cash is where a confirmation is close to mandatory.",
     }),
     columnsCheck({ id: "cash-confirmations.columns", spec, needed: ["bank", "books", "confirmed", "sent"] }),
+    readabilityCheck({ id: "cash-confirmations.readable", spec, labelKeys: LABEL }),
   ],
   insights: [
     rowInsight({
       id: "cash-confirmations.difference",
+      requires: ["books", "confirmed"],
       title: "Differences with the bank not explained",
       severity: "high",
       assertion: "Existence; Accuracy",
@@ -110,6 +115,7 @@ export const cashConfirmations: Reviewer = {
     }),
     rowInsight({
       id: "cash-confirmations.no-response",
+      requires: ["sent", ["confirmed", "received"]],
       title: "No reply from the bank",
       severity: "high",
       assertion: "Existence; Rights and obligations",
@@ -120,12 +126,20 @@ export const cashConfirmations: Reviewer = {
       labelKeys: LABEL,
       test(row) {
         if (dateOf(row, "sent") === null) return null;
-        if (amountOf(row, "confirmed") !== null || dateOf(row, "received") !== null || !isBlank(row.cells.received)) return null;
-        return { cellKey: "received", amount: amountOf(row, "books"), detail: "Sent, no reply recorded" };
+        if (amountOf(row, "confirmed") !== null || dateOf(row, "received") !== null) return null;
+        // Words in the received column count as a reply unless they say there isn't one ("Not yet", "Outstanding").
+        const note = textOf(row, "received");
+        if (note && !NO_REPLY.test(note)) return null;
+        return {
+          cellKey: row.cells.received ? "received" : "confirmed",
+          amount: amountOf(row, "books"),
+          detail: note ? `Sent, reply marked "${note}"` : "Sent, no reply recorded",
+        };
       },
     }),
     rowInsight({
       id: "cash-confirmations.not-direct",
+      requires: ["channel"],
       title: "Not sent or received directly",
       severity: "high",
       assertion: "Existence",
@@ -142,6 +156,7 @@ export const cashConfirmations: Reviewer = {
     }),
     rowInsight({
       id: "cash-confirmations.not-sent",
+      requires: ["sent"],
       title: "Accounts not confirmed",
       severity: "medium",
       assertion: "Completeness; Rights and obligations",
@@ -161,6 +176,7 @@ export const cashConfirmations: Reviewer = {
     }),
     rowInsight({
       id: "cash-confirmations.date",
+      requires: ["asAt"],
       title: "Confirmed at a different date",
       severity: "medium",
       assertion: "Existence; Cut-off",
@@ -177,6 +193,7 @@ export const cashConfirmations: Reviewer = {
     }),
     rowInsight({
       id: "cash-confirmations.overdraft",
+      requires: ["books"],
       title: "Overdrawn accounts",
       severity: "low",
       assertion: "Classification; Presentation",

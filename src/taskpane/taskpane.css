@@ -1055,3 +1055,21 @@ textarea {
 .why-meta .why-label:not(:first-child) {
   margin-left: 8px;
 }
+
+/* Checks that did not run: neither a pass nor a fail */
+.item.skip .mark,
+.item.skip .item-title {
+  color: var(--muted);
+}
+
+.skip-count {
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.insights-none {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}

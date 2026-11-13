@@ -18,7 +18,16 @@ describe("panel summary", () => {
   it("never says all clear while a procedure check could not run", () => {
     const s = summarise([{ findings: [] }], [{ items: [], blocked: "Set the year-end" }]);
     expect(s.allClear).toBe(false);
-    expect(summaryParts(s)).toEqual(["1 procedure check not run"]);
+    expect(summaryParts(s)).toEqual(["No issues found", "1 check not run"]);
+  });
+
+  it("counts a check that could not run as not run, and leaves out one that does not apply", () => {
+    const couldNot = summarise([{ findings: [] }, { findings: [], skipped: { blocking: true } }]);
+    expect(couldNot.allClear).toBe(false);
+    expect(couldNot.checks).toBe(1);
+    const notApplicable = summarise([{ findings: [] }, { findings: [], skipped: { blocking: false } }]);
+    expect(notApplicable.allClear).toBe(true);
+    expect(notApplicable.checks).toBe(1);
   });
 
   it("lists checklist findings first", () => {

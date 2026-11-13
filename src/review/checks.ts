@@ -3,9 +3,9 @@
 
 import { lettersToCol, toA1 } from "./address";
 import { findHardcodedNumbers, hasExternalLink, toR1C1 } from "./formula";
-import { isDateFormat } from "./layout";
+import { DetectedTable, findTables, isDateFormat } from "./layout";
 import { completeness, dates, highlights, placeholders, strayNumbers, textNumbers } from "./quality";
-import { Cell, Check, CheckId, Finding, ReviewContext, SheetSnapshot } from "./types";
+import { Cell, Check, CheckId, Finding, ReviewContext, SheetSnapshot, Skip } from "./types";
 import { looksLikeWorkpaper } from "./workpaper";
 
 // ─── Grid helpers ────────────────────────────────────────────────────────────
@@ -56,6 +56,70 @@ function neighbourPairs(sheet: SheetSnapshot, c: Cell): Array<[Cell | undefined,
   ];
 }
 
+/** A flagged cell, with the message for it alone and for a run of cells with the same problem. */
+interface Hit {
+  cell: Cell;
+  /** Cells with the same key have the same problem, e.g. the same formula copied down. */
+  key: string;
+  one: string;
+  many(range: string, count: number): string;
+}
+
+/**
+ * One finding per unbroken run of the same problem, down a column or along a row, instead of one per cell.
+ * A formula with a hard-code copied down 200 rows is one thing to fix, not 200.
+ */
+function groupRuns(checkId: CheckId, hits: Hit[]): Finding[] {
+  const out: Array<{ row: number; col: number; finding: Finding }> = [];
+  const emit = (run: Hit[]) => {
+    const first = run[0];
+    const last = run[run.length - 1];
+    out.push({
+      row: first.cell.row,
+      col: first.cell.col,
+      finding: {
+        checkId,
+        cell: first.cell.address,
+        message: run.length === 1 ? first.one : first.many(`${first.cell.address}:${last.cell.address}`, run.length),
+      },
+    });
+  };
+  const collect = (list: Hit[], vertical: boolean): Hit[] => {
+    const along = (h: Hit) => (vertical ? h.cell.row : h.cell.col);
+    const across = (h: Hit) => (vertical ? h.cell.col : h.cell.row);
+    const sorted = list.slice().sort((a, b) => across(a) - across(b) || along(a) - along(b));
+    const singles: Hit[] = [];
+    let i = 0;
+    while (i < sorted.length) {
+      let j = i;
+      while (
+        j + 1 < sorted.length &&
+        across(sorted[j + 1]) === across(sorted[i]) &&
+        along(sorted[j + 1]) === along(sorted[j]) + 1 &&
+        sorted[j + 1].key === sorted[i].key
+      ) {
+        j++;
+      }
+      if (j > i) emit(sorted.slice(i, j + 1));
+      else singles.push(sorted[i]);
+      i = j + 1;
+    }
+    return singles;
+  };
+  collect(collect(hits, true), false).forEach(h => emit([h]));
+  return out.sort((a, b) => a.row - b.row || a.col - b.col).map(o => o.finding);
+}
+
+const tablesCache = new WeakMap<SheetSnapshot, DetectedTable[]>();
+function tablesOf(sheet: SheetSnapshot): DetectedTable[] {
+  let t = tablesCache.get(sheet);
+  if (!t) {
+    t = findTables(sheet);
+    tablesCache.set(sheet, t);
+  }
+  return t;
+}
+
 // ─── Checks ──────────────────────────────────────────────────────────────────
 
 const errors: Check = {
@@ -65,9 +129,17 @@ const errors: Check = {
   why: "An error like #REF! or #DIV/0! means a number on the page is wrong or missing. Reviewers stop reading the moment they see one.",
   fix: "Click into the cell, trace the inputs (Formulas → Trace Precedents) and fix the broken reference or the divide-by-zero.",
   run(sheet) {
-    return allCells(sheet)
-      .filter(c => c.kind === "error")
-      .map(c => ({ checkId: "errors" as CheckId, cell: c.address, message: `${c.value} error` }));
+    return groupRuns(
+      "errors",
+      allCells(sheet)
+        .filter(c => c.kind === "error")
+        .map(c => ({
+          cell: c,
+          key: String(c.value),
+          one: `${c.value} error`,
+          many: (range, n) => `${c.value} errors in ${range} (${n} cells)`,
+        })),
+    );
   },
 };
 
@@ -78,19 +150,20 @@ const hardcodes: Check = {
   why: "A number typed into a formula is invisible support. Nobody can tell where it came from, and it won't update when the source changes.",
   fix: "Put the number in its own labelled input cell with a source reference, then point the formula at that cell.",
   run(sheet) {
-    const out: Finding[] = [];
+    const hits: Hit[] = [];
     for (const c of allCells(sheet)) {
       if (!isFormula(c)) continue;
       const nums = findHardcodedNumbers(c.formula);
       if (nums.length) {
-        out.push({
-          checkId: "hardcodes",
-          cell: c.address,
-          message: `Hard-coded ${nums.join(", ")} in ${c.formula}`,
+        hits.push({
+          cell: c,
+          key: r1c1(c),
+          one: `Hard-coded ${nums.join(", ")} in ${c.formula}`,
+          many: (range, n) => `Hard-coded ${nums.join(", ")} in ${range} (${n} cells with the same formula), e.g. ${c.formula}`,
         });
       }
     }
-    return out;
+    return groupRuns("hardcodes", hits);
   },
 };
 
@@ -165,6 +238,8 @@ const overwritten: Check = {
   },
 };
 
+const AGGREGATE = /^=\s*(SUM|SUBTOTAL|AGGREGATE|AVERAGE|COUNT|COUNTA|MIN|MAX|SUMPRODUCT)\(/i;
+
 const inconsistent: Check = {
   id: "inconsistent",
   title: "Formulas consistent across rows and columns",
@@ -177,6 +252,8 @@ const inconsistent: Check = {
       if (!isFormula(c)) continue;
       for (const [a, b] of neighbourPairs(sheet, c)) {
         if (isFormula(a) && isFormula(b) && r1c1(a) === r1c1(b) && r1c1(c) !== r1c1(a)) {
+          // A subtotal sitting between two item formulas is meant to be different.
+          if (AGGREGATE.test(c.formula) && !AGGREGATE.test(a.formula)) continue;
           out.push({
             checkId: "inconsistent",
             cell: c.address,
@@ -190,7 +267,8 @@ const inconsistent: Check = {
   },
 };
 
-const SUM_RANGE = /^=\s*SUM\(\s*\$?([A-Z]{1,3})\$?(\d+)\s*:\s*\$?([A-Z]{1,3})\$?(\d+)\s*\)\s*$/i;
+// =SUM(A1:A9), and the filter-aware =SUBTOTAL(9,A1:A9) / =SUBTOTAL(109,A1:A9).
+const SUM_RANGE = /^=\s*(?:SUM\(|SUBTOTAL\(\s*(?:10)?9\s*,)\s*\$?([A-Z]{1,3})\$?(\d+)\s*:\s*\$?([A-Z]{1,3})\$?(\d+)\s*\)\s*$/i;
 
 const totals: Check = {
   id: "totals",
@@ -224,6 +302,23 @@ const totals: Check = {
           });
         }
       }
+      // A total that starts late: the range begins below the first items of the table it totals.
+      if (c1 === c2 && c1 === c.col && r2 < c.row) {
+        const table = tablesOf(sheet).filter(t => t.rows.indexOf(r1) >= 0)[0];
+        if (table) {
+          const before = table.rows
+            .filter(r => r < r1)
+            .map(r => cellAt(sheet, r, c.col))
+            .filter((s): s is Cell => !!s && s.kind === "number" && !isDateFormat(s.numberFormat));
+          if (before.length) {
+            out.push({
+              checkId: "totals",
+              cell: c.address,
+              message: `${c.formula} starts after ${before.map(s => s.address).join(", ")}`,
+            });
+          }
+        }
+      }
       // Horizontal total: single row, same row as the total, ending left of it.
       if (r1 === r2 && r1 === c.row && c2 < c.col - 1) {
         const skipped: string[] = [];
@@ -251,9 +346,17 @@ const externalLinks: Check = {
   why: "Links to other workbooks break when files are moved, renamed or archived, and the reviewer can't see the source.",
   fix: "Paste the source figures into this file with a reference to where they came from, or document the link in the workpaper.",
   run(sheet) {
-    return allCells(sheet)
-      .filter(c => isFormula(c) && hasExternalLink(c.formula!))
-      .map(c => ({ checkId: "external-links" as CheckId, cell: c.address, message: `Links to another file: ${c.formula}` }));
+    return groupRuns(
+      "external-links",
+      allCells(sheet)
+        .filter((c): c is Cell & { formula: string } => isFormula(c) && hasExternalLink(c.formula))
+        .map(c => ({
+          cell: c,
+          key: r1c1(c),
+          one: `Links to another file: ${c.formula}`,
+          many: (range, n) => `Links to another file in ${range} (${n} cells), e.g. ${c.formula}`,
+        })),
+    );
   },
 };
 
@@ -284,6 +387,19 @@ function findLabel(sheet: SheetSnapshot, pattern: RegExp): { cell: Cell; filled:
   return null;
 }
 
+/**
+ * Supporting data tabs (client listings, exports) aren't signed off and don't state a purpose; only workpapers do.
+ * Shown as "not applied" so nobody reads it as "the sign-off is fine".
+ */
+function notAWorkpaper(sheet: SheetSnapshot): Skip | undefined {
+  if (isEmpty(sheet) || looksLikeWorkpaper(sheet)) return undefined;
+  return {
+    reason:
+      "Not applied: this sheet doesn't look like a workpaper (no workpaper reference, period heading, sign-off or conclusion line), so it was treated as supporting data.",
+    blocking: false,
+  };
+}
+
 // Sign-off labels start the cell ("Prepared by: AB"), so prose mentioning "the reviewer" doesn't count.
 const PREPARED = /^\s*(prepared\s*by|preparer\b|prep'?d\s*by)/i;
 const REVIEWED = /^\s*(reviewed\s*by|reviewer\b)/i;
@@ -294,8 +410,8 @@ const signoff: Check = {
   severity: "low",
   why: "Sign-offs show who did the work and when. A workpaper without them isn't evidence, and it's one of the most common review notes.",
   fix: 'Add "Prepared by: <initials>, <date>" and leave a "Reviewed by:" line for your senior.',
+  skipped: notAWorkpaper,
   run(sheet) {
-    // Supporting data tabs (client listings, exports) aren't signed off; only workpapers are.
     if (isEmpty(sheet) || !looksLikeWorkpaper(sheet)) return [];
     const out: Finding[] = [];
     const prep = findLabel(sheet, PREPARED);
@@ -318,6 +434,7 @@ const header: Check = {
   severity: "low",
   why: "A reviewer needs to know what the sheet is for, where the numbers came from, and what you concluded before they can sign it off.",
   fix: 'Add "Purpose:" and "Source:" lines (document name, client contact or system report) at the top, and a "Conclusion:" at the bottom.',
+  skipped: notAWorkpaper,
   run(sheet) {
     if (isEmpty(sheet) || !looksLikeWorkpaper(sheet)) return [];
     const texts = textCells(sheet).map(c => String(c.value));
@@ -334,6 +451,9 @@ const header: Check = {
 
 const TICKMARK = /^\s*[✓✔√✗✘^©®Ⓐ-Ⓩⓐ-ⓩ]\s*$/;
 
+/** A column heading that says the cells under it are tickmarks. */
+const TICK_HEADER = /^\s*(ticks?|tick\s*-?\s*marks?|t\/?m)\s*$/i;
+
 const tickmarks: Check = {
   id: "tickmarks",
   title: "Tickmarks explained in a legend",
@@ -342,9 +462,28 @@ const tickmarks: Check = {
   fix: 'Add a "Tickmark legend" that explains every symbol used on the sheet, e.g. "✓ = agreed to invoice".',
   run(sheet) {
     const texts = textCells(sheet);
+    // Tickmarks are the usual symbols anywhere, plus whatever short marks sit in a column headed "Tick".
     const marks = texts.filter(c => TICKMARK.test(String(c.value)));
+    const seenMark = new Set(marks.map(c => c.address));
+    for (const head of texts.filter(c => TICK_HEADER.test(String(c.value)))) {
+      for (let r = head.row + 1; r < sheet.originRow + sheet.cells.length; r++) {
+        const c = cellAt(sheet, r, head.col);
+        if (!c || c.kind !== "text") continue;
+        const v = String(c.value).trim();
+        if (v.length >= 1 && v.length <= 2 && !seenMark.has(c.address)) {
+          seenMark.add(c.address);
+          marks.push(c);
+        }
+      }
+    }
     if (!marks.length) return [];
-    const legend = texts.filter(c => !TICKMARK.test(String(c.value)) && /legend|tick\s*mark|[✓✔√✗✘^©®Ⓐ-Ⓩⓐ-ⓩ]\s*[=:\-–]/i.test(String(c.value)));
+    const isMark = (c: Cell) => seenMark.has(c.address);
+    const legend = texts.filter(
+      c =>
+        !isMark(c) &&
+        !TICK_HEADER.test(String(c.value)) &&
+        /legend|tick\s*-?\s*marks?\b.*[=:]|[✓✔√✗✘^©®Ⓐ-Ⓩⓐ-ⓩ]\s*[=:\-–]|^\s*\S{1,2}\s*[=:]\s*\w/i.test(String(c.value)),
+    );
     if (!legend.length) {
       return [
         {
@@ -362,7 +501,12 @@ const tickmarks: Check = {
       const sym = String(m.value).trim();
       if (seen.has(sym)) continue;
       seen.add(sym);
-      if (legendText.indexOf(sym) < 0) {
+      // A symbol is explained if it appears in the legend; a letter or number only if it is followed by = or :.
+      const plain = /^[A-Za-z0-9]{1,2}$/.test(sym);
+      const explained = plain
+        ? new RegExp(`(^|[\\s(;,])${sym}\\s*[=:\\-–)]`, "i").test(legendText)
+        : legendText.indexOf(sym) >= 0;
+      if (!explained) {
         out.push({ checkId: "tickmarks", cell: m.address, message: `"${sym}" is used but not explained in the legend` });
       }
     }
@@ -395,10 +539,18 @@ export function getCheck(id: CheckId): Check {
 export interface CheckResult {
   check: Check;
   findings: Finding[];
+  /** Set when the check did not run; `findings` is then empty and must not be read as a pass. */
+  skipped?: Skip;
+}
+
+/** Run one check, or record why it didn't run. */
+export function runCheck(check: Check, sheet: SheetSnapshot, ctx?: ReviewContext): CheckResult {
+  const skipped = check.skipped ? check.skipped(sheet, ctx) : undefined;
+  return skipped ? { check, findings: [], skipped } : { check, findings: check.run(sheet, ctx) };
 }
 
 export function runChecklist(sheet: SheetSnapshot, ctx?: ReviewContext): CheckResult[] {
-  return CHECKS.map(check => ({ check, findings: check.run(sheet, ctx) }));
+  return CHECKS.map(check => runCheck(check, sheet, ctx));
 }
 
 export { toA1 };
