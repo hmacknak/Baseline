@@ -133,3 +133,10 @@ Measured on 180 sheets from 130 public sample workbooks (`tools/noise`), then fi
 - Dropped from the video: the "fewer review notes" framing, workpaper-reference jargon in captions, Mark OK and
   Review all sheets. Captions sit over the sheet so they never cover the panel.
 - The download page and README use the same description.
+
+## 2026-11-13: Download page redesigned
+- The page now leads with what Baseline is ("Live feedback on your workpaper, as you work"), then the three things
+  it does, an example flag with its why, what it checks, and how to get started. Same single static file, no
+  scripts, no external fonts or trackers, light and dark.
+- States the limits plainly: nothing leaves Excel; a first pass, not a replacement for review; needs Microsoft 365
+  or Excel on the web.

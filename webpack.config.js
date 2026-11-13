@@ -109,6 +109,10 @@ module.exports = async (env, options) => {
             },
           },
           {
+            from: "site/poster.jpg",
+            to: "poster.jpg",
+          },
+          {
             from: "demo/Baseline-demo.xlsx",
             to: "Baseline-demo.xlsx",
           },
