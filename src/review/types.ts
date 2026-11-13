@@ -29,6 +29,8 @@ export interface SheetSnapshot {
   originCol: number;
   /** True when the used range was larger than we were willing to read. */
   truncated?: boolean;
+  /** False when fill colours could not be read (sheet too large, or an older Excel). Undefined means they were. */
+  fillsRead?: boolean;
 }
 
 export type Severity = "high" | "medium" | "low";
@@ -71,7 +73,18 @@ export interface Check {
   reference?: string;
   /** Wording and references to use instead when the workbook reports under US GAAP. */
   usGaap?: FrameworkText;
+  /**
+   * Why this check can't or shouldn't run on this sheet. A skipped check is shown as "not run" with the reason;
+   * it is never shown as a pass.
+   */
+  skipped?(sheet: SheetSnapshot, ctx?: ReviewContext): Skip | undefined;
   run(sheet: SheetSnapshot, ctx?: ReviewContext): Finding[];
+}
+
+export interface Skip {
+  reason: string;
+  /** True when the check couldn't be done (so the sheet isn't "all clear"); false when it simply doesn't apply. */
+  blocking: boolean;
 }
 
 /** The accounting framework the client reports under. Decides which accounting references are shown. */
@@ -117,6 +130,8 @@ export interface Insight {
   reference?: string;
   /** Wording and references to use instead when the workbook reports under US GAAP. */
   usGaap?: FrameworkText;
+  /** Why this insight can't run on this sheet, e.g. the column it reads isn't there. Shown instead of a pass. */
+  unavailable?(sheet: SheetSnapshot, ctx: ReviewContext): string | undefined;
   run(sheet: SheetSnapshot, ctx: ReviewContext): InsightItem[];
 }
 

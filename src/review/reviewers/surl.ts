@@ -3,7 +3,7 @@
 
 import { amountOf, cellAddress, dateOf, flagOf } from "../table";
 import { Reviewer } from "../types";
-import { TableSpec, columnsCheck, completenessCheck, detectScore, fmtDate, rowInsight, tableFor } from "./procedure";
+import { columnsCheck, completenessCheck, detectScore, fmtDate, missingColumns, readabilityCheck, rowInsight, tableFor, TableSpec } from "./procedure";
 
 const spec: TableSpec = {
   minColumns: 3,
@@ -69,10 +69,12 @@ export const surl: Reviewer = {
       why: "Each selection only proves something if you can show when the service happened, whether it was recorded, and what you concluded. Without the service date you can't say which year the liability belongs to; without a conclusion the reviewer can't tell whether the item was cleared or is an exception.",
     }),
     columnsCheck({ id: "surl.columns", spec, needed: ["invoiceDate", "serviceDate", "amount", "recorded"] }),
+    readabilityCheck({ id: "surl.readable", spec, labelKeys: LABEL }),
   ],
   insights: [
     rowInsight({
       id: "surl.post-ye-invoice",
+      requires: ["invoiceDate", "serviceDate"],
       title: "Invoices after year-end for this year's services",
       severity: "high",
       assertion: "Completeness",
@@ -97,6 +99,7 @@ export const surl: Reviewer = {
     }),
     rowInsight({
       id: "surl.pre-ye-unrecorded",
+      requires: ["invoiceDate", "recorded"],
       title: "Pre-year-end invoices not in payables",
       severity: "high",
       assertion: "Completeness",
@@ -120,6 +123,7 @@ export const surl: Reviewer = {
     }),
     rowInsight({
       id: "surl.recorded-next-year",
+      requires: ["serviceDate", "recorded"],
       title: "Recorded at year-end for next year's services",
       severity: "medium",
       assertion: "Existence; Cut-off",
@@ -141,6 +145,7 @@ export const surl: Reviewer = {
     }),
     rowInsight({
       id: "surl.no-service-date",
+      requires: ["serviceDate"],
       title: "Can't tell which year it belongs to",
       severity: "medium",
       assertion: "Completeness; Cut-off",
@@ -168,6 +173,7 @@ export const surl: Reviewer = {
       reference: "ISA 560 (subsequent events)",
       why: "Suppliers often invoice weeks after delivery, so a search that stops soon after year-end can miss liabilities that are paid later. The window normally runs as close to the audit report date as practicable, and at least one full payment cycle.",
       needs: ["yearEnd"],
+      unavailable: sheet => missingColumns(sheet, spec, [["paymentDate", "invoiceDate"]]),
       run(sheet, ctx) {
         const table = tableFor(sheet, spec);
         if (!table || table.rows.length < 3) return [];

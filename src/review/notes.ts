@@ -161,6 +161,7 @@ export function pyStatuses(
   const covered = new Set<CheckId>();
   const failing = new Set<CheckId>();
   for (const r of results) {
+    if (r.skipped) continue;
     for (const id of answersTo(r.check)) {
       covered.add(id);
       if (r.findings.length) failing.add(id);

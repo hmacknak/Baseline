@@ -322,8 +322,32 @@ function renderFinding(f: ReviewedCheck["findings"][number]): HTMLElement {
   return wrap;
 }
 
+/** A check that didn't run: shown with a dash and the reason, never with a tick. */
+function renderSkippedCheck(r: ReviewedCheck): HTMLElement {
+  const skip = r.skipped!;
+  const item = el("li", "item skip");
+  const head = el("button", "item-head");
+  head.setAttribute("aria-expanded", String(expanded.has(r.check.id)));
+  head.appendChild(el("span", "mark", "–"));
+  head.appendChild(el("span", "item-title", r.check.title));
+  head.appendChild(el("span", "count skip-count", skip.blocking ? "Not run" : "Not applied"));
+  head.addEventListener("click", () => {
+    if (expanded.has(r.check.id)) expanded.delete(r.check.id);
+    else expanded.add(r.check.id);
+    renderReview();
+  });
+  item.appendChild(head);
+  if (expanded.has(r.check.id)) {
+    const body = el("div", "item-body");
+    body.appendChild(el("p", "why", skip.reason));
+    item.appendChild(body);
+  }
+  return item;
+}
+
 function renderCheckItem(r: ReviewedCheck): HTMLElement {
   const { check, findings, dismissed } = r;
+  if (r.skipped) return renderSkippedCheck(r);
   const pass = findings.length === 0;
   const pyRelated = sheet ? pyNotesForCheck(notes, sheet.name, check) : [];
   const item = el("li", `item ${pass ? "pass" : "fail"} ${check.severity}`);
@@ -398,13 +422,23 @@ function renderChecklist(list: HTMLElement, results: ReviewedCheck[]) {
   const open = results
     .filter(r => r.findings.length)
     .sort((a, b) => SEVERITY_ORDER.indexOf(a.check.severity) - SEVERITY_ORDER.indexOf(b.check.severity));
-  const clear = results.filter(r => !r.findings.length);
+  // Checks that couldn't run sit with the open items; ones that don't apply fold away with the clear ones.
+  const notRun = results.filter(r => r.skipped && r.skipped.blocking);
+  const notApplied = results.filter(r => r.skipped && !r.skipped.blocking);
+  const clear = results.filter(r => !r.findings.length && !r.skipped);
   open.forEach(r => list.appendChild(renderCheckItem(r)));
-  if (!clear.length) return;
+  notRun.forEach(r => list.appendChild(renderCheckItem(r)));
+  if (!clear.length && !notApplied.length) return;
   const toggle = el("li", "item clear-toggle");
   const btn = el("button", "item-head");
   btn.appendChild(el("span", "mark", "✓"));
-  btn.appendChild(el("span", "item-title", `${plural(clear.length, "check")} clear`));
+  btn.appendChild(
+    el(
+      "span",
+      "item-title",
+      `${plural(clear.length, "check")} clear${notApplied.length ? ` · ${notApplied.length} not applied` : ""}`,
+    ),
+  );
   btn.appendChild(el("span", "count", showClear ? "Hide" : "Show"));
   btn.addEventListener("click", () => {
     showClear = !showClear;
@@ -412,7 +446,7 @@ function renderChecklist(list: HTMLElement, results: ReviewedCheck[]) {
   });
   toggle.appendChild(btn);
   list.appendChild(toggle);
-  if (showClear) clear.forEach(r => list.appendChild(renderCheckItem(r)));
+  if (showClear) clear.concat(notApplied).forEach(r => list.appendChild(renderCheckItem(r)));
 }
 
 function renderInsight(r: InsightResult): HTMLElement {
@@ -433,6 +467,8 @@ function renderInsight(r: InsightResult): HTMLElement {
     const total = r.items.reduce((s, i) => s + (i.amount ?? 0), 0);
     const meta = el("span", "insight-meta", total ? `${hits} · $${fmtAmount(total)}` : String(hits));
     head.appendChild(meta);
+  } else if (r.blocked) {
+    head.appendChild(el("span", "insight-meta", "Not run"));
   }
   head.addEventListener("click", () => {
     if (startsOpen) {
@@ -448,9 +484,11 @@ function renderInsight(r: InsightResult): HTMLElement {
     const body = el("div", "insight-body");
     if (r.blocked) {
       body.appendChild(el("p", "why", r.blocked + "."));
-      const go = el("button", "link", "Open settings");
-      go.addEventListener("click", () => showTab("settings"));
-      body.appendChild(go);
+      if (r.needsSettings) {
+        const go = el("button", "link", "Open settings");
+        go.addEventListener("click", () => showTab("settings"));
+        body.appendChild(go);
+      }
     } else if (!hits) {
       body.appendChild(el("p", "why", "Nothing flagged."));
     } else {
@@ -499,13 +537,19 @@ function renderProcedure() {
   const box = $("insights");
   box.textContent = "";
   const flagged = result.insights.reduce((n, r) => n + r.items.length, 0);
+  const blocked = result.insights.filter(r => r.blocked);
   const head = el("p", "insights-head");
   head.appendChild(el("strong", undefined, "Insights"));
-  head.appendChild(
-    document.createTextNode(flagged ? ` · ${plural(flagged, "high-risk item")} to look at` : " · nothing flagged"),
-  );
+  const state = flagged ? plural(flagged, "high-risk item") + " to look at" : blocked.length ? "nothing flagged so far" : "nothing flagged";
+  head.appendChild(document.createTextNode(` · ${state}${blocked.length ? ` · ${blocked.length} not run` : ""}`));
   box.appendChild(head);
-  result.insights.forEach(r => box.appendChild(renderInsight(r)));
+  // If nothing could run for one and the same reason (no testing table), say it once.
+  const reasons = new Set(blocked.map(r => r.blocked));
+  if (result.insights.length && blocked.length === result.insights.length && reasons.size === 1) {
+    box.appendChild(el("p", "insights-none", `${blocked[0].blocked}. None of the ${result.insights.length} procedure checks could run.`));
+  } else {
+    result.insights.forEach(r => box.appendChild(renderInsight(r)));
+  }
   renderChecklist($("procList"), procedureView);
 }
 
@@ -620,6 +664,7 @@ async function reviewWorkbook() {
     head.appendChild(close);
     panel.appendChild(head);
     let needing = 0;
+    let anyNotRun = false;
     const list = el("ul", "wb-list");
     for (const snap of sheets) {
       if (!snap.cells.length) continue;
@@ -632,6 +677,7 @@ async function reviewWorkbook() {
       const flagged = res.insights.filter(i => i.items.length);
       const sum = summarise(checks, res.insights);
       const count = sum.toFix + sum.highRisk;
+      if (sum.notRun) anyNotRun = true;
       if (count) needing++;
       const li = el("li");
       const btn = el("button", `wb-row ${count ? "fail" : "pass"}`);
@@ -653,7 +699,7 @@ async function reviewWorkbook() {
                 .slice(0, 2)
                 .join(" · ")
             : sum.notRun
-              ? "Procedure checks not run: set the year-end in Settings"
+              ? `No issues found · ${plural(sum.notRun, "check")} not run`
               : "No open issues",
         ),
       );
@@ -664,7 +710,11 @@ async function reviewWorkbook() {
       list.appendChild(li);
     }
     panel.appendChild(
-      el("p", "help small", needing ? `${plural(needing, "sheet")} need attention. Tap one to go to it.` : "No open issues on any sheet. This is a first pass, not a review sign-off."),
+      el("p", "help small", needing
+          ? `${plural(needing, "sheet")} need attention. Tap one to go to it.`
+          : anyNotRun
+            ? "No issues found, but some checks could not run. Open those sheets to see why."
+            : "No open issues on any sheet. This is a first pass, not a review sign-off."),
     );
     panel.appendChild(list);
   } catch (e) {

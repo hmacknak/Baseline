@@ -39,10 +39,10 @@ function monthIndex(word: string): number {
 /**
  * Turn a cell value into a serial date, or null.
  * Numbers in a plausible range (1990–2100) are serials, which is how Excel stores dates. Text accepts
- * 2025-12-31, 31-Dec-2025, 31 Dec 2025, Dec 31, 2025 and 12/31/2025 (numeric dates are read
- * month-first, like en-US Excel, unless the first number is over 12).
+ * 2025-12-31, 31-Dec-2025, 31 Dec 2025, Dec 31, 2025 and 12/31/2025. Numeric text dates are read month-first
+ * unless `dayFirst` is set or the first number is over 12; see `isAmbiguousDateText`.
  */
-export function toSerial(value: unknown): number | null {
+export function toSerial(value: unknown, dayFirst = false): number | null {
   if (typeof value === "number") {
     return value >= 32874 && value <= 73051 ? Math.floor(value) : null;
   }
@@ -60,15 +60,29 @@ export function toSerial(value: unknown): number | null {
   if (m && monthIndex(m[1]) && valid(+m[3], monthIndex(m[1]), +m[2])) {
     return serialFromYMD(+m[3], monthIndex(m[1]), +m[2]);
   }
-  m = /^(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})$/.exec(s);
+  m = NUMERIC_DATE.exec(s);
   if (m) {
     const y = +m[3] < 100 ? 2000 + +m[3] : +m[3];
-    let month = +m[1];
-    let day = +m[2];
-    if (month > 12) [month, day] = [day, month];
+    let month = dayFirst ? +m[2] : +m[1];
+    let day = dayFirst ? +m[1] : +m[2];
+    if (month > 12 && day <= 12) [month, day] = [day, month];
     if (valid(y, month, day)) return serialFromYMD(y, month, day);
   }
   return null;
+}
+
+const NUMERIC_DATE = /^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})$/;
+
+/** What a numeric text date such as "05/01/2026" tells us about the order it was typed in. */
+export function numericDateOrder(value: unknown): "day-first" | "month-first" | "ambiguous" | null {
+  if (typeof value !== "string") return null;
+  const m = NUMERIC_DATE.exec(value.trim());
+  if (!m) return null;
+  const a = +m[1];
+  const b = +m[2];
+  if (a > 12 && b <= 12) return "day-first";
+  if (b > 12 && a <= 12) return "month-first";
+  return a === b ? null : "ambiguous";
 }
 
 /** Amounts arrive as numbers, or as text like "$1,234.50" or "(1,234)". */

@@ -104,7 +104,7 @@ async function snapshotOf(ctx: Excel.RequestContext, ws: Excel.Worksheet): Promi
     }
     cells.push(line);
   }
-  return { name: ws.name, cells, originRow: used.rowIndex, originCol: used.columnIndex, truncated };
+  return { name: ws.name, cells, originRow: used.rowIndex, originCol: used.columnIndex, truncated, fillsRead: !!fills };
 }
 
 export async function readActiveSheet(): Promise<SheetSnapshot> {

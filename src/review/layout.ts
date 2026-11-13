@@ -69,6 +69,11 @@ export interface DetectedTable {
 const TOTAL_ROW = /^\s*(sub[\s-]?)?total\b|^\s*grand total/i;
 const NOTE_ROW = /^\s*(conclu(sion|ded)|notes?\b|tick\s*-?\s*marks?|legend|source|purpose|prepared\s*by|reviewed\s*by)/i;
 
+/** A sentence on its own under a table, such as "Conclusion: ..." or a note. It is not an item of the table. */
+export function isNoteText(c: Cell | undefined): boolean {
+  return isText(c) && (c.value.trim().length > 40 || NOTE_ROW.test(c.value));
+}
+
 function textCount(sheet: SheetSnapshot, r: number): Cell[] {
   const line = sheet.cells[r - sheet.originRow] || [];
   return line.filter(isText);
@@ -89,7 +94,8 @@ export function findTables(sheet: SheetSnapshot): DetectedTable[] {
   let r = sheet.originRow;
   while (r <= lastRow) {
     const heads = textCount(sheet, r);
-    if (heads.length < 3) {
+    // Column headings don't end in a colon; a row of "Prepared by:" / "Date:" labels is a form, not a table.
+    if (heads.length < 3 || heads.some(h => /:\s*$/.test(String(h.value)))) {
       r++;
       continue;
     }
@@ -103,7 +109,7 @@ export function findTables(sheet: SheetSnapshot): DetectedTable[] {
       if (inRow.every(isBlank)) break;
       // A lone sentence under the table (a conclusion or a note) ends it; it isn't an item with blanks.
       const filled = inRow.filter(c => !isBlank(c));
-      if (filled.length === 1 && isText(filled[0]) && (filled[0].value.trim().length > 40 || NOTE_ROW.test(filled[0].value))) break;
+      if (filled.length === 1 && isNoteText(filled[0])) break;
       rows.push(next);
       next++;
     }

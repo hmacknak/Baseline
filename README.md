@@ -6,6 +6,7 @@ last year's review notes. It doesn't replace the review.
 
 **Procedures on:** search for unrecorded liabilities, cash confirmations and expense vouching, each with
 researched "why it matters" (assertion and standard). See [docs/PROCEDURES.md](docs/PROCEDURES.md).
+What each flag can and can't see is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 **Reviewer catalog.** *Workpaper basics* run on every sheet. On top of that, each sheet gets a **procedure
 reviewer** from the catalog (bank rec, search for unrecorded liabilities, revenue cut-off, AR confirmations, with

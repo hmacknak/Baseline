@@ -142,3 +142,17 @@ Measured on 180 sheets from 130 public sample workbooks (`tools/noise`), then fi
   or Excel on the web.
 - The footer credits the two people who built it, at the owner's request. This is a deliberate exception to the
   "nothing personal in the repo" rule; no other personal details are included.
+
+## 2026-11-13: Every flag says when it couldn't check
+- A check now ends flagged, clear, or **not run with a reason**; a check that couldn't run is never shown as a
+  pass and "No open issues" is never shown while one is outstanding. Reasons: setting missing, column missing, no
+  testing table, fill colours unreadable, not a workpaper.
+- New procedure check "Baseline can read every answer" reports values the rules can't read instead of skipping
+  them. Yes/no answers are read by their first word; a bare "x" is reported as unclear (it used to count as yes).
+- Text dates are read day-first or month-first from the evidence on the sheet; with none, the cell is reported.
+- Repeated findings are grouped into one flag with a range (errors, hard-codes, external links).
+- Fewer false alarms: subtotals between item formulas, masked account numbers, sign-off forms read as tables, a
+  conclusion under a testing table read as a tested item, "Not yet" in a received-date cell read as a reply.
+- More reach: totals that start late, SUBTOTAL totals, letter tickmarks in a "Tick" column, sign-off applied to
+  any sheet with a procedure reviewer on it.
+- The full register of what each flag can and can't see is `docs/LIMITATIONS.md`.

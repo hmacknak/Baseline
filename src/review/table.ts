@@ -1,7 +1,8 @@
 // Reads the testing table on a procedure sheet: finds the header row, maps columns by their
 // many possible names, and returns one record per tested item with cell addresses for jumping.
 
-import { toAmount, toSerial } from "./dates";
+import { numericDateOrder, toAmount, toSerial } from "./dates";
+import { isNoteText } from "./layout";
 import { Cell, SheetSnapshot } from "./types";
 
 export type ColumnKind = "text" | "date" | "amount" | "flag";
@@ -19,12 +20,46 @@ export interface TableRow {
   /** 0-based worksheet row. */
   row: number;
   cells: Record<string, Cell | undefined>;
+  /** How numeric text dates on this sheet are read; see `dateOrderOf`. */
+  dayFirst?: boolean;
 }
+
+export type DateOrder = "day-first" | "month-first" | "unknown";
 
 export interface Table {
   headerRow: number;
   columns: Record<string, number>;
   rows: TableRow[];
+  /** Whether dates typed as text on this sheet are day-first, month-first, or can't be told. */
+  dateOrder: DateOrder;
+}
+
+/**
+ * Dates typed as text ("05/01/2026") don't say whether the day or the month comes first. The sheet usually does:
+ * another text date such as "25/01/2026" can only be day-first, and a date format such as dd/mm/yyyy on real dates
+ * shows how the preparer writes them. With no evidence either way the order is unknown, and callers must not guess
+ * silently.
+ */
+export function dateOrderOf(sheet: SheetSnapshot): DateOrder {
+  let day = 0;
+  let month = 0;
+  for (const line of sheet.cells) {
+    for (const c of line) {
+      if (!c) continue;
+      if (c.kind === "text") {
+        const order = numericDateOrder(c.value);
+        if (order === "day-first") day++;
+        else if (order === "month-first") month++;
+      } else if (c.kind === "number" && c.numberFormat) {
+        // An explicit dd/mm format is a choice. "m/d/yyyy" is Excel's locale default code, so it proves nothing.
+        const f = c.numberFormat.toLowerCase().replace(/\[[^\]]*\]/g, "");
+        if (/^d{1,2}[/.\-]m{1,2}[/.\-]y{2,4}/.test(f)) day++;
+      }
+    }
+  }
+  if (day > month) return "day-first";
+  if (month > day) return "month-first";
+  return "unknown";
 }
 
 function norm(s: string): string {
@@ -95,6 +130,7 @@ export function readTable(sheet: SheetSnapshot, specs: ColumnSpec[], minColumns 
   if (!best) return null;
 
   const keys = Object.keys(best.columns);
+  const dateOrder = dateOrderOf(sheet);
   const rows: TableRow[] = [];
   let blanks = 0;
   for (let r = best.row + 1; r < sheet.originRow + sheet.cells.length; r++) {
@@ -108,17 +144,20 @@ export function readTable(sheet: SheetSnapshot, specs: ColumnSpec[], minColumns 
       if (++blanks >= 2) break;
       continue;
     }
+    // A conclusion or note under the table ends it; it is not a tested item with every other column blank.
+    const filled = keys.filter(k => !isBlank(cells[k]));
+    if (filled.length === 1 && isNoteText(cells[filled[0]])) break;
     blanks = 0;
-    rows.push({ row: r, cells });
+    rows.push({ row: r, cells, dayFirst: dateOrder === "day-first" });
   }
-  return { headerRow: best.row, columns: best.columns, rows };
+  return { headerRow: best.row, columns: best.columns, rows, dateOrder };
 }
 
 // ─── Typed accessors ─────────────────────────────────────────────────────────
 
 export function dateOf(row: TableRow, key: string): number | null {
   const c = row.cells[key];
-  return c && !isBlank(c) ? toSerial(c.value) : null;
+  return c && !isBlank(c) ? toSerial(c.value, row.dayFirst) : null;
 }
 
 export function amountOf(row: TableRow, key: string): number | null {
@@ -131,14 +170,22 @@ export function textOf(row: TableRow, key: string): string {
   return c && !isBlank(c) ? String(c.value).trim() : "";
 }
 
+/** "N/A", "n.a.", "not applicable", or a dash: a deliberate non-answer, not something Baseline failed to read. */
+export function isNotApplicable(text: string): boolean {
+  return /^(n\s*[/.]?\s*a\.?|not applicable|nil|[-–—])$/i.test(text.trim());
+}
+
 /** Yes/no answers such as "Y", "Yes", "Recorded", "✓", TRUE. Returns null when blank or unclear. */
 export function flagOf(row: TableRow, key: string): boolean | null {
   const c = row.cells[key];
   if (!c || isBlank(c)) return null;
   if (typeof c.value === "boolean") return c.value;
   const s = String(c.value).trim().toLowerCase();
-  if (/^(y|yes|true|✓|✔|x|recorded|in ap|accrued|received|done|ok)$/.test(s)) return true;
-  if (/^(n|no|false|not recorded|none|not received|nr|n\/r)$/.test(s)) return false;
+  if (isNotApplicable(s)) return null;
+  // The answer is the first word; anything after it is explanation ("No, accrued in January").
+  if (/^(y|yes|true|ok|done)$/.test(s) || /^[✓✔]/.test(s) || /^(yes|recorded|in ap|accrued|received|approved|agreed)\b/.test(s)) return true;
+  if (/^(n|no|false|nr|n\/r|none)$/.test(s) || /^[✗✘]/.test(s) || /^(no|not)\b/.test(s)) return false;
+  // A bare "x" can mean ticked or crossed, so it is left unread rather than guessed.
   return null;
 }
 

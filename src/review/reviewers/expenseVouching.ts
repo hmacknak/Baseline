@@ -13,7 +13,7 @@
 
 import { amountOf, dateOf, flagOf, isBlank, textOf } from "../table";
 import { Reviewer } from "../types";
-import { TableSpec, columnsCheck, completenessCheck, detectScore, fmtAmount, fmtDate, rowInsight, sheetTexts, tableFor } from "./procedure";
+import { columnsCheck, completenessCheck, detectScore, fmtAmount, fmtDate, missingColumns, readabilityCheck, rowInsight, sheetTexts, tableFor, TableSpec } from "./procedure";
 
 const spec: TableSpec = {
   minColumns: 3,
@@ -85,10 +85,12 @@ export const expenseVouching: Reviewer = {
       why: "Each sample item has to show what was recorded, what support it was agreed to, and the result. A sample item with no support reference or no conclusion isn't tested, and an untested item can't be used to conclude on the population.",
     }),
     columnsCheck({ id: "expense-vouching.columns", spec, needed: ["glAmount", "supportAmount", "vendor"] }),
+    readabilityCheck({ id: "expense-vouching.readable", spec, labelKeys: LABEL }),
   ],
   insights: [
     rowInsight({
       id: "expense-vouching.amount",
+      requires: ["glAmount", "supportAmount"],
       title: "Recorded amount doesn't agree to support",
       severity: "high",
       assertion: "Accuracy",
@@ -106,6 +108,7 @@ export const expenseVouching: Reviewer = {
     }),
     rowInsight({
       id: "expense-vouching.cutoff",
+      requires: [["serviceDate", "invoiceDate"]],
       title: "Service falls outside the year",
       severity: "high",
       assertion: "Cut-off",
@@ -137,6 +140,7 @@ export const expenseVouching: Reviewer = {
       reference: "ISA 240 (payments for goods or services not received)",
       why: "The same vendor, amount and invoice recorded twice is either an error (the invoice was paid twice) or a way money leaves the company for nothing in return. Paying for goods or services not received is one of the recognised ways controls are overridden, so duplicates need to be explained, not just noted.",
       aliases: ["duplicate"],
+      unavailable: sheet => missingColumns(sheet, spec, ["vendor", ["supportAmount", "glAmount"]]),
       run(sheet) {
         const table = tableFor(sheet, spec);
         if (!table) return [];
@@ -165,6 +169,7 @@ export const expenseVouching: Reviewer = {
     },
     rowInsight({
       id: "expense-vouching.approval",
+      requires: ["approved"],
       title: "No evidence of approval",
       severity: "medium",
       assertion: "Occurrence",
@@ -184,6 +189,7 @@ export const expenseVouching: Reviewer = {
     }),
     rowInsight({
       id: "expense-vouching.capital",
+      requires: [["description", "account"], "glAmount"],
       title: "Looks like a capital item",
       severity: "medium",
       assertion: "Classification",
@@ -202,6 +208,7 @@ export const expenseVouching: Reviewer = {
     }),
     rowInsight({
       id: "expense-vouching.classification",
+      requires: ["classOk"],
       title: "Recorded in the wrong account",
       severity: "medium",
       assertion: "Classification",

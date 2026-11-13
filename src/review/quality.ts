@@ -71,6 +71,9 @@ export const completeness: Check = {
 const PLACEHOLDER =
   /\b(tbd|tbc)\b|\bto be (completed|confirmed|updated|determined|added|done)\b|\bx{3,}\b|\?{2,}|\[(insert|add|enter|tbd|update)[^\]]*\]|\bpending\b|\bplaceholder\b/i;
 
+/** Masked account or card numbers ("XXXX-1234", "****5678") are not placeholders. */
+const MASKED_NUMBER = /[x*]{3,}[\s-]*\d+|\d+[\s-]*[x*]{3,}/gi;
+
 export const placeholders: Check = {
   id: "placeholders",
   title: "No placeholders left (TBD, XXX, ???)",
@@ -80,7 +83,7 @@ export const placeholders: Check = {
   fix: "Replace the placeholder with the real answer, or delete it if it no longer applies.",
   run(sheet) {
     return allCells(sheet)
-      .filter(c => isText(c) && PLACEHOLDER.test(c.value))
+      .filter(c => isText(c) && PLACEHOLDER.test(c.value.replace(MASKED_NUMBER, "")))
       .map(c => ({
         checkId: "placeholders",
         cell: c.address,
@@ -376,6 +379,13 @@ export const highlights: Check = {
   severity: "low",
   why: "Bright highlights are usually notes-to-self (to check, to fix, ask client). Left in, they make the reviewer wonder what's still open.",
   fix: "Clear the fill once the point is resolved, or add a colour legend if the highlighting is meant to stay.",
+  skipped(sheet) {
+    if (sheet.fillsRead !== false) return undefined;
+    return {
+      reason: "Not checked: fill colours couldn't be read on this sheet (it is very large, or this version of Excel doesn't provide them).",
+      blocking: true,
+    };
+  },
   run(sheet) {
     const cells = allCells(sheet);
     if (cells.some(c => isText(c) && COLOUR_LEGEND.test(c.value))) return [];
