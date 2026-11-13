@@ -3,93 +3,255 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Baseline Review</title>
+    <title>Baseline Review: live feedback on audit workpapers in Excel</title>
+    <meta name="description" content="An Excel add-in that reviews an audit workpaper as you work: the basics, the procedure, and the reason behind every flag." />
     <link rel="icon" href="assets/icon-32.png" />
     <style>
-      :root { --bg: #fff; --text: #1f2328; --muted: #59636e; --brand: #105e48; --card: #f6f7f8; --line: #e1e4e8; }
+      :root {
+        --bg: #ffffff; --band: #f5f7f6; --text: #16211d; --muted: #55635d; --line: #dfe5e2;
+        --brand: #0f5a45; --brand-ink: #ffffff; --brand-soft: #e7f1ed; --card: #ffffff; --shadow: 0 1px 2px rgba(16, 40, 32, 0.06), 0 8px 24px rgba(16, 40, 32, 0.06);
+      }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #1e1e1e; --text: #e6e6e6; --muted: #a0a0a0; --brand: #4ec9a0; --card: #262626; --line: #3a3a3a; }
+        :root {
+          --bg: #121615; --band: #181d1b; --text: #e7ecea; --muted: #9eaaa5; --line: #2b3330;
+          --brand: #4ec9a0; --brand-ink: #0c1a15; --brand-soft: #1b2a25; --card: #1b201e; --shadow: none;
+        }
       }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Segoe UI", -apple-system, sans-serif; }
-      main { max-width: 600px; margin: 0 auto; padding: 32px 16px 48px; }
-      h1 { margin: 0 0 4px; font-size: 28px; }
-      h2 { margin: 32px 0 10px; font-size: 18px; }
-      p { color: var(--muted); margin: 0 0 16px; }
-      video { width: 100%; border-radius: 10px; margin: 8px 0 20px; background: #000; }
-      .downloads { display: grid; gap: 10px; }
-      .dl { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; text-decoration: none;
-            border: 2px solid var(--brand); color: var(--text); background: var(--bg); }
-      .dl.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
-      .dl b { display: block; font-size: 17px; }
-      .dl span { font-size: 13px; opacity: 0.8; }
-      ol, .card { background: var(--card); border-radius: 10px; padding: 14px 16px 14px 36px; margin: 0; }
-      .card { padding: 14px 16px; }
-      li { margin: 6px 0; }
-      table { width: 100%; border-collapse: collapse; font-size: 14px; }
-      td { padding: 8px 6px; border-top: 1px solid var(--line); vertical-align: top; }
-      td:first-child { white-space: nowrap; font-weight: 600; }
-      small { color: var(--muted); }
+      html { -webkit-text-size-adjust: 100%; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
       a { color: var(--brand); }
-      .version { margin-top: 28px; font-size: 13px; color: var(--muted); }
+      .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+      /* Header */
+      header { border-bottom: 1px solid var(--line); }
+      header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
+      .mark { width: 30px; height: 30px; border-radius: 8px; background: var(--brand); color: var(--brand-ink); display: grid; place-items: center; font-weight: 700; font-size: 18px; }
+      nav { display: flex; gap: 22px; font-size: 14.5px; }
+      nav a { color: var(--muted); text-decoration: none; }
+      nav a:hover { color: var(--text); }
+
+      /* Hero */
+      .hero { padding-top: 64px; padding-bottom: 48px; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: center; }
+      .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin: 0 0 14px; }
+      h1 { margin: 0 0 16px; font-size: 44px; line-height: 1.1; letter-spacing: -0.025em; text-wrap: balance; }
+      .lead { margin: 0 0 26px; font-size: 18px; color: var(--muted); max-width: 46ch; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      .btn { display: inline-block; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 15.5px; text-decoration: none; border: 1px solid var(--brand); }
+      .btn.primary { background: var(--brand); color: var(--brand-ink); }
+      .btn.secondary { color: var(--brand); background: transparent; }
+      .fine { margin: 16px 0 0; font-size: 13.5px; color: var(--muted); }
+      .frame { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); background: #0f3d2e; }
+      video { display: block; width: 100%; aspect-ratio: 16 / 9; }
+
+      /* Sections */
+      section { padding: 56px 0; }
+      section.band { background: var(--band); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; text-wrap: balance; }
+      .sub { margin: 0 0 32px; color: var(--muted); max-width: 62ch; }
+      .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+      .num { width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 700; font-size: 14px; margin-bottom: 14px; }
+      h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+      .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+      /* The "why" example */
+      .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+      .flag { background: var(--card); border: 1px solid var(--line); border-left: 4px solid #b42318; border-radius: 10px; padding: 18px 20px; box-shadow: var(--shadow); font-size: 14.5px; }
+      .flag .title { font-weight: 650; margin: 0 0 10px; }
+      .flag .item { display: flex; gap: 10px; align-items: baseline; margin: 0 0 12px; color: var(--muted); }
+      .flag .cell { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; color: var(--brand); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+      .flag .because { background: var(--band); border-radius: 8px; padding: 12px 14px; margin: 0; }
+      .flag .meta { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+      .flag .meta b { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; margin-right: 6px; color: var(--text); }
+      .flag .meta span + b { margin-left: 14px; }
+
+      /* What it checks */
+      .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+      dl { margin: 0; }
+      dt { font-weight: 650; margin-top: 14px; font-size: 15px; }
+      dt:first-child { margin-top: 0; }
+      dd { margin: 2px 0 0; color: var(--muted); font-size: 14.5px; }
+
+      /* Get started */
+      .start { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+      ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+      ol li { margin: 6px 0; }
+      ol b, ol code { color: var(--text); }
+      code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.92em; }
+      .files { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--line); }
+      .files li { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+      .files span { color: var(--muted); }
+      .files a { font-weight: 600; text-decoration: none; white-space: nowrap; }
+
+      footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 13.5px; color: var(--muted); }
+      footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+      @media (max-width: 860px) {
+        .hero, .why, .start { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+        .hero { padding-top: 36px; padding-bottom: 32px; }
+        .three, .cols { grid-template-columns: minmax(0, 1fr); }
+        h1 { font-size: 34px; }
+        h2 { font-size: 24px; }
+        section { padding: 40px 0; }
+        nav { display: none; }
+        .wrap { padding: 0 16px; }
+      }
     </style>
   </head>
   <body>
-    <main>
-      <h1>Baseline Review</h1>
-      <p>Live feedback on your workpaper, as you work, inside Excel. Baseline checks the basics, reviews the procedure and
-        explains why each flag matters, and brings in last year's review notes.</p>
+    <header>
+      <div class="wrap">
+        <a class="brand" href="#top"><span class="mark">B</span>Baseline Review</a>
+        <nav>
+          <a href="#what">What it does</a>
+          <a href="#checks">What it checks</a>
+          <a href="#start">Get started</a>
+        </nav>
+      </div>
+    </header>
 
-      <video src="Baseline-demo-video.mp4?v=__VERSION__" controls playsinline preload="metadata"></video>
-
-      <h2>Downloads</h2>
-      <div class="downloads">
-        <a class="dl primary" href="manifest.xml?v=__VERSION__" download="manifest.xml">
-          <div><b>Download the add-in</b><span>manifest.xml · upload once in Excel (steps below)</span></div>
-        </a>
-        <a class="dl" href="Baseline-demo.xlsx?v=__VERSION__" download="Baseline-demo.xlsx">
-          <div><b>Download the demo workbook</b><span>Baseline-demo.xlsx · workpaper basics, SURL, cash confirmations, expense vouching</span></div>
-        </a>
-        <a class="dl" href="Baseline-demo-video.mp4?v=__VERSION__" download="Baseline-demo-video.mp4">
-          <div><b>Download the demo video</b><span>Baseline-demo-video.mp4 · The basics, the procedure review and the why, last year's notes; 2.5 minutes</span></div>
-        </a>
-        <a class="dl" href="Baseline-demo-short.mp4?v=__VERSION__" download="Baseline-demo-short.mp4">
-          <div><b>Download the 1-minute version</b><span>Baseline-demo-short.mp4 · for email and chat</span></div>
-        </a>
+    <main id="top">
+      <div class="wrap hero">
+        <div>
+          <p class="eyebrow">Excel add-in for auditors</p>
+          <h1>Live feedback on your workpaper, as you work.</h1>
+          <p class="lead">Baseline Review reads the workpaper in front of you and tells you what is incomplete, what doesn&rsquo;t add up
+            and what the procedure is missing. Every flag comes with the reason behind it.</p>
+          <div class="actions">
+            <a class="btn primary" href="manifest.xml?v=__VERSION__" download="manifest.xml">Download the add-in</a>
+            <a class="btn secondary" href="#start">How to install</a>
+          </div>
+          <p class="fine">Nothing in your workbook leaves Excel. A first pass, not a replacement for review.</p>
+        </div>
+        <div class="frame">
+          <video src="Baseline-demo-video.mp4?v=__VERSION__" poster="poster.jpg?v=__VERSION__" controls playsinline preload="none"></video>
+        </div>
       </div>
 
-      <h2>Install (once)</h2>
-      <ol>
-        <li>Download the <b>Add-in file</b> above.</li>
-        <li>Open <b>Excel on the web</b> (office.com) and open any workbook.</li>
-        <li><b>Home → Add-ins → More Add-ins → My Add-ins → Upload My Add-in</b>, then pick <code>manifest.xml</code>.</li>
-        <li>Click <b>Review</b> on the Home tab.</li>
-      </ol>
-      <p style="margin-top:10px"><small>Already installed? You don&rsquo;t need to download it again: the add-in checks for updates every time it opens and installs them automatically.
-        Close and reopen the Review panel to get the latest version.</small></p>
+      <section class="band" id="what">
+        <div class="wrap">
+          <h2>Three things, while the work is still open</h2>
+          <p class="sub">Feedback that arrives while you can still act on it, instead of in a review note days later.</p>
+          <div class="three">
+            <div class="card">
+              <div class="num">1</div>
+              <h3>Workpaper basics</h3>
+              <p>Fifteen checks on every sheet. Is it complete, is it consistent, does it add up? A total that skips a line, a blank
+                in a testing table, a typed number among formulas, a date that doesn&rsquo;t fit.</p>
+            </div>
+            <div class="card">
+              <div class="num">2</div>
+              <h3>Procedure review, with the why</h3>
+              <p>Baseline recognises the procedure and reviews the testing itself. Each flag explains why it matters, the assertion
+                at risk and the standard behind it, so the feedback also teaches.</p>
+            </div>
+            <div class="card">
+              <div class="num">3</div>
+              <h3>Last year&rsquo;s review notes</h3>
+              <p>Load last year&rsquo;s notes once. Baseline shows which of those issues are happening again, on the flag itself,
+                while there is still time to deal with them.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <h2>Try the demo</h2>
-      <ol>
-        <li>Open the <b>Demo workbook</b> in Excel and click <b>Review</b>.</li>
-        <li>In the panel's <b>Settings</b> tab, set year-end to 31 Dec 2025.</li>
-        <li>Follow the workbook's <b>Start here</b> tab.</li>
-      </ol>
+      <section>
+        <div class="wrap why">
+          <div>
+            <h2>The reason, not just the flag</h2>
+            <p class="sub" style="margin-bottom:0">A flag on its own gets fixed and forgotten. Baseline says what is wrong, why a reviewer
+              cares, which assertion is at risk and where the requirement comes from. The references follow the framework you choose:
+              IFRS or US GAAP, with ISA and PCAOB auditing standards.</p>
+          </div>
+          <div class="flag" aria-label="Example of a Baseline flag">
+            <p class="title">Invoices after year-end for this year&rsquo;s services</p>
+            <p class="item"><span class="cell">D16</span><span>Invoiced 9 Jan 2026 for services on 20 Dec 2025, not marked as recorded</span></p>
+            <p class="because"><b>Why it matters:</b> the service was received before year-end, so the company already owed the money at
+              year-end. If it isn&rsquo;t recorded or accrued, liabilities and expenses are understated.</p>
+            <p class="meta"><b>Assertion</b><span>Completeness</span><b>Reference</b><span>IFRS Conceptual Framework 4.26; IAS 37.11</span></p>
+          </div>
+        </div>
+      </section>
 
-      <h2>What's inside</h2>
-      <div class="card">
-        <table>
-          <tr><td>Formulas</td><td>Errors, hard-coded numbers, typed numbers among formulas, inconsistent formulas, links to other files</td></tr>
-          <tr><td>Totals</td><td>Totals that skip a line, numbers stored as text</td></tr>
-          <tr><td>Completeness</td><td>Blanks in testing tables, placeholders (TBD, XXX), purpose, source and conclusion</td></tr>
-          <tr><td>Dates</td><td>Step through every date; prior-year dates after roll-forward, year typos, dates typed as text</td></tr>
-          <tr><td>Tidiness</td><td>Leftover highlighting, stray numbers off to the side, tickmarks missing from the legend</td></tr>
-          <tr><td>Sign-off</td><td>Preparer and reviewer, with dates, in the right order</td></tr>
-          <tr><td>Whole workbook</td><td>One pass over every sheet before it goes to review</td></tr>
-          <tr><td>Prior-year notes</td><td>Flags when last year's review notes are happening again</td></tr>
-        </table>
-      </div>
+      <section class="band" id="checks">
+        <div class="wrap">
+          <h2>What it checks</h2>
+          <p class="sub">The basics run on every sheet. Procedure reviews are offered when Baseline recognises the workpaper.</p>
+          <div class="cols">
+            <div class="card">
+              <h3>Workpaper basics</h3>
+              <dl>
+                <dt>Formulas</dt>
+                <dd>Errors, hard-coded numbers, typed numbers among formulas, inconsistent formulas, links to other files</dd>
+                <dt>Totals</dt>
+                <dd>Totals that skip a line, numbers stored as text</dd>
+                <dt>Completeness</dt>
+                <dd>Blanks in testing tables, placeholders, purpose, source and conclusion</dd>
+                <dt>Dates</dt>
+                <dd>Prior-year dates left after roll-forward, year typos, dates typed as text; step through every date</dd>
+                <dt>Tidiness and sign-off</dt>
+                <dd>Leftover highlighting, stray numbers, tickmarks missing from the legend, dated sign-offs</dd>
+              </dl>
+            </div>
+            <div class="card">
+              <h3>Procedure reviews</h3>
+              <dl>
+                <dt>Search for unrecorded liabilities</dt>
+                <dd>Post-year-end invoices for this year&rsquo;s services, invoices missing from payables, over-accruals, missing
+                  service dates, a search window that stops too soon</dd>
+                <dt>Cash confirmations</dt>
+                <dd>Unexplained differences, no reply, replies not received directly from the bank, unconfirmed accounts, wrong
+                  confirmation date, overdrafts, foreign currency</dd>
+                <dt>Expense vouching</dt>
+                <dd>Amounts that don&rsquo;t agree to support, cut-off, possible duplicate payments, missing approval, capital items
+                  expensed, wrong account</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <p class="version">Version __VERSION_LABEL__ · Nothing in your workbook leaves Excel</p>
+      <section id="start">
+        <div class="wrap">
+          <h2>Get started</h2>
+          <p class="sub">Install once. After that the add-in updates itself each time it opens.</p>
+          <div class="start">
+            <div class="card">
+              <h3>Install</h3>
+              <ol>
+                <li>Download the add-in file, <code>manifest.xml</code>.</li>
+                <li>Open <b>Excel on the web</b> and open any workbook.</li>
+                <li><b>Home &rarr; Add-ins &rarr; More Add-ins &rarr; My Add-ins &rarr; Upload My Add-in</b>, then choose the file.</li>
+                <li>Click <b>Review</b> on the Home tab.</li>
+              </ol>
+              <p class="fine">Needs a current version of Excel: Microsoft 365 or Excel on the web.</p>
+            </div>
+            <div class="card">
+              <h3>Try it on the demo workbook</h3>
+              <ol>
+                <li>Download the demo workbook and open it in Excel.</li>
+                <li>Click <b>Review</b>, then set the year-end to 31 Dec 2025 in <b>Settings</b>.</li>
+                <li>Follow the workbook&rsquo;s <b>Start here</b> tab.</li>
+              </ol>
+              <ul class="files">
+                <li><span>Add-in file</span><a href="manifest.xml?v=__VERSION__" download="manifest.xml">manifest.xml</a></li>
+                <li><span>Demo workbook, all figures made up</span><a href="Baseline-demo.xlsx?v=__VERSION__" download="Baseline-demo.xlsx">Baseline-demo.xlsx</a></li>
+                <li><span>Demo video, 2.5 minutes</span><a href="Baseline-demo-video.mp4?v=__VERSION__" download="Baseline-demo-video.mp4">Download</a></li>
+                <li><span>Short video, under a minute</span><a href="Baseline-demo-short.mp4?v=__VERSION__" download="Baseline-demo-short.mp4">Download</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <footer>
+      <div class="wrap">
+        <span>Baseline Review &middot; Version __VERSION_LABEL__ &middot; Built by Hunter Macknak and Alex Larson</span>
+        <span>Nothing in your workbook leaves Excel. Baseline is a first pass and does not replace review.</span>
+      </div>
+    </footer>
   </body>
 </html>
