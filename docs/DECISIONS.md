@@ -140,3 +140,5 @@ Measured on 180 sheets from 130 public sample workbooks (`tools/noise`), then fi
   scripts, no external fonts or trackers, light and dark.
 - States the limits plainly: nothing leaves Excel; a first pass, not a replacement for review; needs Microsoft 365
   or Excel on the web.
+- The footer credits the two people who built it, at the owner's request. This is a deliberate exception to the
+  "nothing personal in the repo" rule; no other personal details are included.
